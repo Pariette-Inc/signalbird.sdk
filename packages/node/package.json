@@ -1,0 +1,56 @@
+{
+  "name": "@signalbird/sdk",
+  "version": "0.1.0",
+  "description": "Signalbird SDK — send logs and alert notifications from your projects",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "signalbird",
+    "sdk",
+    "monitoring",
+    "logging",
+    "notification",
+    "alert"
+  ],
+  "author": "Signalbird",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pariette-Inc/signalbird.sdk.git"
+  },
+  "homepage": "https://signalbird.io/sdk",
+  "bugs": {
+    "url": "https://github.com/Pariette-Inc/signalbird.sdk/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

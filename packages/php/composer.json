@@ -1,0 +1,50 @@
+{
+    "name": "signalbird/sdk",
+    "description": "Signalbird PHP SDK — Projelerinizden log ve bildirim gönderin",
+    "type": "library",
+    "keywords": [
+        "signalbird",
+        "sdk",
+        "monitoring",
+        "logging",
+        "notification",
+        "alert",
+        "laravel"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Signalbird",
+            "email": "hello@signalbird.io"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "guzzlehttp/guzzle": "^7.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Signalbird\\Sdk\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Signalbird\\Sdk\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Signalbird\\Sdk\\SignalbirdServiceProvider"
+            ],
+            "aliases": {
+                "Signalbird": "Signalbird\\Sdk\\Facades\\Signalbird"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

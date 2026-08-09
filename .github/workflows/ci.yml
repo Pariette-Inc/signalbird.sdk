@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main, test, live]
+  pull_request:
+
+jobs:
+  node:
+    name: Node paketi
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: packages/node/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  php:
+    name: PHP paketi
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/php
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      - run: composer validate --strict
+      - run: composer install --no-interaction --no-progress
+      - name: Sözdizimi kontrolü
+        run: find src config -name '*.php' -print0 | xargs -0 -n1 php -l
+
+  version-lock:
+    name: Sürüm kilidi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Sürüm kilitlidir: VERSION ile paketlerin sürümü ayrışırsa build kırılır
+      - name: VERSION dosyaya yazılan paketlerle eşleşiyor mu
+        run: |
+          node scripts/sync-version.mjs
+          if ! git diff --quiet; then
+            echo "::error::Paket sürümleri VERSION ile ayrışmış. 'node scripts/sync-version.mjs' çalıştırıp commit'leyin."
+            git --no-pager diff
+            exit 1
+          fi
+      # Etiketten sürüm alanlar (Packagist, ileride Go/SPM) için etiket kontrolü
+      - name: Sürüm etiketi VERSION ile eşleşiyor mu
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: node scripts/sync-version.mjs --check-tag "${GITHUB_REF#refs/tags/}"
