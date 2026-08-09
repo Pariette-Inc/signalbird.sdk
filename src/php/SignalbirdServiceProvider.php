@@ -8,7 +8,7 @@ class SignalbirdServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/signalbird.php', 'signalbird');
+        $this->mergeConfigFrom(__DIR__ . '/../../config/signalbird.php', 'signalbird');
 
         $this->app->singleton(Signalbird::class, function ($app) {
             $config = $app['config']['signalbird'];
@@ -27,7 +27,7 @@ class SignalbirdServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../config/signalbird.php' => config_path('signalbird.php'),
+                __DIR__ . '/../../config/signalbird.php' => config_path('signalbird.php'),
             ], 'signalbird-config');
         }
     }

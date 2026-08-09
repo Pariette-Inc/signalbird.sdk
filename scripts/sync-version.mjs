@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Kök VERSION dosyasındaki sürümü, sürüm alanı taşıyan paketlere yazar.
+ * Kök VERSION dosyasındaki sürümü, manifestinde sürüm alanı olan dillere yazar.
  *
  * Sürüm kilitlidir: bir dilde değişiklik olmasa bile tüm paketler aynı numarayı
  * taşır, böylece "Signalbird SDK v1.2.0" her dilde aynı şeyi ifade eder.
@@ -8,7 +8,7 @@
  * Her registry sürümü aynı yerden okumaz:
  *   - npm      → package.json "version"           (bu betik yazar)
  *   - Packagist→ git etiketi                       (composer.json'da version ALANI OLMAZ;
- *                                                   ayna repoya taşınan vX.Y.Z etiketi belirler)
+ *                                                   repoya atılan vX.Y.Z etiketi belirler)
  *   - NuGet    → .csproj <Version>                 (eklendiğinde TARGETS'a gir)
  *   - Maven    → pom.xml / gradle.properties       (eklendiğinde TARGETS'a gir)
  *   - Go, SPM  → git etiketi                       (dosyaya yazılmaz)
@@ -41,9 +41,9 @@ if (checkTagIndex !== -1) {
   process.exit(0)
 }
 
-/** JSON dosyasındaki "version" alanı güncellenecek paketler. */
+/** Manifestinde "version" alanı taşıyan diller (kökte dururlar). */
 const TARGETS = [
-  'packages/node/package.json',
+  'package.json',   // npm → @signalbird/sdk
 ]
 
 let changed = 0
@@ -70,14 +70,14 @@ for (const rel of TARGETS) {
 }
 
 // package-lock.json kök sürümü iki yerde tutar
-const lockPath = join(root, 'packages/node/package-lock.json')
+const lockPath = join(root, 'package-lock.json')
 try {
   const lock = JSON.parse(readFileSync(lockPath, 'utf8'))
   if (lock.version !== version) {
     lock.version = version
     if (lock.packages?.['']) lock.packages[''].version = version
     writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n')
-    console.log(`  ✓ packages/node/package-lock.json → ${version}`)
+    console.log(`  ✓ package-lock.json → ${version}`)
     changed++
   }
 } catch {

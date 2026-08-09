@@ -1,7 +1,7 @@
 {
   "name": "@signalbird/sdk",
   "version": "0.1.0",
-  "description": "Signalbird SDK — send logs and alert notifications from your projects",
+  "description": "Signalbird SDK — tek pakette çok dilli istemci (Node.js / TypeScript)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

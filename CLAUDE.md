@@ -4,26 +4,39 @@
 
 ## Proje Tanımı
 
-Signalbird'ün **çok dilli** resmi SDK monoreposu. Geliştiricinin kendi
-projesinden Signalbird'e log ve bildirim göndermesini sağlar. Her dilin
-istemcisi aynı sürümü, aynı metot adlarını ve aynı davranışı paylaşır.
+Signalbird'ün resmi SDK'sı. **Tek paket, tüm diller** — bu repo aynı anda bir
+npm paketi, bir Composer paketi ve (eklendikçe) bir Go modülü, Swift paketi,
+NuGet ve Maven artefaktıdır. Hepsi aynı etiketten çıkar, aynı sürümü ve aynı
+davranışı taşır. Ayrı SDK reposu, ayna repo veya alt modül YOKTUR.
 
 Temel endpoint: `POST /sdk/log/{api_key}` — auth yok, yetkiyi anahtar taşır.
 
 ## Repo yapısı
 
+Manifest dosyaları **kökte** durur — her paket yöneticisi kendi manifestini
+kökte arar. Kaynaklar dile göre ayrılır, her manifest kendi dizinini gösterir.
+
 ```
 signalbird.sdk/
+├── package.json            # npm       → @signalbird/sdk  (giriş: src/node)
+├── composer.json           # Packagist → signalbird/sdk   (psr-4: src/php)
 ├── VERSION                 # kilitli tek sürüm (tek doğruluk kaynağı)
 ├── docs/CONTRACT.md        # diller arası davranış sözleşmesi ← ÖNCE BUNU OKU
-├── scripts/sync-version.mjs
-├── packages/
-│   ├── node/               # @signalbird/sdk  → npm
-│   └── php/                # signalbird/sdk   → Packagist (ayna repo üzerinden)
-└── .github/workflows/
-    ├── ci.yml              # node build+typecheck, php lint, sürüm kilidi
-    └── split-php.yml       # packages/php → Pariette-Inc/signalbird.php.sdk
+├── scripts/
+│   ├── sync-version.mjs
+│   └── check-parity.mjs    # her dil aynı yedi metodu sunuyor mu
+├── src/
+│   ├── node/               # TypeScript kaynak
+│   └── php/                # PHP kaynak
+├── config/                 # Laravel config (vendor:publish)
+├── dist/                   # npm build çıktısı (tsup)
+└── .github/workflows/ci.yml
 ```
+
+Her manifest **diğer dillerin dosyalarını kendi paketinden dışlar**:
+`package.json` → `files`, `composer.json` → `archive.exclude`. Yeni dil eklerken
+bu dışlama listelerini güncellemeyi unutma, yoksa npm kullanıcısı PHP kaynağı
+indirir.
 
 ## Değişmez Kurallar
 
@@ -36,7 +49,8 @@ signalbird.sdk/
 3. **URL'ler sabit.** `production` → `https://live.signalbird.io/api`,
    `test` → `http://localhost/api`. Kullanıcıya serbest `baseUrl` verdirme —
    yanlış hosta log göndermek sessiz veri kaybıdır.
-4. **Ayna repo elle düzenlenmez.** `signalbird.php.sdk` bu repodan üretilir.
+4. **Tek repo, tek paket.** Yeni dil için ayrı repo AÇILMAZ; manifesti bu
+   reponun köküne gelir, kaynağı `src/<dil>/` altına.
 
 ## Dokümantasyon Kuralı (ZORUNLU)
 
@@ -45,19 +59,19 @@ dosyalarda da güncellenir:
 
 1. `docs/CONTRACT.md` — sözleşme
 2. `README.md` — kök, dil matrisi ve hızlı başlangıç
-3. `packages/<dil>/README.md` — o dilin resmi dokümanı
-4. `signalbird.web/public/docs/{tr,en}/sdk.md` ve `sdk-node.md` / `sdk-php.md`
+3. `signalbird.web/public/docs/{tr,en}/sdk.md` ve `sdk-node.md` / `sdk-php.md`
 
 ### Akış
 
 ```
 docs/CONTRACT.md güncelle
-  → tüm packages/* içinde uygula
-  → README'leri güncelle
+  → tüm src/* dillerinde uygula
+  → node scripts/check-parity.mjs (parite bozulmamış olmalı)
+  → README güncelle
   → signalbird.web public/docs/ güncelle (tr + en)
   → VERSION artır + node scripts/sync-version.mjs
   → git commit, git tag vX.Y.Z, git push --tags
-  → npm publish (packages/node), Packagist aynayı otomatik alır
+  → npm publish; Packagist etiketi kendi alır
 ```
 
 ## Yapılmaması Gerekenler
@@ -70,9 +84,9 @@ docs/CONTRACT.md güncelle
 
 ## Yeni dil ekleme
 
-`docs/CONTRACT.md` → "Yeni dil eklerken" bölümündeki altı adımı izle.
-Registry kökü şart koşan diller (Packagist, Swift Package Manager) için
-`.github/workflows/` altına bir split workflow'u gerekir.
+`docs/CONTRACT.md` → "Yeni dil eklerken" bölümündeki yedi adımı izle. Özet:
+kaynak `src/<dil>/`, manifest repo köküne, diğer dilleri paketten dışla,
+`scripts/check-parity.mjs`'e bir giriş ekle.
 
 ## İlişkili Projeler
 

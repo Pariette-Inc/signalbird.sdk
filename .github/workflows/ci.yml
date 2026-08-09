@@ -3,32 +3,39 @@ name: CI
 on:
   push:
     branches: [main, test, live]
+    tags: ['v*']
   pull_request:
 
 jobs:
   node:
-    name: Node paketi
+    name: Node
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/node
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: packages/node/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+      # npm tarball'ında yalnız dist + README olmalı; PHP kaynağı sızmamalı
+      - name: Paket içeriği
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e "
+            const files = require('/tmp/pack.json')[0].files.map(f => f.path);
+            const leak = files.filter(f => f.startsWith('src/') || f.startsWith('config/'));
+            if (leak.length) {
+              console.error('::error::npm tarball\'ına başka dilin dosyaları sızmış: ' + leak.join(', '));
+              process.exit(1);
+            }
+            console.log('npm tarball temiz (' + files.length + ' dosya)');
+          "
 
   php:
-    name: PHP paketi
+    name: PHP
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/php
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -37,26 +44,50 @@ jobs:
       - run: composer validate --strict
       - run: composer install --no-interaction --no-progress
       - name: Sözdizimi kontrolü
-        run: find src config -name '*.php' -print0 | xargs -0 -n1 php -l
+        run: find src/php config -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Sınıflar autoload'dan çözülüyor mu
+        run: |
+          php -r '
+            require "vendor/autoload.php";
+            $classes = [
+              "Signalbird\\Sdk\\Signalbird",
+              "Signalbird\\Sdk\\SignalbirdClient",
+              "Signalbird\\Sdk\\SignalbirdException",
+            ];
+            foreach ($classes as $c) {
+              if (!class_exists($c)) { fwrite(STDERR, "Çözülemedi: $c\n"); exit(1); }
+            }
+            // ServiceProvider config yolunu src/php/../../config üzerinden çözer
+            if (!file_exists(__DIR__ . "/src/php/../../config/signalbird.php")) {
+              fwrite(STDERR, "config/signalbird.php ServiceProvider yolundan görünmüyor\n"); exit(1);
+            }
+            echo "PHP paketi tamam\n";
+          '
 
-  version-lock:
-    name: Sürüm kilidi
+  contract:
+    name: Sözleşme ve sürüm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      # Sürüm kilitlidir: VERSION ile paketlerin sürümü ayrışırsa build kırılır
-      - name: VERSION dosyaya yazılan paketlerle eşleşiyor mu
+
+      # Sürüm kilitlidir: VERSION ile manifestler ayrışırsa build kırılır
+      - name: VERSION manifestlerle eşleşiyor mu
         run: |
           node scripts/sync-version.mjs
           if ! git diff --quiet; then
-            echo "::error::Paket sürümleri VERSION ile ayrışmış. 'node scripts/sync-version.mjs' çalıştırıp commit'leyin."
+            echo "::error::Sürümler VERSION ile ayrışmış. 'node scripts/sync-version.mjs' çalıştırıp commit'leyin."
             git --no-pager diff
             exit 1
           fi
+
       # Etiketten sürüm alanlar (Packagist, ileride Go/SPM) için etiket kontrolü
       - name: Sürüm etiketi VERSION ile eşleşiyor mu
         if: startsWith(github.ref, 'refs/tags/v')
         run: node scripts/sync-version.mjs --check-tag "${GITHUB_REF#refs/tags/}"
+
+      # Sözleşme: her dil aynı yedi metodu sunmak zorunda
+      - name: Metot paritesi
+        run: node scripts/check-parity.mjs

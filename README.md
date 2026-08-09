@@ -1,18 +1,22 @@
 # Signalbird SDK
 
-Tek kaynak, çok dil. Signalbird'e proje içinden log ve bildirim göndermek için
-resmi istemciler bu repoda yaşar — hepsi **aynı sürümü**, **aynı metot adlarını**
-ve **aynı davranışı** paylaşır.
+**Tek paket, tüm diller.** Bu repo aynı anda bir npm paketi, bir Composer paketi
+ve (eklendikçe) bir Go modülü, Swift paketi, NuGet ve Maven artefaktıdır. Hepsi
+aynı etiketten çıkar, aynı sürümü ve aynı davranışı taşır.
+
+Ayrı SDK reposu, ayna repo ya da dil başına sürüm yoktur.
 
 ## Kurulum
 
-| Dil | Paket | Kurulum | Kaynak |
-|---|---|---|---|
-| Node.js / TypeScript | `@signalbird/sdk` (npm) | `npm install @signalbird/sdk` | [`packages/node`](packages/node) |
-| PHP / Laravel | `signalbird/sdk` (Packagist) | `composer require signalbird/sdk` | [`packages/php`](packages/php) |
+Her paket yöneticisi **aynı repoyu** gösterir:
 
-> Yol haritası: Go, .NET, Swift ve Android istemcileri aynı sözleşmeyle
-> [`docs/CONTRACT.md`](docs/CONTRACT.md) üzerinden eklenecek.
+| Dil | Kurulum |
+|---|---|
+| Node.js / TypeScript | `npm install @signalbird/sdk` |
+| PHP / Laravel | `composer require signalbird/sdk` |
+
+> Yol haritası: Go, .NET, Swift ve Android. Hepsi bu repoya eklenir —
+> `go.mod`, `Package.swift`, `.csproj` ve `build.gradle.kts` aynı köke gelir.
 
 ## Hızlı başlangıç
 
@@ -39,7 +43,7 @@ API anahtarını Signalbird panelinde **SDK Anahtarları** bölümünden üretir
 
 ## Ortak sözleşme
 
-Her dilin istemcisi altı kısayol metodu ve bir genel metot sunar:
+Her dil altı kısayol metodu ve bir genel metot sunar:
 
 | Metot | Seviye | Not |
 |---|---|---|
@@ -51,53 +55,54 @@ Her dilin istemcisi altı kısayol metodu ve bir genel metot sunar:
 | `debug` | `debug` | Geliştirme kaydı |
 | `send` | serbest | Seviye parametre olarak verilir |
 
-Ayrıntılı davranış kuralları (uç nokta, hata biçimi, zaman aşımı, ortam URL'leri)
-için: [`docs/CONTRACT.md`](docs/CONTRACT.md). Yeni bir dil eklerken uyulması
-gereken tek belge odur.
+Davranış kuralları (uç nokta, hata biçimi, zaman aşımı, ortam URL'leri):
+[`docs/CONTRACT.md`](docs/CONTRACT.md). Yeni dil eklerken uyulacak tek belge odur.
 
 ## Repo yapısı
 
+Manifest dosyaları **kökte** durur — her paket yöneticisi kendi manifestini
+kökte arar. Kaynaklar dile göre ayrılır; her manifest kendi dizinini gösterir.
+
 ```
 signalbird.sdk/
-├── VERSION                 # kilitli tek sürüm — tüm paketler bunu taşır
-├── docs/CONTRACT.md        # diller arası davranış sözleşmesi
-├── scripts/sync-version.mjs
-├── packages/
-│   ├── node/               # @signalbird/sdk       → npm
-│   └── php/                # signalbird/sdk        → Packagist (ayna repo üzerinden)
-└── .github/workflows/
-    ├── ci.yml
-    └── split-php.yml       # packages/php → Pariette-Inc/signalbird.php.sdk
+├── package.json          # npm       → @signalbird/sdk      (giriş: src/node)
+├── composer.json         # Packagist → signalbird/sdk       (psr-4: src/php)
+├── VERSION               # kilitli tek sürüm
+├── src/
+│   ├── node/             # TypeScript kaynak
+│   └── php/              # PHP kaynak
+├── config/               # Laravel config (vendor:publish)
+├── dist/                 # npm build çıktısı (tsup)
+├── docs/CONTRACT.md
+└── scripts/sync-version.mjs
 ```
+
+Her manifest kendi paketine girmeyecek dosyaları dışlar: `package.json` →
+`files: ["dist","README.md"]`, `composer.json` → `archive.exclude`. Yani npm
+tarball'ında PHP kaynağı, Packagist zip'inde TypeScript kaynağı bulunmaz.
 
 ## Sürümleme
 
-Sürüm **kilitlidir**: tek bir dilde değişiklik olsa bile tüm paketler birlikte
+Sürüm **kilitlidir**: tek bir dilde değişiklik olsa bile paket bir bütün olarak
 yükselir. `Signalbird SDK v1.2.0` her dilde aynı şeyi ifade eder.
 
 ```bash
 # Kök VERSION dosyasını düzenle, sonra:
-node scripts/sync-version.mjs      # dosyaya sürüm yazan paketleri günceller
+node scripts/sync-version.mjs   # dosyaya sürüm yazan manifestleri günceller
 git commit -am "v0.2.0"
-git tag v0.2.0 && git push --tags  # split workflow'u tetikler
+git tag v0.2.0 && git push --tags
 ```
 
-Her registry sürümü aynı yerden okumaz: npm `package.json`'dan, Packagist ise
-**git etiketinden** okur (bu yüzden `composer.json`'da `version` alanı yoktur —
-Packagist bunu zaten önermez). İkisinin ayrışmaması CI'da `--check-tag` ile
-doğrulanır.
+npm sürümü `package.json`'dan okur; Packagist **git etiketinden** okur (bu yüzden
+`composer.json`'da `version` alanı yoktur — Packagist bunu zaten önermez). İkisinin
+ayrışmasını CI `--check-tag` ile yakalar.
 
 ## Yayınlama
 
-**npm** — `packages/node` içinden:
-
 ```bash
-npm run build && npm publish --access public
+npm run build && npm publish --access public   # npm
+git push --tags                                 # Packagist etiketi kendi alır
 ```
 
-**Packagist** — `packages/php` doğrudan yayınlanamaz; Packagist `composer.json`'ı
-repo kökünde ister. `split-php.yml` workflow'u her sürüm etiketinde
-`packages/php`'yi `Pariette-Inc/signalbird.php.sdk` ayna reposuna salt-okunur
-olarak kopyalar ve etiketi taşır. Packagist o repoyu izler.
-
-> Ayna repo **elle düzenlenmez** — kaynağı burasıdır.
+Packagist bir kereliğine `Pariette-Inc/signalbird.sdk` adresine kaydedilir;
+sonrasında her `v*` etiketini kendisi toplar.

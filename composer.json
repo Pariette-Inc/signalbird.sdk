@@ -1,6 +1,6 @@
 {
     "name": "signalbird/sdk",
-    "description": "Signalbird PHP SDK — Projelerinizden log ve bildirim gönderin",
+    "description": "Signalbird SDK — tek pakette çok dilli istemci (PHP / Laravel)",
     "type": "library",
     "keywords": [
         "signalbird",
@@ -27,12 +27,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Signalbird\\Sdk\\": "src/"
+            "Signalbird\\Sdk\\": "src/php/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Signalbird\\Sdk\\Tests\\": "tests/"
+            "Signalbird\\Sdk\\Tests\\": "tests/php/"
         }
     },
     "extra": {
@@ -46,5 +46,27 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "archive": {
+        "exclude": [
+            "/src/node",
+            "/src/go",
+            "/src/swift",
+            "/src/dotnet",
+            "/src/android",
+            "/dist",
+            "/node_modules",
+            "/vendor",
+            "/composer.lock",
+            "/package.json",
+            "/package-lock.json",
+            "/tsconfig.json",
+            "/tsup.config.ts",
+            "/scripts",
+            "/.github",
+            "/DEVLOG.md",
+            "/DEVELOPMENT.md",
+            "/CLAUDE.md"
+        ]
+    }
 }

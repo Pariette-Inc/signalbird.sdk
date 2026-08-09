@@ -1,6 +1,6 @@
 # Signalbird SDK — Diller Arası Davranış Sözleşmesi
 
-Bu belge, `packages/` altındaki **her** istemcinin uyması gereken kuralları tanımlar.
+Bu belge, `src/` altındaki **her** dil istemcisinin uyması gereken kuralları tanımlar.
 Yeni bir dil eklerken tek referans budur; bir kural burada yoksa o kural yoktur.
 
 ## 1. Uç nokta
@@ -73,15 +73,30 @@ Yapılandırma üç alandır: `apiKey` (zorunlu), `mode` (varsayılan `productio
 
 ## 7. Yeni dil eklerken
 
-1. `packages/<dil>/` klasörünü aç.
+Tüm diller **tek repoda ve tek pakette** yaşar. Ayrı repo, ayna repo veya alt
+modül açılmaz.
+
+1. Kaynağı `src/<dil>/` altına koy.
 2. Yukarıdaki yedi metodu ve üç yapılandırma alanını uygula.
-3. Paket adını hizala: npm `@signalbird/sdk`, Packagist `signalbird/sdk`,
-   NuGet `Signalbird.Sdk`, Maven `io.signalbird:sdk`, Go
-   `github.com/Pariette-Inc/signalbird.sdk/go`, SPM `SignalbirdSDK`.
-4. Sürüm: dosyada `version` alanı taşıyan bir registry ise (npm, NuGet, Maven)
+3. Dilin manifest dosyasını **repo köküne** ekle ve kaynak dizinini orada göster:
+
+   | Dil | Kök manifest | Kaynağı nasıl gösterir |
+   |---|---|---|
+   | Node | `package.json` | `tsup.config.ts` → `entry: src/node/index.ts` |
+   | PHP | `composer.json` | `autoload.psr-4` → `src/php/` |
+   | Go | `go.mod` | alt paket: `github.com/Pariette-Inc/signalbird.sdk/src/go` |
+   | Swift | `Package.swift` | `.target(name:"SignalbirdSDK", path:"src/swift")` |
+   | .NET | `Signalbird.Sdk.csproj` | `<Compile Include="src/dotnet/**/*.cs" />` |
+   | Android | `build.gradle.kts` | `sourceSets.main.kotlin.srcDir("src/android")` |
+
+4. Aynı manifestte **diğer dillerin dosyalarını paketten dışla** (npm `files`,
+   composer `archive.exclude`, .NET `<Content Remove>` vb.). Kullanıcı yalnızca
+   kendi dilinin dosyalarını indirmeli.
+5. Paket adını hizala: npm `@signalbird/sdk`, Packagist `signalbird/sdk`,
+   NuGet `Signalbird.Sdk`, Maven `io.signalbird:sdk`, SPM `SignalbirdSDK`.
+6. Sürüm: manifestinde `version` alanı varsa (npm, NuGet, Maven)
    `scripts/sync-version.mjs` içindeki `TARGETS`'a ekle. Etiketten sürüm alan bir
-   registry ise (Packagist, Go, SPM) hiçbir yere yazma — kilit `--check-tag` ile
-   korunur.
-5. Kök `README.md`'deki kurulum tablosuna bir satır ekle.
-6. Registry kökü şart koşuyorsa (Packagist, SPM) `.github/workflows/` altına
-   split workflow'u ekle.
+   registry ise (Packagist, Go, SPM) hiçbir yere yazma — kilit `--check-tag`
+   ile korunur.
+7. `.github/workflows/ci.yml`'ye bir iş ekle ve kök `README.md`'deki kurulum
+   tablosuna bir satır gir.

@@ -6,9 +6,9 @@ function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
 var axios__default = /*#__PURE__*/_interopDefault(axios);
 
-// src/client.ts
+// src/node/client.ts
 
-// src/types.ts
+// src/node/types.ts
 var SignalbirdError = class extends Error {
   constructor(message, statusCode, details) {
     super(message);
@@ -22,7 +22,7 @@ var API_URLS = {
   test: "http://localhost/api"
 };
 
-// src/client.ts
+// src/node/client.ts
 var SignalbirdClient = class {
   constructor(config) {
     this.apiKey = config.apiKey;
@@ -59,7 +59,7 @@ var SignalbirdClient = class {
   }
 };
 
-// src/signalbird.ts
+// src/node/signalbird.ts
 var Signalbird = class {
   constructor(config) {
     this.client = new SignalbirdClient(config);
