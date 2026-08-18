@@ -1,102 +1,73 @@
 # Signalbird SDK — Diller Arası Davranış Sözleşmesi
 
-Bu belge, `src/` altındaki **her** dil istemcisinin uyması gereken kuralları tanımlar.
-Yeni bir dil eklerken tek referans budur; bir kural burada yoksa o kural yoktur.
+Bu belge, `src/` altındaki **her** dil istemcisinin uyması gereken kuralları
+tanımlar. Yeni bir dil eklerken tek referans budur; bir kural burada yoksa o
+kural yoktur.
 
-## 1. Uç nokta
-
-Tek uç nokta kullanılır:
+## 1. Uç noktalar
 
 ```
-POST {baseUrl}/sdk/log/{apiKey}
-Content-Type: application/json
-Accept: application/json
-
-{ "title": "...", "message": "...", "level": "info" }
+POST {baseUrl}/v1/radio/log
+POST {baseUrl}/v1/radio/log/batch
 ```
 
-- `apiKey` **yol parametresidir**, header'a konmaz.
-- Auth header, token yenileme, oturum kavramı **yoktur**. Uç nokta public'tir ve
-  yetkiyi anahtarın kendisi taşır.
+Gövde:
 
-## 2. Ortam URL'leri
+```json
+{ "channel": "critical", "message": "…", "level": "critical", "context": {}, "source": "api-01" }
+```
 
-| Mod | URL |
+`level` ve `context` isteğe bağlıdır. `level` verilmezse **kanalın kendi
+varsayılanı** geçerlidir — istemci burada bir varsayılan uydurmaz.
+
+## 2. Kimlik
+
+| Ortam | Başlık | Anahtar biçimi |
+|---|---|---|
+| Sunucu | `Authorization: Bearer <key>` | `sbr_live_…` |
+| Tarayıcı | `X-Signalbird-Key: <key>` | `sbr_pub_…` |
+| Tarayıcı (yalnız `sendBeacon`) | `?key=<key>` | `sbr_pub_…` |
+
+**Gizli anahtar sorgu dizesine KONMAZ** ve sunucu bunu reddeder
+(`SECRET_KEY_IN_QUERY`): sorgu dizeleri erişim günlüklerine düşer.
+
+Sunucu istemcisi `sbr_pub_` ile başlayan anahtarı kabul etmez ve kurulum
+anında hata verir. Sessizce çalışıp kanal kısıtına takılması, hatanın
+haftalar sonra fark edilmesi demektir.
+
+## 3. baseUrl
+
+Varsayılan `https://signalbird.io/api`. Kullanıcının kendi kurulumu olabileceği
+için serbest `baseUrl` **kabul edilir** (eski sözleşmede yasaktı; kendi
+kurulumunu yapan müşteriyi dışarıda bırakıyordu).
+
+## 4. Ortak yüzey
+
+Her dil istemcisi şu metotları sunar:
+
+| Metot | Anlamı |
 |---|---|
-| `production` (varsayılan) | `https://live.signalbird.io/api` |
-| `test` | `http://localhost/api` |
+| `log(channel, message, level?, context?)` | Temel çağrı |
+| `debug` `info` `warn` `error` `critical` | Seviye kısayolları |
+| `batch(events)` | En fazla 100 kayıt, satır satır sonuç |
 
-Bu değerler istemcide **sabittir**. Kullanıcının serbest `baseUrl` geçmesine izin
-verilmez — yanlış hosta log göndermek sessiz veri kaybıdır.
-
-## 3. Seviyeler
-
-`info` · `warn` · `error` · `critical` · `confirm` · `debug`
-
-Sunucu bu altısı dışında bir değeri 422 ile reddeder. İstemci kendi tarafında
-doğrulama yapmaz; sunucunun hatasını olduğu gibi yüzeye çıkarır.
-
-## 4. Genel arayüz
-
-Her istemci şu yedi metodu sunar. İsimlendirme dilin idiomuna uyar
-(`snake_case`, `camelCase`, `PascalCase`) ama **anlam ve sıra değişmez**:
-
-| Metot | İmza (mantıksal) |
-|---|---|
-| `info(title, message)` | seviye `info` ile gönderir |
-| `warn(title, message)` | seviye `warn` |
-| `error(title, message)` | seviye `error` |
-| `critical(title, message)` | seviye `critical` |
-| `confirm(title, message)` | seviye `confirm` |
-| `debug(title, message)` | seviye `debug` |
-| `send(title, message, level)` | seviye çağıran tarafından verilir |
-
-Yapılandırma üç alandır: `apiKey` (zorunlu), `mode` (varsayılan `production`),
-`timeout` (varsayılan **10 saniye**).
+Seviye kümesi tam olarak: `debug`, `info`, `warn`, `error`, `critical`.
+Fazlası eklenmez — beş seviye kanal ayarını anlaşılır tutar.
 
 ## 5. Hata davranışı
 
-- HTTP 2xx dışı her yanıt, dile özgü **tek bir istisna tipiyle** fırlatılır:
-  `SignalbirdError` / `SignalbirdException` / `SignalbirdError` (Go'da `error` değeri).
-- İstisna üç şey taşır: **mesaj** (sunucunun `message` alanı, yoksa taşıma katmanı
-  hatası), **statusCode** (ağ hatasında `0`), **details** (çözümlenmiş gövde, varsa).
-- İstemci **kendi kendine yeniden denemez**. Retry çağıranın kararıdır; sessiz
-  tekrar, kritik alarmın iki kez çalmasına yol açar.
+Varsayılan **sessiz hata**: ağ ya da sunucu hatasında istisna fırlatılmaz,
+`ok: false` + `code` döner. Log göndermek uygulamanın asıl işi değildir.
 
-## 6. Yapılmayacaklar
+`throwOnError` açıksa istisna fırlatılır. Bu bayrak geliştirme içindir.
 
-- Incoming webhook / API anahtarı CRUD işlemleri SDK'da **yer almaz** — panelden yapılır.
-- Anahtar dışında kimlik doğrulama **yoktur**.
-- Toplu (batch) gönderim, kuyruk ve arka plan thread'i **yoktur**; çağrı senkron
-  ya da dilin doğal async modelidir.
-- Telemetri, kullanım ölçümü, otomatik hata yakalama **yoktur**.
+## 6. Zaman aşımı
 
-## 7. Yeni dil eklerken
+Varsayılan 5 saniye. Bir log çağrısı, kullanıcının isteğini bekletmemeli.
 
-Tüm diller **tek repoda ve tek pakette** yaşar. Ayrı repo, ayna repo veya alt
-modül açılmaz.
+## 7. Toplu gönderim
 
-1. Kaynağı `src/<dil>/` altına koy.
-2. Yukarıdaki yedi metodu ve üç yapılandırma alanını uygula.
-3. Dilin manifest dosyasını **repo köküne** ekle ve kaynak dizinini orada göster:
-
-   | Dil | Kök manifest | Kaynağı nasıl gösterir |
-   |---|---|---|
-   | Node | `package.json` | `tsup.config.ts` → `entry: src/node/index.ts` |
-   | PHP | `composer.json` | `autoload.psr-4` → `src/php/` |
-   | Go | `go.mod` | alt paket: `github.com/Pariette-Inc/signalbird.sdk/src/go` |
-   | Swift | `Package.swift` | `.target(name:"SignalbirdSDK", path:"src/swift")` |
-   | .NET | `Signalbird.Sdk.csproj` | `<Compile Include="src/dotnet/**/*.cs" />` |
-   | Android | `build.gradle.kts` | `sourceSets.main.kotlin.srcDir("src/android")` |
-
-4. Aynı manifestte **diğer dillerin dosyalarını paketten dışla** (npm `files`,
-   composer `archive.exclude`, .NET `<Content Remove>` vb.). Kullanıcı yalnızca
-   kendi dilinin dosyalarını indirmeli.
-5. Paket adını hizala: npm `@signalbird/sdk`, Packagist `signalbird/sdk`,
-   NuGet `Signalbird.Sdk`, Maven `io.signalbird:sdk`, SPM `SignalbirdSDK`.
-6. Sürüm: manifestinde `version` alanı varsa (npm, NuGet, Maven)
-   `scripts/sync-version.mjs` içindeki `TARGETS`'a ekle. Etiketten sürüm alan bir
-   registry ise (Packagist, Go, SPM) hiçbir yere yazma — kilit `--check-tag`
-   ile korunur.
-7. `.github/workflows/ci.yml`'ye bir iş ekle ve kök `README.md`'deki kurulum
-   tablosuna bir satır gir.
+Kısmi başarı normaldir (kota tam ortada dolabilir). Yanıt tek bir durum değil,
+indeks → sonuç eşlemesidir. İstemci başarısız satırları yeniden denemez:
+yeniden deneme kararı çağıranındır, çünkü aynı logu iki kez yazmak da bir
+maliyettir.

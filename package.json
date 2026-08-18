@@ -1,7 +1,7 @@
 {
   "name": "@signalbird/sdk",
-  "version": "0.1.0",
-  "description": "Signalbird SDK — tek pakette çok dilli istemci (Node.js / TypeScript)",
+  "version": "1.0.0",
+  "description": "Signalbird SDK — Telsiz (Radio) istemcisi: sunucu ve tarayıcı",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -10,6 +10,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.mjs",
+      "require": "./dist/browser.js"
     }
   },
   "files": [
@@ -25,19 +30,20 @@
   "keywords": [
     "signalbird",
     "sdk",
-    "monitoring",
+    "telsiz",
+    "radio",
     "logging",
     "notification",
-    "alert"
+    "alert",
+    "observability"
   ],
   "author": "Signalbird",
   "license": "MIT",
-  "dependencies": {
-    "axios": "^1.7.7"
-  },
+  "dependencies": {},
   "devDependencies": {
     "tsup": "^8.3.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

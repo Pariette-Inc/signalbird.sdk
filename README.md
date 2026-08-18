@@ -1,108 +1,219 @@
 # Signalbird SDK
 
-**Tek paket, tüm diller.** Bu repo aynı anda bir npm paketi, bir Composer paketi
-ve (eklendikçe) bir Go modülü, Swift paketi, NuGet ve Maven artefaktıdır. Hepsi
-aynı etiketten çıkar, aynı sürümü ve aynı davranışı taşır.
+**Telsiz** istemcisi. Tek işi vardır: projenizden bir **kanala** mesaj yazmak.
 
-Ayrı SDK reposu, ayna repo ya da dil başına sürüm yoktur.
+Bildirimin kime gideceği, hangi kanaldan (push/e-posta), sessiz saatlerde ne
+olacağı ve aynı mesajın kaç kez uyarı üreteceği **sunucuda, kanal ayarlarında**
+durur. Kod tarafında bunlar yoktur ve olmamalıdır: bildirim kuralını
+değiştirmek için uygulamanızı yeniden yayınlamanız gerekmesin.
+
+```
+proje  →  penyu.io        (anahtarın sahibi)
+kanal  →  critical, info, deploy…   (bildirim kuralı burada)
+olay   →  tek bir kayıt
+```
+
+## İki anahtar, iki paket
+
+| | Sunucu | Tarayıcı |
+|---|---|---|
+| Anahtar | `sbr_live_…` **gizli** | `sbr_pub_…` **açık** |
+| Giriş noktası | `@signalbird/sdk` · `signalbird/sdk` | `@signalbird/sdk/browser` |
+| Yazabildiği kanal | hepsi | yalnız izin verilenler |
+| Kısıt | — | yalnız izinli alan adlarından |
+
+Gizli anahtar tarayıcıya **gömülemez**: sunucu, `Origin` başlığı taşıyan bir
+istekte gizli anahtarı reddeder (`SECRET_KEY_IN_BROWSER`). Bu bir kolaylık
+değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesindir.
 
 ## Kurulum
 
-Her paket yöneticisi **aynı repoyu** gösterir:
-
-| Dil | Kurulum |
+| Dil / çatı | Kurulum |
 |---|---|
-| Node.js / TypeScript | `npm install @signalbird/sdk` |
-| PHP / Laravel | `composer require signalbird/sdk` |
+| Node.js, Next.js (sunucu), Express, NestJS, Fastify | `npm install @signalbird/sdk` |
+| React, Vue, Angular, Svelte, düz JS (tarayıcı) | `npm install @signalbird/sdk` → `@signalbird/sdk/browser` |
+| PHP, Laravel | `composer require signalbird/sdk` |
 
-> Yol haritası: Go, .NET, Swift ve Android. Hepsi bu repoya eklenir —
-> `go.mod`, `Package.swift`, `.csproj` ve `build.gradle.kts` aynı köke gelir.
+> Yol haritası: Go, .NET, Swift, Kotlin. Hepsi bu repoya gelir — ayrı SDK
+> reposu ya da dil başına sürüm yoktur.
 
-## Hızlı başlangıç
+## Node.js / TypeScript
 
-**Node.js**
+```ts
+import { signalbird } from '@signalbird/sdk'
 
-```typescript
-import { Signalbird } from '@signalbird/sdk'
+// SIGNALBIRD_KEY ortam değişkeninden okunur
+await signalbird().critical('critical', 'ödeme servisi yanıt vermiyor', {
+  service: 'iyzico',
+  attempt: 3,
+})
 
-const sb = new Signalbird({ apiKey: process.env.SIGNALBIRD_API_KEY! })
-
-await sb.error({ title: 'Veritabanı Hatası', message: 'Bağlantı koptu' })
+await signalbird().info('info', 'ahmet@x.com yeni hesap oluşturdu')
 ```
 
-**PHP / Laravel**
+Kendi istemcinizi kurmak isterseniz:
+
+```ts
+import { SignalbirdClient } from '@signalbird/sdk'
+
+const sb = new SignalbirdClient({
+  apiKey: process.env.SIGNALBIRD_KEY!,
+  source: 'api-01',        // hangi sunucudan geldiği
+  throwOnError: false,     // üretimde kapalı kalmalı
+})
+
+await sb.log({ channel: 'deploy', message: 'v2.4.0 yayında', level: 'info' })
+```
+
+**Yakalanmamış hatalar:**
+
+```ts
+signalbird().captureUncaught('critical')
+```
+
+**Toplu gönderim** (kısmi başarı normaldir, satır satır sonuç döner):
+
+```ts
+const result = await signalbird().batch([
+  { channel: 'info', message: 'iş 1 bitti' },
+  { channel: 'info', message: 'iş 2 bitti' },
+])
+```
+
+### Next.js
+
+Sunucu tarafında (route handler, server action, `app/api/**`) doğrudan
+`@signalbird/sdk` kullanılır. **İstemci bileşenlerinde kullanmayın** — anahtar
+paketle birlikte tarayıcıya iner.
+
+```ts
+// app/api/webhook/route.ts
+import { signalbird } from '@signalbird/sdk'
+
+export async function POST(req: Request) {
+  try {
+    // …
+  } catch (error) {
+    await signalbird().error('webhook', (error as Error).message)
+    throw error
+  }
+}
+```
+
+## Tarayıcı (React, Vue, Angular, düz JS)
+
+Çatıya özel sarmalayıcı yoktur; gereken tek şey bir fonksiyon çağrısıdır.
+
+```ts
+// uygulama açılışında bir kez
+import { initSignalbird } from '@signalbird/sdk/browser'
+
+const sb = initSignalbird({
+  publicKey: 'sbr_pub_…',
+  source: 'web',
+})
+
+sb.captureErrors('browser')   // window.onerror + unhandledrejection
+sb.error('browser', 'sepet güncellenemedi', { cartId })
+```
+
+Kayıtlar tek tek değil, **toplu** gider (varsayılan 3 saniyede bir) ve sekme
+kapanırken `sendBeacon` ile boşaltılır.
+
+**React** — `app/providers.tsx` ya da `main.tsx`:
+
+```tsx
+useEffect(() => {
+  const sb = initSignalbird({ publicKey: process.env.NEXT_PUBLIC_SIGNALBIRD_KEY! })
+  return sb.captureErrors()
+}, [])
+```
+
+**Vue** — `main.ts`:
+
+```ts
+const sb = initSignalbird({ publicKey: import.meta.env.VITE_SIGNALBIRD_KEY })
+app.config.errorHandler = (err) => sb.error('browser', String(err))
+```
+
+**Angular** — `ErrorHandler` sağlayıcısı:
+
+```ts
+@Injectable()
+export class SignalbirdErrorHandler implements ErrorHandler {
+  private sb = initSignalbird({ publicKey: environment.signalbirdKey })
+  handleError(error: unknown) { this.sb.error('browser', String(error)) }
+}
+```
+
+Panelde bu projenin **izinli kökenlerini** ve **izinli kanallarını** açmayı
+unutmayın; ikisi de boşken tarayıcı anahtarı hiçbir şey yapamaz. Kritik
+kanalları tarayıcıya açmayın: istemci kodu herkesin elindedir.
+
+## PHP / Laravel
 
 ```php
 use Signalbird\Sdk\Facades\Signalbird;
 
-Signalbird::error('Veritabanı Hatası', 'Bağlantı koptu');
+Signalbird::critical('critical', 'ödeme servisi yanıt vermiyor', [
+    'service' => 'iyzico',
+]);
+
+Signalbird::info('info', 'ahmet@x.com yeni hesap oluşturdu');
 ```
 
-API anahtarını Signalbird panelinde **SDK Anahtarları** bölümünden üretirsiniz
-(`sb_` ile başlar).
-
-## Ortak sözleşme
-
-Her dil altı kısayol metodu ve bir genel metot sunar:
-
-| Metot | Seviye | Not |
-|---|---|---|
-| `info` | `info` | Bilgilendirme |
-| `warn` | `warn` | Uyarı |
-| `error` | `error` | Hata — push önceliği yükselir |
-| `critical` | `critical` | Kritik alarm — sesli + yüksek öncelikli push |
-| `confirm` | `confirm` | Onay / başarı |
-| `debug` | `debug` | Geliştirme kaydı |
-| `send` | serbest | Seviye parametre olarak verilir |
-
-Davranış kuralları (uç nokta, hata biçimi, zaman aşımı, ortam URL'leri):
-[`docs/CONTRACT.md`](docs/CONTRACT.md). Yeni dil eklerken uyulacak tek belge odur.
-
-## Repo yapısı
-
-Manifest dosyaları **kökte** durur — her paket yöneticisi kendi manifestini
-kökte arar. Kaynaklar dile göre ayrılır; her manifest kendi dizinini gösterir.
+`.env`:
 
 ```
-signalbird.sdk/
-├── package.json          # npm       → @signalbird/sdk      (giriş: src/node)
-├── composer.json         # Packagist → signalbird/sdk       (psr-4: src/php)
-├── VERSION               # kilitli tek sürüm
-├── src/
-│   ├── node/             # TypeScript kaynak
-│   └── php/              # PHP kaynak
-├── config/               # Laravel config (vendor:publish)
-├── dist/                 # npm build çıktısı (tsup)
-├── docs/CONTRACT.md
-└── scripts/sync-version.mjs
+SIGNALBIRD_KEY=sbr_live_…
+SIGNALBIRD_SOURCE=api-01
 ```
 
-Her manifest kendi paketine girmeyecek dosyaları dışlar: `package.json` →
-`files: ["dist","README.md"]`, `composer.json` → `archive.exclude`. Yani npm
-tarball'ında PHP kaynağı, Packagist zip'inde TypeScript kaynağı bulunmaz.
+**Laravel'in kendi loglarını Telsiz'e bağlamak** — `config/logging.php`:
 
-## Sürümleme
-
-Sürüm **kilitlidir**: tek bir dilde değişiklik olsa bile paket bir bütün olarak
-yükselir. `Signalbird SDK v1.2.0` her dilde aynı şeyi ifade eder.
-
-```bash
-# Kök VERSION dosyasını düzenle, sonra:
-node scripts/sync-version.mjs   # dosyaya sürüm yazan manifestleri günceller
-git commit -am "v0.2.0"
-git tag v0.2.0 && git push --tags
+```php
+'signalbird' => [
+    'driver'  => 'monolog',
+    'handler' => \Signalbird\Sdk\SignalbirdLogHandler::class,
+    'with'    => ['channel' => 'laravel'],
+    'level'   => 'error',
+],
 ```
 
-npm sürümü `package.json`'dan okur; Packagist **git etiketinden** okur (bu yüzden
-`composer.json`'da `version` alanı yoktur — Packagist bunu zaten önermez). İkisinin
-ayrışmasını CI `--check-tag` ile yakalar.
+Sonra `LOG_STACK=single,signalbird`. Mevcut `Log::error()` satırlarınız olduğu
+gibi çalışır; tek satır kod yazmadan Telsiz'e düşerler.
 
-## Yayınlama
+Laravel dışı PHP:
 
-```bash
-npm run build && npm publish --access public   # npm
-git push --tags                                 # Packagist etiketi kendi alır
+```php
+use Signalbird\Sdk\Signalbird;
+
+Signalbird::configure('sbr_live_…');
+Signalbird::error('api', 'veritabanı bağlantısı koptu');
 ```
 
-Packagist bir kereliğine `Pariette-Inc/signalbird.sdk` adresine kaydedilir;
-sonrasında her `v*` etiketini kendisi toplar.
+## Davranış kuralları
+
+- **Sessiz hata varsayılandır.** Telsiz erişilemezse çağrı `ok: false` döner ve
+  uygulamanız çalışmaya devam eder. Log göndermek, ödeme akışını çökertmek için
+  geçerli bir sebep değildir. Geliştirme sırasında `throwOnError: true`.
+- **Tanımsız kanal düşürülmez.** İlk `log('odeme-hatasi', …)` çağrısında kanal
+  kendiliğinden açılır ve panelde "otomatik açıldı" işaretiyle görünür. Yeni
+  kanal **sessizdir** — kuralı ekip koyar.
+- **Seviye kanalın varsayılanını ezer.** `level` göndermezseniz kanalın kendi
+  seviyesi geçerlidir.
+- **Kritik seviye sessiz saatleri deler.** Gece üçte ölen servis sabahı bekleyemez.
+- **Tekrar bastırma kaydı değil bildirimi susturur.** Aynı mesaj kanalın
+  `dedupe` süresi içinde tekrar gelirse ikinci bildirim gitmez ama kayıt tutulur.
+
+## Hata kodları
+
+| Kod | Anlamı |
+|---|---|
+| `INVALID_KEY` | Anahtar yok, yanlış ya da proje pasif |
+| `SECRET_KEY_IN_BROWSER` | Gizli anahtar tarayıcıdan kullanıldı |
+| `ORIGIN_NOT_ALLOWED` | Tarayıcı anahtarı bu alan adına açık değil |
+| `CHANNEL_NOT_ALLOWED` | Tarayıcı anahtarı bu kanala yazamaz |
+| `MODULE_DISABLED` | Paketinizde Telsiz (`logger`) modülü yok |
+| `LIMIT_REACHED` | Aylık kayıt limitiniz doldu |
+| `CHANNEL_DISABLED` | Kanal kapalı — kayıt yazılmaz, kota da harcanmaz |

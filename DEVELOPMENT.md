@@ -1,68 +1,35 @@
-# Geliştirme Kaydı
+# Geliştirme Kaydı — signalbird.sdk
 
-> Her metot/davranış değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
-> Format: development-log skill'i (Claude) tarafından otomatik bakılır.
+> Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
-## 2026-08-10 — Tek paket, çok dil (ilk kayıt)
+## 2026-08-19 — Telsiz (Radio) için sıfırdan yazıldı (v1.0.0)
 
-`sistemtakip.sdk` (Node) ve `sistemtakip.php.sdk` (PHP) **tek pakette** birleşti.
-Bu repo aynı anda bir npm paketi ve bir Composer paketidir; ileride Go modülü,
-Swift paketi, NuGet ve Maven artefaktı da aynı kökten çıkacak. Ayna repo yok.
+Eski paket `POST /api/sdk/log/{key}` ucuna yazıyordu; o uç gelen kaydı **hiçbir
+yere yazmıyor**, yalnız anahtarı üreten kişiye bir bildirim atıyordu. Kanal,
+kalıcı kayıt, ekip yönlendirmesi ve arama yoktu. Uç kaldırıldı, paket yeni
+Telsiz modeline göre baştan yazıldı.
 
-### Servis yüzeyi
+| Giriş noktası | Kimlik | Endpoint |
+|---|---|---|
+| `@signalbird/sdk` (Node 18+) | `Authorization: Bearer sbr_live_…` | `POST /api/v1/radio/log`, `POST /api/v1/radio/log/batch` |
+| `@signalbird/sdk/browser` | `X-Signalbird-Key: sbr_pub_…` (+ `Origin`) | aynı uçlar; sekme kapanışında `?key=` sorgu parametresiyle `sendBeacon` |
+| `signalbird/sdk` (PHP/Laravel) | `Authorization: Bearer sbr_live_…` | aynı uçlar |
 
-Tüm diller tek bir uç nokta tüketir:
+**Kararlar ve gerekçeleri**
 
-| SDK metodu | API Endpoint | Gövde | Not |
-|---|---|---|---|
-| `info(title, message)` | `POST /api/sdk/log/{apiKey}` | `{title, message, level:"info"}` | — |
-| `warn(title, message)` | `POST /api/sdk/log/{apiKey}` | `level:"warn"` | — |
-| `error(title, message)` | `POST /api/sdk/log/{apiKey}` | `level:"error"` | push önceliği yükselir |
-| `critical(title, message)` | `POST /api/sdk/log/{apiKey}` | `level:"critical"` | sesli + yüksek öncelikli push |
-| `confirm(title, message)` | `POST /api/sdk/log/{apiKey}` | `level:"confirm"` | — |
-| `debug(title, message)` | `POST /api/sdk/log/{apiKey}` | `level:"debug"` | — |
-| `send(title, message, level)` | `POST /api/sdk/log/{apiKey}` | seviye çağırandan | sunucu geçersiz seviyeyi 422 ile reddeder |
+- **Bağımlılık sıfırlandı.** Node tarafında `axios` çıkarıldı (Node 18+ `fetch`),
+  PHP tarafında `guzzle` çıkarıldı (`ext-curl`). Bir log kütüphanesinin
+  müşterinin projesine HTTP istemcisi sürümü dayatması, sürüm çakışmalarının en
+  sık sebebidir.
+- **Tarayıcı ayrı giriş noktası.** Teknik değil güvenlik gerekçesi: gizli anahtar
+  istemciye inemez, sunucu `Origin` taşıyan gizli anahtarlı isteği reddeder.
+- **`sendBeacon` için sorgu parametresi.** Beacon özel başlık taşıyamaz; sayfa
+  kapanırken kuyruğu boşaltmanın başka yolu yok. Sunucu sorgu dizesinde YALNIZ
+  açık anahtar kabul eder (`SECRET_KEY_IN_QUERY` aksi hâlde) — gizli anahtar
+  erişim günlüklerine düşmesin.
+- **Sessiz hata varsayılan.** `throwOnError: false`. Telsiz erişilemezse
+  müşterinin ödeme akışı çökmemeli.
+- **Monolog handler.** `Log::channel('signalbird')` ile mevcut `Log::error()`
+  satırları tek satır kod yazmadan Telsiz'e düşer.
 
-Ucun sahibi `signalbird.api` → `ApiKeyController@log`. Auth yoktur; yetkiyi yol
-parametresindeki anahtar taşır (`sb_` öneki).
-
-### Paketleme
-
-Manifestler **repo kökünde**; her paket yöneticisi manifestini kökte arar.
-Kaynaklar `src/<dil>/` altında ayrılır.
-
-| Dil | Kurulum | Manifest | Kaynak | Sürüm kaynağı |
-|---|---|---|---|---|
-| Node.js / TypeScript | `npm install @signalbird/sdk` | `package.json` | `src/node/` | `package.json` |
-| PHP / Laravel | `composer require signalbird/sdk` | `composer.json` | `src/php/` | git etiketi `vX.Y.Z` |
-
-Her manifest diğer dilleri kendi paketinden dışlar. Doğrulandı:
-npm tarball'ı 8 dosya (`dist/` + `README.md` + `package.json`, PHP kaynağı yok),
-Packagist arşivi 11 dosya (`src/php/` + `config/` + doküman, Node kaynağı yok).
-
-### Bu turda yapılanlar
-
-- **Yapı düzleştirildi.** Önceki turda kurulan `packages/*` + ayna repo düzeni
-  geri alındı: manifestler köke, kaynaklar `src/<dil>/` altına taşındı.
-  `split-php.yml` silindi — Packagist artık bu repoyu doğrudan izleyebiliyor.
-- `src/node`: sınıflar `Signalbird`, `SignalbirdClient`, `SignalbirdError`,
-  `SignalbirdConfig`. Prod URL `https://live.signalbird.io/api`.
-- `src/php`: namespace `Signalbird\Sdk`, Facade `Signalbird`,
-  `config/signalbird.php`, env `SIGNALBIRD_API_KEY` / `SIGNALBIRD_MODE` /
-  `SIGNALBIRD_TIMEOUT`, publish tag `signalbird-config`.
-  `composer.json`'dan `version` alanı kaldırıldı — Packagist sürümü etiketten okur.
-- `docs/CONTRACT.md`: diller arası davranış sözleşmesi. Yeni dil eklemenin tek
-  referansı; § 7 her registry'nin manifestini nereye koyacağını tablo hâlinde verir.
-- `scripts/sync-version.mjs`: kilitli tek sürüm. Manifestinde `version` alanı
-  olanları günceller; etiketten okuyanlar için `--check-tag` doğrulaması.
-- `scripts/check-parity.mjs`: her dilin aynı yedi metodu sunduğunu denetler.
-  Bir dile metot eklenip diğerine eklenmezse CI kırılır.
-- `.github/workflows/ci.yml`: node build+typecheck+tarball sızıntı kontrolü,
-  php lint + `composer validate --strict` + autoload çözümleme, sürüm kilidi,
-  metot paritesi.
-
-### Bekleyen kurulum
-
-1. npm'de `@signalbird` scope'u açılmalı.
-2. Packagist'te `signalbird/sdk` paketi **bu repo adresiyle** kaydedilmeli
-   (`https://github.com/Pariette-Inc/signalbird.sdk`) — ayna repo gerekmiyor.
+**Yapılmayanlar:** Go, .NET, Swift, Kotlin paketleri. Aynı repoya gelecek.

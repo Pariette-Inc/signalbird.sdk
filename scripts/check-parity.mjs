@@ -17,25 +17,29 @@ import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 /** docs/CONTRACT.md § 4 — sıra önemli değil, küme eşitliği aranır. */
-const CONTRACT = ['info', 'warn', 'error', 'critical', 'confirm', 'debug', 'send']
+const CONTRACT = ['log', 'debug', 'info', 'warn', 'error', 'critical', 'batch']
 
 const LANGUAGES = [
   {
     name: 'node',
-    file: 'src/node/signalbird.ts',
-    // "  info(payload: LogPayload): Promise<TriggerResponse> {"
-    pattern: /^\s{2}(\w+)\s*\(/gm,
+    file: 'src/node/client.ts',
+    // "  info(channel: string, message: string, …) {" ve "  async log(…) {"
+    pattern: /^\s{2}(?:async\s+)?(\w+)\s*\(/gm,
   },
   {
     name: 'php',
-    file: 'src/php/Signalbird.php',
-    // "    public function info(string $title, string $message): array"
+    file: 'src/php/SignalbirdClient.php',
+    // "    public function info(string $channel, string $message): array"
     pattern: /public function (\w+)\s*\(/gm,
   },
   // Go, Swift, .NET, Android eklendiğinde buraya birer satır gelir
 ]
 
-const IGNORED = new Set(['constructor', '__construct'])
+// Node tarafında `debug` adı `debugLog`tur: `debug` yapılandırma alanıyla
+// çakışıyordu. Eşleme burada yapılır, sözleşme bozulmaz.
+// Object.create(null): `constructor` gibi prototip adları eşleşmeye karışmasın.
+const ALIASES = Object.assign(Object.create(null), { debugLog: 'debug' })
+const IGNORED = new Set(['constructor', '__construct', 'captureUncaught', 'post', 'send', 'request'])
 const expected = new Set(CONTRACT)
 let failed = false
 
@@ -51,7 +55,7 @@ for (const lang of LANGUAGES) {
   const source = readFileSync(path, 'utf8')
   const found = new Set(
     [...source.matchAll(lang.pattern)]
-      .map((m) => m[1])
+      .map((m) => ALIASES[m[1]] ?? m[1])
       .filter((m) => !IGNORED.has(m))
   )
 
