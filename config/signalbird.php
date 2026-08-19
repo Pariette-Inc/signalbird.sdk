@@ -22,4 +22,16 @@ return [
     */
     'throw_on_error' => env('SIGNALBIRD_THROW', false),
 
+    /*
+    | Gönderim (Messaging) takım API anahtarı (`sb_…`). E-posta/SMS/push,
+    | kişi ve kampanya uçları bu anahtarla çalışır; Telsiz anahtarından ayrıdır.
+    */
+    'messaging_key' => env('SIGNALBIRD_MESSAGING_KEY', ''),
+
+    /* Gönderim API kökü. Boşsa `url` kullanılır. */
+    'messaging_url' => env('SIGNALBIRD_MESSAGING_URL'),
+
+    /* Gönderim istek zaman aşımı (sn). Toplu kişi yükleme uzun sürebilir. */
+    'messaging_timeout' => env('SIGNALBIRD_MESSAGING_TIMEOUT', 15),
+
 ];

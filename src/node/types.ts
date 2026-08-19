@@ -70,7 +70,9 @@ export class SignalbirdError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    readonly code?: string
+    readonly code?: string,
+    /** Sunucunun ham yanıt gövdesi (varsa) — gönderim istemcisi doldurur. */
+    readonly body?: unknown
   ) {
     super(message);
     this.name = 'SignalbirdError';

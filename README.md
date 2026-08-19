@@ -1,6 +1,16 @@
 # Signalbird SDK
 
-**Telsiz** istemcisi. Tek işi vardır: projenizden bir **kanala** mesaj yazmak.
+Tek paket, üç yüzey:
+
+| Yüzey | Ne yapar | Anahtar | Nerede |
+|---|---|---|---|
+| **Telsiz** (Radio) | projenizden bir **kanala** log/olay yazar | `sbr_live_…` / `sbr_pub_…` | sunucu / tarayıcı |
+| **Gönderim** (Messaging) | e-posta, SMS, push gönderir; kişi, liste, kampanya yönetir; mesaj durumu okur; webhook imzası doğrular | `sb_…` | yalnız sunucu |
+| **Widget** (`signalbird.js`) | müşterinin sitesine canlı sohbet balonu + push cihaz kaydı | `sbw_pub_…` | tarayıcı, tek `<script>` |
+
+## Telsiz
+
+Telsiz'in tek işi vardır: projenizden bir **kanala** mesaj yazmak.
 
 Bildirimin kime gideceği, hangi kanaldan (push/e-posta), sessiz saatlerde ne
 olacağı ve aynı mesajın kaç kez uyarı üreteceği **sunucuda, kanal ayarlarında**
@@ -33,6 +43,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Node.js, Next.js (sunucu), Express, NestJS, Fastify | `npm install @signalbird/sdk` |
 | React, Vue, Angular, Svelte, düz JS (tarayıcı) | `npm install @signalbird/sdk` → `@signalbird/sdk/browser` |
 | PHP, Laravel | `composer require signalbird/sdk` |
+| Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>` |
 
 > Yol haritası: Go, .NET, Swift, Kotlin. Hepsi bu repoya gelir — ayrı SDK
 > reposu ya da dil başına sürüm yoktur.
@@ -206,6 +217,114 @@ Signalbird::error('api', 'veritabanı bağlantısı koptu');
 - **Tekrar bastırma kaydı değil bildirimi susturur.** Aynı mesaj kanalın
   `dedupe` süresi içinde tekrar gelirse ikinci bildirim gitmez ama kayıt tutulur.
 
+## Gönderim (Messaging)
+
+Takım API anahtarı (`sb_…`, panelde **Konsol → API anahtarları**, scope'lu)
+ile çalışır. Telsiz anahtarı burada geçmez — istemci kurulurken
+`WRONG_KEY_TYPE` ile reddeder. Yalnız sunucuda kullanılır.
+
+Node:
+
+```ts
+import { SignalbirdMessaging } from '@signalbird/sdk'
+
+const sb = new SignalbirdMessaging({ apiKey: process.env.SIGNALBIRD_MESSAGING_KEY! })
+
+const r = await sb.sendEmail({
+  to: 'ali@example.com',
+  class: 'transactional',       // zorunlu: transactional | commercial
+  subject: 'Siparişiniz yola çıktı',
+  body: '<p>Merhaba {{first_name}}…</p>',
+})
+if (!r.ok) console.error(r.code, r.message)   // ok:false → code + message
+
+await sb.sendSms({ to: '+905551112233', class: 'transactional', body: 'Kodunuz: 4821' })
+await sb.sendPush({ to: 'external:user-1042', class: 'transactional', subject: 'Yeni mesaj', body: '…' })
+
+// Kişi + liste + kampanya
+const list = await sb.createContactList({ name: 'agustos-kampanya' })
+await sb.bulkContacts({                       // 1000'lik parçalara bölünür
+  list_id: list.data.id,
+  consent_source: 'offline',
+  contacts: [{ email: 'a@x.com', first_name: 'Ayşe', attributes: { external_ref: 'rcp_1' } }],
+})
+const c = await sb.createCampaign({
+  name: 'Ağustos', channel: 'email', list_id: list.data.id,
+  subject: 'Merhaba {{first_name}}', body: '…', external_ref: 'cc_42',
+})
+for await (const m of sb.iterateCampaignMessages(c.data.batch.id)) {
+  console.log(m.external_ref, m.status)
+}
+```
+
+PHP / Laravel:
+
+```php
+use Signalbird\Sdk\Facades\Signalbird;
+
+$r = Signalbird::messaging()->sendEmail([
+    'to' => 'ali@example.com', 'class' => 'transactional',
+    'subject' => 'Siparişiniz yola çıktı', 'body' => '<p>…</p>',
+]);
+if (! $r['ok']) { Log::warning($r['code'], $r); }
+```
+
+`.env`: `SIGNALBIRD_MESSAGING_KEY=sb_…` (isteğe bağlı `SIGNALBIRD_MESSAGING_URL`,
+`SIGNALBIRD_MESSAGING_TIMEOUT`). Laravel dışı PHP:
+`Signalbird::configureMessaging('sb_…')` ya da `new MessagingClient('sb_…')`.
+
+Metot kümesi iki dilde aynıdır: `sendEmail` `sendSms` `previewSms` `sendPush` ·
+`listContacts` `createContact` `updateContact` `deleteContact` `bulkContacts` ·
+`listContactLists` `createContactList` `deleteContactList` · `listCampaigns`
+`createCampaign` `getCampaign` `cancelCampaign` `listCampaignMessages`
+`iterateCampaignMessages` · `listMessages` `getMessage`. Hepsi
+`{ok, status, data?, code?, message?}` döner; `throwOnError: true` ile istisna
+(`SignalbirdError` / `SignalbirdException`, `code` + `status` + `body` taşır).
+
+**Webhook imzası** (`message.*`, `campaign.*` olayları):
+
+```ts
+import { verifyWebhook } from '@signalbird/sdk'
+// Express: app.post('/hooks/signalbird', express.raw({ type: '*/*' }), (req, res) => {
+if (!verifyWebhook(req.body, req.header('X-Signalbird-Signature'), process.env.SIGNALBIRD_WEBHOOK_SECRET!)) {
+  return res.status(401).end()
+}
+```
+
+```php
+use Signalbird\Sdk\Messaging\Webhook;
+
+abort_unless(Webhook::verify($request->getContent(), $request->header('X-Signalbird-Signature'), config('services.signalbird.webhook_secret')), 401);
+```
+
+Doğrulama **ham gövde** üzerinde yapılır; JSON'u ayrıştırıp yeniden
+serileştirmek imzayı bozar.
+
+## Widget (canlı sohbet)
+
+Panelde **Gelen Kutusu → Ayarlar → Uygulamalar**'dan bir uygulama açın; verilen
+`sbw_pub_…` anahtarını sitenize gömün:
+
+```html
+<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>
+```
+
+Bu kadar. Sohbet modülü açıksa balon görünür; renk, konum, karşılama, ön-form,
+çalışma saatleri panelden yönetilir. Programatik kullanım:
+
+```js
+Signalbird.identify({ external_id: 'user-1042', email: 'ali@example.com', name: 'Ali Veli' })
+Signalbird.chat.open()                       // close() · toggle() · isOpen()
+Signalbird.chat.on('unread', (n) => badge.textContent = n)
+Signalbird.push.register({ token, platform: 'web', provider: 'fcm' })
+Signalbird.destroy()
+```
+
+`data-app-key` yerine `Signalbird.init({ appKey, baseUrl?, locale? })` da
+çağrılabilir. Widget ev sahibi sayfaya asla hata fırlatmaz; Shadow DOM içinde
+çalışır, sayfanızın CSS'iyle çakışmaz; < 20 KB gzip. Ayrıntı:
+`docs/CONTRACT.md § 9` ve https://signalbird.io/sdk/widget.
+
 ## Hata kodları
 
 | Kod | Anlamı |
@@ -217,3 +336,9 @@ Signalbird::error('api', 'veritabanı bağlantısı koptu');
 | `MODULE_DISABLED` | Paketinizde Telsiz (`logger`) modülü yok |
 | `LIMIT_REACHED` | Aylık kayıt limitiniz doldu |
 | `CHANNEL_DISABLED` | Kanal kapalı — kayıt yazılmaz, kota da harcanmaz |
+
+Gönderim istemcisine özgü: `WRONG_KEY_TYPE` (kurulumda), `API_KEY_INVALID`,
+`API_KEY_SCOPE`, `VALIDATION_ERROR` (422), `NO_CONSENT`, `SUPPRESSED`,
+`NO_SENDING_DOMAIN`, `LIST_NOT_FOUND`, `NETWORK_ERROR`, `TIMEOUT`, `HTTP_<durum>`.
+Widget: `VISITOR_INVALID` (yerel kimlik silinir, yeni oturum), `CHAT_UNAVAILABLE`
+(kota — "sohbet kullanılamıyor" bandı).

@@ -137,7 +137,7 @@ class SignalbirdClient
 
         if ($body === false) {
             if ($this->throwOnError) {
-                throw new SignalbirdException("Signalbird: bağlanılamadı ({$error})");
+                throw new SignalbirdException("Signalbird: bağlanılamadı ({$error})", 'NETWORK_ERROR', 0);
             }
 
             return ['ok' => false, 'code' => 'NETWORK_ERROR'];
@@ -149,7 +149,7 @@ class SignalbirdClient
             $code = $decoded['code'] ?? 'UNKNOWN';
 
             if ($this->throwOnError) {
-                throw new SignalbirdException("Signalbird: {$code} (HTTP {$status})");
+                throw new SignalbirdException("Signalbird: {$code} (HTTP {$status})", (string) $code, $status, $decoded);
             }
 
             return ['ok' => false, 'code' => $code];

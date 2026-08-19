@@ -4,8 +4,42 @@
  * Next.js sunucu bileşenleri, API route'ları, Express/Fastify/NestJS ve düz
  * Node betikleri buradan alır. TARAYICI için `@signalbird/sdk/browser`
  * kullanılır — gizli anahtar istemciye inmez.
+ *
+ * İki istemci vardır ve anahtarları farklıdır:
+ *  - `SignalbirdClient`    → Telsiz (log), `sbr_live_…`
+ *  - `SignalbirdMessaging` → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
  */
 export { SignalbirdClient } from './client';
+export { SignalbirdMessaging } from './messaging';
+export { verifyWebhook } from './webhook';
+export type {
+  MessagingConfig,
+  SbResult,
+  MessageClass,
+  Channel,
+  SendEmailInput,
+  SendSmsInput,
+  SendPushInput,
+  SendResult,
+  SmsPreview,
+  ContactInput,
+  Contact,
+  ListContactsQuery,
+  BulkContactsInput,
+  BulkContactsResult,
+  ContactList,
+  CreateContactListInput,
+  CreateCampaignInput,
+  Batch,
+  CampaignCreateResult,
+  CampaignDetail,
+  ListCampaignsQuery,
+  Message,
+  ListMessagesQuery,
+  ListCampaignMessagesQuery,
+  Paginated,
+  MessagingErrorCode,
+} from './messaging-types';
 export {
   SignalbirdError,
   DEFAULT_BASE_URL,

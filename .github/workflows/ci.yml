@@ -44,7 +44,9 @@ jobs:
       - run: composer validate --strict
       - run: composer install --no-interaction --no-progress
       - name: Sözdizimi kontrolü
-        run: find src/php config -name '*.php' -print0 | xargs -0 -n1 php -l
+        run: find src/php config tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: PHPUnit
+        run: vendor/bin/phpunit
       - name: Sınıflar autoload'dan çözülüyor mu
         run: |
           php -r '
@@ -53,6 +55,8 @@ jobs:
               "Signalbird\\Sdk\\Signalbird",
               "Signalbird\\Sdk\\SignalbirdClient",
               "Signalbird\\Sdk\\SignalbirdException",
+              "Signalbird\\Sdk\\Messaging\\MessagingClient",
+              "Signalbird\\Sdk\\Messaging\\Webhook",
             ];
             foreach ($classes as $c) {
               if (!class_exists($c)) { fwrite(STDERR, "Çözülemedi: $c\n"); exit(1); }

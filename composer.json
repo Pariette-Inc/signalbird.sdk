@@ -1,6 +1,6 @@
 {
   "name": "signalbird/sdk",
-  "description": "Signalbird SDK — Telsiz (Radio) istemcisi (PHP / Laravel)",
+  "description": "Signalbird SDK — Telsiz (Radio) ve Gönderim (Messaging) istemcisi (PHP / Laravel)",
   "type": "library",
   "keywords": [
     "signalbird",
@@ -10,7 +10,12 @@
     "logging",
     "notification",
     "alert",
-    "laravel"
+    "laravel",
+    "messaging",
+    "email",
+    "sms",
+    "push",
+    "webhook"
   ],
   "license": "MIT",
   "authors": [
@@ -67,7 +72,12 @@
       "/.github",
       "/DEVLOG.md",
       "/DEVELOPMENT.md",
-      "/CLAUDE.md"
+      "/CLAUDE.md",
+      "/src/browser",
+      "/src/widget",
+      "/tests",
+      "/phpunit.xml.dist",
+      "/.phpunit.result.cache"
     ]
   },
   "suggest": {
