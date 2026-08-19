@@ -9,16 +9,22 @@ npm paketi, bir Composer paketi ve (eklendikçe) bir Go modülü, Swift paketi,
 NuGet ve Maven artefaktıdır. Hepsi aynı etiketten çıkar, aynı sürümü ve aynı
 davranışı taşır. Ayrı SDK reposu, ayna repo veya alt modül YOKTUR.
 
-Paket **üç yüzey** taşır; her birinin anahtarı ve kapısı farklıdır:
+Paket **dört yüzey** taşır; her birinin anahtarı ve kapısı farklıdır:
 
 | Yüzey | Anahtar | Uçlar | Kaynak |
 |---|---|---|---|
-| **Telsiz** (Radio) — log/olay | `sbr_live_…` (sunucu, `Authorization: Bearer`) / `sbr_pub_…` (tarayıcı, `X-Signalbird-Key`) | `POST /v1/radio/log`, `POST /v1/radio/log/batch` | `src/node/client.ts`, `src/browser/`, `src/php/SignalbirdClient.php` |
-| **Gönderim** (Messaging) — e-posta/SMS/push, kişi, liste, kampanya, mesaj, webhook imzası | `sb_…` takım API anahtarı (yalnız sunucu) | `/v1/email/send`, `/v1/sms/*`, `/v1/push/send`, `/v1/contacts*`, `/v1/contact-lists*`, `/v1/campaigns*`, `/v1/messages*` | `src/node/messaging.ts`, `src/node/webhook.ts`, `src/php/Messaging/` |
-| **Widget** — canlı sohbet + push cihaz kaydı | `sbw_pub_…` uygulama anahtarı (`X-Signalbird-App-Key`) + ziyaretçi sırrı (`X-Signalbird-Visitor`) | `/v1/sdk/bootstrap`, `/v1/sdk/chat/*`, `/v1/sdk/devices`, `/v1/sdk/identify` | `src/widget/` → `dist/signalbird.js` |
+| **Telsiz** (Radio) — log/olay | `sbr_live_…` (sunucu, `Authorization: Bearer`) / `sbr_pub_…` (tarayıcı, `X-Signalbird-Key`) | `POST /v1/radio/log`, `POST /v1/radio/log/batch` | `src/{node,browser,python,go,dotnet,swift,kotlin}` |
+| **Gönderim** (Messaging) — e-posta/SMS/push, kişi, liste, kampanya, mesaj, webhook imzası | `sb_…` takım API anahtarı (yalnız sunucu) | `/v1/email/send`, `/v1/sms/*`, `/v1/push/send`, `/v1/contacts*`, `/v1/contact-lists*`, `/v1/campaigns*`, `/v1/messages*` | `src/{node,php,python,go,dotnet}` |
+| **Yönetim** (Management) — Telsiz projesi/kanalı, olay akışı, sohbet gelen kutusu, uygulama ve cihaz | `sb_…` + `radio\|chat\|apps` scope'ları (yalnız sunucu) | `/v1/radio/{summary,events,projects…}`, `/v1/chat/*`, `/v1/apps*` | `src/node/management.ts`, `src/php/Management/`, `src/{python,go,dotnet}` |
+| **Uygulama** (App) — son kullanıcıya canlı sohbet + push cihaz kaydı | `sbw_pub_…` uygulama anahtarı (`X-Signalbird-App-Key`) + ziyaretçi sırrı (`X-Signalbird-Visitor`) | `/v1/sdk/bootstrap`, `/v1/sdk/chat/*`, `/v1/sdk/devices`, `/v1/sdk/identify` | `src/app/`, `src/{react,vue,angular,react-native}`, `src/swift`, `src/kotlin`, `src/widget/` → `dist/signalbird.js` |
 
-Ana kaynak sözleşme: `docs/CONTRACT.md` (§1–7 Telsiz, §8 Gönderim, §9 Widget)
-ve platform sözleşmesi `../signalbird.api/docs/PLATFORM_EXPANSION_2026-08-19.md` §3.
+**Yönetim ADMIN yüzeyi DEĞİLDİR.** Anahtar tek bir takıma bağlıdır ve yalnız o
+takımın kayıtlarına dokunur. Kullanıcı yönetimi, faturalama, abonelik ve plan
+işlemleri SDK'ya GİRMEZ.
+
+Ana kaynak sözleşme: `docs/CONTRACT.md` (§0 yüzey tablosu, §1–7 Telsiz,
+§8 Gönderim, §9 Widget, §10 Yönetim, §11 Uygulama) ve platform sözleşmesi
+`../signalbird.api/docs/PLATFORM_EXPANSION_2026-08-19.md` §3.
 
 ## Repo yapısı
 
@@ -27,22 +33,34 @@ kökte arar. Kaynaklar dile göre ayrılır, her manifest kendi dizinini göster
 
 ```
 signalbird.sdk/
-├── package.json            # npm       → @signalbird/sdk  (giriş: src/node, src/browser)
-├── composer.json           # Packagist → signalbird/sdk   (psr-4: src/php)
+├── package.json            # npm       → @signalbird/sdk       (src/node, browser, app, react, vue, angular, react-native)
+├── composer.json           # Packagist → signalbird/sdk        (psr-4: src/php)
+├── pyproject.toml          # PyPI      → signalbird            (src/python)
+├── go.mod                  # Go        → …/signalbird.sdk      (src/go/signalbird)
+├── Package.swift           # SPM       → Signalbird            (src/swift/Sources)
+├── build.gradle.kts        # Maven     → io.signalbird:signalbird-sdk (src/kotlin)
+├── Signalbird.Sdk.csproj   # NuGet     → Signalbird.Sdk        (src/dotnet)
 ├── VERSION                 # kilitli tek sürüm (tek doğruluk kaynağı)
 ├── docs/CONTRACT.md        # diller arası davranış sözleşmesi ← ÖNCE BUNU OKU
 ├── scripts/
-│   ├── sync-version.mjs
-│   ├── check-parity.mjs    # Telsiz (7) + Gönderim (20) metot kümeleri her dilde aynı mı
+│   ├── sync-version.mjs    # VERSION → package.json, pyproject, csproj, gradle, __init__.py
+│   ├── check-parity.mjs    # 4 küme × 5 dil: Telsiz 7 · Gönderim 20 · Yönetim 40 · Uygulama 17
 │   └── publish-web.mjs     # dist/signalbird.js → ../signalbird.web/public/sdk/v1/
 ├── src/
-│   ├── node/               # TypeScript: client.ts (Telsiz), messaging.ts + webhook.ts (Gönderim)
+│   ├── node/               # TS sunucu: client (Telsiz), messaging + webhook, management, http
 │   ├── browser/            # Telsiz tarayıcı istemcisi (@signalbird/sdk/browser)
-│   ├── widget/             # Sohbet widget'ı (chat.ts denetleyici, ui/, store, poller, i18n)
-│   └── php/                # PHP: SignalbirdClient (Telsiz), Messaging/{MessagingClient,Webhook}
+│   ├── app/                # Son kullanıcı yüzeyi: client.ts + session.ts (ChatSession)
+│   ├── react/ vue/ angular/ react-native/   # app'in üstüne oturan ince uyarlamalar
+│   ├── widget/             # Hazır sohbet widget'ı (chat.ts, ui/, store, poller, i18n)
+│   ├── php/                # SignalbirdClient · Messaging/ · Management/ · Laravel provider
+│   ├── python/signalbird/  # client · messaging · management · webhook · _http
+│   ├── go/signalbird/      # radio · messaging · management · webhook · http
+│   ├── dotnet/Signalbird.Sdk/  # SignalbirdClient · MessagingClient · ManagementClient · DI
+│   ├── swift/Sources/Signalbird/   # SignalbirdApp (sohbet/push) · SignalbirdClient · Storage
+│   └── kotlin/src/main/kotlin/io/signalbird/sdk/   # SignalbirdApp · SignalbirdClient · Storage
 ├── config/                 # Laravel config (vendor:publish)
-├── tests/php/              # PHPUnit (vendor/bin/phpunit)
-├── dist/                   # tsup çıktısı: index.*, browser.*, signalbird.js
+├── tests/php/              # PHPUnit (vendor/bin/phpunit) — Messaging/ + Management/
+├── dist/                   # tsup çıktısı: index, browser, app, react, vue, angular, react-native, signalbird.js
 └── .github/workflows/ci.yml
 ```
 
@@ -74,11 +92,15 @@ CDN'den (`https://signalbird.io/sdk/v1/signalbird.js`) alır.
 
 ```
 npm run typecheck              # tsc
-npm run build                  # tsup (index, browser, signalbird.js) + publish-web
-node scripts/check-parity.mjs  # Node ↔ PHP metot paritesi (iki küme)
+npm run build                  # tsup (7 giriş + signalbird.js) + publish-web
+node scripts/check-parity.mjs  # 4 yüzey × 5 dil metot paritesi
 vendor/bin/phpunit             # PHP testleri (composer install gerekir)
+swift build                    # Swift paketi
+python3 -c "import signalbird"  # src/python içinden
 gzip -c dist/signalbird.js | wc -c   # widget boyutu (< 40 KB hedef)
 ```
+
+Go, Kotlin ve .NET araç zincirleri bu makinede kurulu değil; CI'da derlenir.
 
 ## Dokümantasyon Kuralı (ZORUNLU)
 
@@ -89,7 +111,11 @@ dosyalarda da güncellenir:
 2. `README.md` — kök, dil matrisi ve hızlı başlangıç
 3. `DEVELOPMENT.md` — tarihli kayıt (en yeni üstte)
 4. `signalbird.web/public/docs/{tr,en}/` — `sdk-node.md`, `sdk-browser.md`,
-   `sdk-php.md`, `sdk-messaging.md`, `sdk-widget.md`
+   `sdk-php.md`, `sdk-messaging.md`, `sdk-widget.md`, `sdk-management.md`,
+   `sdk-app.md`, `sdk-python.md`, `sdk-go.md`, `sdk-dotnet.md`, `sdk-swift.md`,
+   `sdk-kotlin.md`
+5. `signalbird.web/src/app/[locale]/(marketing)/sdk/page.tsx` — yüzey × dil
+   seçicili ana sayfa; oradaki her kod örneği pakette GERÇEKTEN olmalı
 
 ### Akış
 
@@ -109,6 +135,10 @@ docs/CONTRACT.md güncelle
 
 - Auth token / Sanctum token SDK'da OLMAYACAK (uçlar anahtarla çalışır)
 - Incoming Webhook veya API anahtarı CRUD işlemleri OLMAYACAK (panelden yapılır)
+- **Admin yüzeyi OLMAYACAK**: kullanıcı yönetimi, faturalama, abonelik, plan,
+  şirket/takım CRUD. Yönetim yüzeyi müşterinin KENDİ projesi içindir
+- Mobil dillerde (Swift, Kotlin) Gönderim ya da Yönetim istemcisi OLMAYACAK —
+  `sb_` anahtarı telefona gömülmez
 - Anahtar dışında kimlik doğrulama OLMAYACAK (widget'ta ziyaretçi sırrı da bir anahtardır)
 - İstemci içinde otomatik retry OLMAYACAK — kritik alarmı iki kez çaldırır,
   iletiyi iki kez gönderir

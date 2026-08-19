@@ -1,0 +1,3 @@
+module Signalbird {
+    header "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/include/Signalbird-Swift.h"
+}

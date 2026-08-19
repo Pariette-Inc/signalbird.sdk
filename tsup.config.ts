@@ -2,26 +2,43 @@ import { readFileSync } from 'node:fs'
 import { defineConfig } from 'tsup'
 
 /**
- * Üç giriş noktası, üç yüzey:
- *  - `index`      → sunucu (Node 18+): Telsiz (`SignalbirdClient`) + Gönderim
- *                   (`SignalbirdMessaging`, `verifyWebhook`)
- *  - `browser`    → tarayıcı Telsiz istemcisi (açık anahtar, sendBeacon)
- *  - `signalbird` → sohbet/push widget'ı: tek dosya IIFE, global `Signalbird`,
- *                   `<script src=…/sdk/v1/signalbird.js data-app-key=…>` ile
- *                   gömülür. npm paketine girmez; `scripts/publish-web.mjs`
- *                   çıktıyı signalbird.web'e kopyalar.
+ * Giriş noktaları — her biri bir yüzey ya da bir çatı uyarlaması:
+ *
+ *  - `index`        → sunucu (Node 18+): Telsiz (`SignalbirdClient`), Gönderim
+ *                     (`SignalbirdMessaging`, `verifyWebhook`), Yönetim
+ *                     (`SignalbirdManagement`)
+ *  - `browser`      → tarayıcı Telsiz istemcisi (açık anahtar, sendBeacon)
+ *  - `app`          → son kullanıcı yüzeyi: sohbet + push cihaz kaydı
+ *                     (`SignalbirdApp`, `ChatSession`) — çatısız
+ *  - `react` `vue` `angular` `react-native`
+ *                   → `app`'in üstüne oturan ince uyarlamalar; motor tektir
+ *  - `signalbird`   → hazır sohbet widget'ı: tek dosya IIFE, global `Signalbird`,
+ *                     `<script src=…/sdk/v1/signalbird.js data-app-key=…>` ile
+ *                     gömülür. npm paketine girmez; `scripts/publish-web.mjs`
+ *                     çıktıyı signalbird.web'e kopyalar.
  *
  * `index`/`browser` ayrımı teknik değil güvenliktir; ayrıntı için
- * `src/browser/index.ts` başlığına bakın.
+ * `src/browser/index.ts` başlığına bakın. Çatılar `external` bırakılır: paket
+ * React'i ya da Vue'yu kendi içine gömerse müşterinin uygulamasında iki kopya
+ * çalışır — React'te bu doğrudan çökme demektir.
  */
 const version = readFileSync(new URL('./VERSION', import.meta.url), 'utf8').trim()
 
 export default defineConfig([
   {
-    entry: { index: 'src/node/index.ts', browser: 'src/browser/index.ts' },
+    entry: {
+      index: 'src/node/index.ts',
+      browser: 'src/browser/index.ts',
+      app: 'src/app/index.ts',
+      react: 'src/react/index.ts',
+      vue: 'src/vue/index.ts',
+      angular: 'src/angular/index.ts',
+      'react-native': 'src/react-native/index.ts',
+    },
     format: ['esm', 'cjs'],
     dts: true,
     sourcemap: true,
+    external: ['react', 'react-native', 'vue', 'rxjs'],
     // Widget çıktısı paralel build'de silinmesin
     clean: ['!signalbird.js'],
     splitting: false,

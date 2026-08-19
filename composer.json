@@ -1,6 +1,6 @@
 {
   "name": "signalbird/sdk",
-  "description": "Signalbird SDK — Telsiz (Radio) ve Gönderim (Messaging) istemcisi (PHP / Laravel)",
+  "description": "Signalbird SDK — Telsiz (Radio), Gönderim (Messaging) ve Yönetim (Management) istemcisi (PHP / Laravel)",
   "type": "library",
   "keywords": [
     "signalbird",
@@ -15,7 +15,9 @@
     "email",
     "sms",
     "push",
-    "webhook"
+    "chat",
+    "webhook",
+    "management"
   ],
   "license": "MIT",
   "authors": [
@@ -56,10 +58,18 @@
   "archive": {
     "exclude": [
       "/src/node",
+      "/src/browser",
+      "/src/app",
+      "/src/react",
+      "/src/vue",
+      "/src/angular",
+      "/src/react-native",
+      "/src/widget",
       "/src/go",
+      "/src/python",
       "/src/swift",
       "/src/dotnet",
-      "/src/android",
+      "/src/kotlin",
       "/dist",
       "/node_modules",
       "/vendor",
@@ -68,13 +78,16 @@
       "/package-lock.json",
       "/tsconfig.json",
       "/tsup.config.ts",
+      "/pyproject.toml",
+      "/go.mod",
+      "/Package.swift",
+      "/build.gradle.kts",
+      "/Signalbird.Sdk.csproj",
       "/scripts",
       "/.github",
       "/DEVLOG.md",
       "/DEVELOPMENT.md",
       "/CLAUDE.md",
-      "/src/browser",
-      "/src/widget",
       "/tests",
       "/phpunit.xml.dist",
       "/.phpunit.result.cache"

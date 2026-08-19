@@ -4,6 +4,22 @@ Bu belge, `src/` altındaki **her** dil istemcisinin uyması gereken kuralları
 tanımlar. Yeni bir dil eklerken tek referans budur; bir kural burada yoksa o
 kural yoktur.
 
+## 0. Dört yüzey
+
+| # | Yüzey | Kim kullanır | Anahtar | Diller |
+|---|---|---|---|---|
+| §1–7 | **Telsiz** (Radio) | müşterinin sunucusu ve sitesi | `sbr_live_…` / `sbr_pub_…` | Node, PHP, Python, Go, .NET, tarayıcı |
+| §8 | **Gönderim** (Messaging) | müşterinin sunucusu | `sb_…` | Node, PHP, Python, Go, .NET |
+| §10 | **Yönetim** (Management) | müşterinin sunucusu / otomasyonu | `sb_…` + `radio\|chat\|apps` scope'ları | Node, PHP, Python, Go, .NET |
+| §11 | **Uygulama** (App) | müşterinin **müşterisi** | `sbw_pub_…` + ziyaretçi sırrı | TypeScript (web/RN), Swift, Kotlin |
+
+İlk üçü **sunucu** yüzeyidir ve gizli anahtar ister. Dördüncüsü **istemci**
+yüzeyidir: açık anahtar taşır, yalnız ziyaretçinin KENDİ verisine dokunur ve
+mobil uygulamaya gömülür.
+
+`scripts/check-parity.mjs` dört kümeyi de denetler; bir dilde olup diğerinde
+olmayan metot CI'ı kırar.
+
 ## 1. Uç noktalar
 
 ```
@@ -239,3 +255,187 @@ fırlatmaz**; hata konsola yazılır ve yutulur. `init` öncesi kaydedilen
 - **Mobil**: ≤640 px'de panel tam ekran. **Dil**: `locale` → `app.chat.locale`
   → `navigator.language`; `tr` dışı her şey `en`.
 - **Boyut**: < 40 KB gzip (ölçüm: `gzip -c dist/signalbird.js | wc -c`).
+
+---
+
+## 10. Yönetim (Management) istemcisi
+
+Dördüncü değil **üçüncü sunucu yüzeyi**: müşterinin panelde tıklayarak yaptığı
+her şeyi kodla yapar. Telsiz projesi ve kanalı açar, olay akışını okur, sohbet
+gelen kutusunu işler, uygulama kaydı ve cihaz listesi yönetir.
+
+**Bu bir ADMIN yüzeyi DEĞİLDİR.** Anahtar tek bir takıma bağlıdır ve yalnız o
+takımın kayıtlarına dokunur; başka takımın kaydı 404 döner (varlık sızdırılmaz).
+Kullanıcı yönetimi, faturalama, abonelik ve plan işlemleri SDK'da YOKTUR ve
+olmayacaktır — onlar panelin ve şirket sahibinin işidir.
+
+| Dil | Sınıf |
+|---|---|
+| Node | `SignalbirdManagement` (`@signalbird/sdk`) |
+| PHP | `Signalbird\Sdk\Management\ManagementClient` — Laravel: `Signalbird::management()` |
+| Python | `signalbird.SignalbirdManagement` |
+| Go | `signalbird.Management` |
+| .NET | `Signalbird.Sdk.ManagementClient` |
+
+### 10.1 Kurucu
+
+Gönderim istemcisiyle (§8.1) **aynı** kuralları taşır: `sb_` dışı anahtar
+kurulum anında `WRONG_KEY_TYPE`, boş anahtar `NO_KEY`; `baseUrl` serbest,
+sondaki `/` kırpılır; `timeout` 15 s; `throwOnError` varsayılan `false`.
+
+Gerektirdiği scope'lar (`ApiKey::SCOPES`): `radio:read` · `radio:write` ·
+`chat:read` · `chat:write` · `apps:read` · `apps:write`. Yazma scope'u okumayı
+kapsar (sunucu tarafında `SCOPE_FALLBACKS`); ikisini ayrı ayrı işaretlemeye
+zorlamak, ilk entegrasyonda 403 alıp anahtarı yeniden üretmek demekti.
+
+### 10.2 Sonuç biçimi
+
+§8.2 ile birebir aynıdır — aynı zarf, aynı kod eşlemesi. İki yüzey aynı kapıyı
+(`Authorization: Bearer sb_…`) kullanır; hata kodlarının ayrışması müşterinin
+tek bir hata işleyicisi yazmasını imkânsız kılardı.
+
+### 10.3 Metot kümesi — 40 metot
+
+Adlar diller arasında birebir aynıdır; her dil kendi yazım geleneğini korur
+(`createRadioProject` / `create_radio_project` / `CreateRadioProject` /
+`CreateRadioProjectAsync` aynı metottur). Alan adları API ile aynıdır
+(snake_case) — SDK yeniden adlandırmaz.
+
+**Telsiz yönetimi (11)**
+
+| Metot | HTTP |
+|---|---|
+| `radioSummary()` | `GET /v1/radio/summary` |
+| `radioEvents(query?)` | `GET /v1/radio/events` |
+| `listRadioProjects()` | `GET /v1/radio/projects` |
+| `createRadioProject({name})` | `POST /v1/radio/projects` |
+| `getRadioProject(id)` | `GET /v1/radio/projects/{id}` |
+| `updateRadioProject(id, input)` | `PATCH /v1/radio/projects/{id}` |
+| `deleteRadioProject(id)` | `DELETE /v1/radio/projects/{id}` |
+| `rotateRadioSecret(id)` | `POST /v1/radio/projects/{id}/rotate` |
+| `createRadioChannel(projectId, input)` | `POST …/{id}/channels` |
+| `updateRadioChannel(projectId, channelId, input)` | `PATCH …/channels/{cid}` |
+| `deleteRadioChannel(projectId, channelId)` | `DELETE …/channels/{cid}` |
+
+Gizli proje anahtarı (`sbr_live_…`) **yalnız** `createRadioProject` ve
+`rotateRadioSecret` yanıtında görünür; sunucuda yalnız SHA-256 özeti saklanır.
+Kanalın `key` alanı güncellemede DEĞİŞMEZ — müşterinin kodundaki
+`log('critical', …)` çağrısı ona bağlıdır ve değiştirmek sessizce yeni kanal
+açardı.
+
+**Sohbet — ajan tarafı (22)**
+
+| Metot | HTTP |
+|---|---|
+| `chatSummary()` · `chatUpdates()` | `GET /v1/chat/summary` · `/updates` |
+| `listConversations(query?)` · `getConversation(id)` | `GET /v1/chat/conversations[/{id}]` |
+| `listConversationMessages(id, query?)` | `GET …/{id}/messages` |
+| `startConversation({visitor_id\|contact_id, body})` | `POST /v1/chat/conversations` |
+| `updateConversation(id, input)` · `setConversationStatus(id, status)` | `PATCH …/{id}` · `POST …/{id}/status` |
+| `assignConversation(id, userId?)` · `readConversation(id, lastId?)` · `setTyping(id, bool)` | `POST …/{id}/{assign\|read\|typing}` |
+| `reply(id, input)` · `editChatMessage(id, mid, body)` · `deleteChatMessage(id, mid)` · `reactToChatMessage(id, mid, emoji)` | `…/{id}/messages…` |
+| `getVisitor(id)` · `updateVisitor(id, input)` · `banVisitor(id)` | `/v1/chat/visitors/{id}…` |
+| `listCannedReplies()` · `createCannedReply(input)` · `updateCannedReply(id, input)` · `deleteCannedReply(id)` | `/v1/chat/canned-replies…` |
+
+"Ajan" **anahtarı üreten kullanıcıdır**. Sahipsiz anahtar (miras kayıt) yazma
+yapamaz: gelen kutusundaki her satırın bir sahibi olmalı, yoksa liste okunmaz
+hâle gelir. `reply` içinde `is_internal: true` verilen mesaj bir iç nottur ve
+ziyaretçiye **asla** gitmez.
+
+**Uygulamalar (7)**
+
+| Metot | HTTP |
+|---|---|
+| `listApps()` · `createApp(input)` · `getApp(id)` · `updateApp(id, input)` · `deleteApp(id)` | `/v1/apps…` |
+| `rotateAppKey(id)` | `POST /v1/apps/{id}/rotate-key` |
+| `listAppDevices(id, query?)` | `GET /v1/apps/{id}/devices` |
+
+`rotateAppKey` eski açık anahtarı **anında** geçersizleştirir: siteye gömülü
+snippet güncellenene kadar widget çalışmaz. Cihaz listesinde token **maskeli**
+döner; tamamı hiçbir zaman dönmez.
+
+### 10.4 Retry
+
+Yoktur (§8.7 ile aynı ilke). Bir kanalı iki kez açmak ya da bir mesajı iki kez
+göndermek, hiç yapmamaktan pahalıdır.
+
+---
+
+## 11. Uygulama (App) istemcisi — son kullanıcı
+
+Müşterinin **müşterisi** için: canlı sohbet ve push cihaz kaydı. Açık uygulama
+anahtarı (`sbw_pub_…`) taşır ve istemciye gömülür; güvenliği gizlilikten değil
+kısıttan gelir — yalnız izinli kökenden çalışır ve yalnız ziyaretçinin KENDİ
+verisine dokunur. Gönderim yapmaz, kişi listesi okumaz, kota harcamaz (konuşma
+açmak hariç).
+
+| Dil | Sınıf | Giriş |
+|---|---|---|
+| TypeScript | `SignalbirdApp`, `ChatSession` | `@signalbird/sdk/app` |
+| React / Next.js | `SignalbirdProvider`, `useChat` | `@signalbird/sdk/react` |
+| Vue 3 | `signalbirdPlugin`, `useChat` | `@signalbird/sdk/vue` |
+| Angular | `SignalbirdService`, `provideSignalbird` | `@signalbird/sdk/angular` |
+| React Native / Expo | `useNativeChat`, `asyncStorageAdapter` | `@signalbird/sdk/react-native` |
+| Swift (iOS) | `SignalbirdApp` | SPM `Signalbird` |
+| Kotlin (Android) | `SignalbirdApp` | Maven `io.signalbird:signalbird-sdk` |
+| Kod yazmadan | global `Signalbird` | `<script src=…/sdk/v1/signalbird.js>` (§9) |
+
+### 11.1 Kimlik ve saklama
+
+İki başlık: `X-Signalbird-App-Key: sbw_pub_…` ve `X-Signalbird-Visitor: <sır>`.
+Sır **yalnız** `startSession` yanıtında döner.
+
+Her dil bir **saklama katmanı** ister ve bu isteğe bağlı değildir: sır cihazda
+kalmazsa kullanıcı uygulamayı her açtığında sohbet geçmişini kaybeder.
+
+| Dil | Varsayılan | Değiştirilebilir |
+|---|---|---|
+| TypeScript (web) | `localStorage` | `storage` seçeneği |
+| React Native | — (verilmesi ZORUNLU) | `asyncStorageAdapter(AsyncStorage)` |
+| Swift | `UserDefaults` | `SignalbirdStorage` uyarlaması (ör. Keychain) |
+| Kotlin | bellek (yalnız test için) | `SharedPreferences` sarmalayıcısı |
+
+Saklanan kayıt `{id, secret, appKey}` taşır. **`appKey` uyuşmazsa kayıt yok
+sayılır**: uygulama anahtarı döndürüldüğünde eski sırla yapılan her çağrı 401
+alırdı ve sohbet sessizce ölürdü. Sunucu `VISITOR_INVALID` (401) dönerse yerel
+kimlik silinir ve bir sonraki çağrı yeni oturum açar.
+
+### 11.2 Metot kümesi — 17 metot
+
+| Metot | HTTP |
+|---|---|
+| `bootstrap()` | `POST /v1/sdk/bootstrap` |
+| `startSession(input?)` · `identify(input)` · `signOut()` | `POST /v1/sdk/chat/session` · `/v1/sdk/identify` · (yerel) |
+| `listConversations()` · `getConversation(id, {after?, limit?})` | `GET /v1/sdk/chat/conversations[/{id}]` |
+| `startConversation({body, client_id})` · `sendMessage(convId, input)` | `POST …/conversations[/{id}/messages]` |
+| `editMessage` · `deleteMessage` · `reactToMessage` | `…/{id}/messages/{mid}[…/reactions]` |
+| `setTyping(id, bool)` · `markRead(id, lastId?)` | `POST …/{id}/typing` · `…/{id}/read` |
+| `closeConversation(id)` · `rateConversation(id, rating, comment?)` | `POST …/{id}/close` · `…/{id}/rate` |
+| `registerDevice(input)` · `unregisterDevice(token)` | `POST /v1/sdk/devices` · `DELETE …/{token}` |
+
+`uploadAttachment` **sözleşmede yoktur**: dosya her platformda farklı bir tip
+ister (`Blob` / `Data` / `Uri`) ve tek imzada birleşmiyor. Desteklendiği dilde
+o dilin belgesinde durur.
+
+### 11.3 Sohbet oturumu (`ChatSession`) — yalnız TypeScript
+
+Ham uçların üstünde bir durum katmanı: mesaj listesi, okunmamış sayısı, yazıyor
+durumu, iyimser gönderim ve yoklama merdiveni. React, Vue, Angular ve React
+Native uyarlamaları **bu sınıfa abone olur** — dördünde aynı mantığı yeniden
+yazmak, dört ayrı hata takımı üretmek demekti.
+
+- **İyimser gönderim.** Mesaj `client_id` ile listeye ANINDA düşer; sunucu
+  cevabı gelince yerel kopya onunla değiştirilir, başarısızsa `failed`
+  işaretlenir.
+- **Yoklama merdiveni** (§9.2 ile aynı): panel açıkken 3 s, kapalıyken
+  20 s ×3 → 60 s ×2 → 180 s. Yeni veri merdiveni sıfırlar; arka plandaki
+  sekme/uygulama tur atlar. WebSocket yoktur — imleçli yoklama bağlantı
+  kopmasında kendi kendini toparlar ve mobil ağda pil yakmaz.
+- **İmleç yalnız sunucu kimliğidir.** İyimser kayıtlar `after=` imlecine
+  girmez; girseydi sunucu onları tanımaz ve liste boş dönerdi.
+
+### 11.4 Hata davranışı
+
+Hiçbir metot istisna FIRLATMAZ (kurucudaki anahtar denetimi hariç). Sohbet
+balonunun hatası müşterinin ödeme sayfasını çökertmemeli — §9'daki widget
+kuralının aynısı, artık dört dilde geçerli.

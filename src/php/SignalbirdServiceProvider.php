@@ -4,6 +4,7 @@ namespace Signalbird\Sdk;
 
 use Illuminate\Support\ServiceProvider;
 use Monolog\Logger;
+use Signalbird\Sdk\Management\ManagementClient;
 use Signalbird\Sdk\Messaging\MessagingClient;
 
 /**
@@ -16,6 +17,9 @@ use Signalbird\Sdk\Messaging\MessagingClient;
  *     bağlar. Ayrı bir çağrı yazmadan mevcut `Log::error()` satırları çalışır.
  *  3. `signalbird.messaging` — Gönderim istemcisi (`MessagingClient`) tekili;
  *     `Signalbird::messaging()` ile erişilir.
+ *  4. `signalbird.management` — Yönetim istemcisi (`ManagementClient`) tekili;
+ *     `Signalbird::management()` ile erişilir. Telsiz projesi, sohbet gelen
+ *     kutusu ve uygulama kaydı buradan yönetilir.
  */
 class SignalbirdServiceProvider extends ServiceProvider
 {
@@ -51,6 +55,22 @@ class SignalbirdServiceProvider extends ServiceProvider
         });
 
         $this->app->alias(MessagingClient::class, 'signalbird.messaging');
+
+        // Yönetim istemcisi Gönderim ile AYNI anahtar ailesini kullanır
+        // (`sb_…`) ama farklı scope'lar ister. Ayrı bir anahtar tanımlanmadıysa
+        // gönderim anahtarına düşer — çoğu kurulumda tek anahtar vardır.
+        $this->app->singleton(ManagementClient::class, function ($app) {
+            $config = $app['config']['signalbird'];
+
+            return new ManagementClient(
+                apiKey: (string) (($config['api_key'] ?? '') ?: ($config['messaging_key'] ?? '')),
+                baseUrl: ($config['messaging_url'] ?? null) ?: ($config['url'] ?? null),
+                timeout: (int) ($config['messaging_timeout'] ?? 15),
+                throwOnError: (bool) ($config['throw_on_error'] ?? false),
+            );
+        });
+
+        $this->app->alias(ManagementClient::class, 'signalbird.management');
     }
 
     public function boot(): void

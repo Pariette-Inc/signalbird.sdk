@@ -7,10 +7,11 @@
  *
  * Her registry sürümü aynı yerden okumaz:
  *   - npm      → package.json "version"           (bu betik yazar)
+ *   - PyPI     → pyproject.toml [project].version  (bu betik yazar)
+ *   - NuGet    → Signalbird.Sdk.csproj <Version>   (bu betik yazar)
+ *   - Maven    → build.gradle.kts version          (bu betik yazar)
  *   - Packagist→ git etiketi                       (composer.json'da version ALANI OLMAZ;
  *                                                   repoya atılan vX.Y.Z etiketi belirler)
- *   - NuGet    → .csproj <Version>                 (eklendiğinde TARGETS'a gir)
- *   - Maven    → pom.xml / gradle.properties       (eklendiğinde TARGETS'a gir)
  *   - Go, SPM  → git etiketi                       (dosyaya yazılmaz)
  *
  * Etiketten sürüm alan diller için kilidi `--check-tag` sağlar; CI sürüm
@@ -46,6 +47,35 @@ const TARGETS = [
   'package.json',   // npm → @signalbird/sdk
 ]
 
+/**
+ * JSON olmayan manifestler: sürüm satırı düzenli ifadeyle değiştirilir.
+ *
+ * Her biri için desen DAR tutulur — `build.gradle.kts` içinde birden çok
+ * `version` geçer (bağımlılık sürümleri) ve geniş bir desen onları da bozardı.
+ */
+const TEXT_TARGETS = [
+  {
+    file: 'pyproject.toml',
+    pattern: /^(version = ")([^"]+)(")$/m,
+    label: 'PyPI',
+  },
+  {
+    file: 'Signalbird.Sdk.csproj',
+    pattern: /^(\s*<Version>)([^<]+)(<\/Version>)$/m,
+    label: 'NuGet',
+  },
+  {
+    file: 'build.gradle.kts',
+    pattern: /^(version = ")([^"]+)(")$/m,
+    label: 'Maven',
+  },
+  {
+    file: 'src/python/signalbird/__init__.py',
+    pattern: /^(__version__ = ")([^"]+)(")$/m,
+    label: 'python __version__',
+  },
+]
+
 let changed = 0
 
 for (const rel of TARGETS) {
@@ -66,6 +96,37 @@ for (const rel of TARGETS) {
   writeFileSync(path, JSON.stringify(data, null, indent) + '\n')
 
   console.log(`  ✓ ${rel}: ${previous} → ${version}`)
+  changed++
+}
+
+for (const target of TEXT_TARGETS) {
+  const path = join(root, target.file)
+
+  let raw
+
+  try {
+    raw = readFileSync(path, 'utf8')
+  } catch {
+    console.log(`  · ${target.file} yok, atlandı`)
+    continue
+  }
+
+  const match = raw.match(target.pattern)
+
+  if (!match) {
+    // Sessizce geçmek, bir paketin eski sürümle yayınlanması demek olurdu.
+    console.error(`  ✗ ${target.file}: sürüm satırı bulunamadı (${target.label})`)
+    process.exitCode = 1
+    continue
+  }
+
+  if (match[2] === version) {
+    console.log(`  = ${target.file} (zaten ${version})`)
+    continue
+  }
+
+  writeFileSync(path, raw.replace(target.pattern, `$1${version}$3`))
+  console.log(`  ✓ ${target.file}: ${match[2]} → ${version}`)
   changed++
 }
 

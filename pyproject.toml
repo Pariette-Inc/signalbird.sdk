@@ -1,0 +1,38 @@
+# Signalbird SDK — Python manifesti.
+#
+# Manifest KÖKTE durur (her paket yöneticisi kendi manifestini kökte arar),
+# kaynak `src/python/` altındadır. Diğer dillerin dosyaları pakete girmez.
+#
+# Sürüm `VERSION` dosyasıyla kilitlidir; `node scripts/sync-version.mjs`
+# buradaki `version` alanını da yazar.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "signalbird"
+version = "1.2.0"
+description = "Signalbird SDK — Telsiz (log), Gönderim (e-posta/SMS/push) ve Yönetim istemcisi"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Signalbird", email = "hello@signalbird.io" }]
+keywords = [
+  "signalbird", "sdk", "logging", "notification", "alert", "observability",
+  "messaging", "email", "sms", "push", "chat",
+]
+# Bağımlılık YOKTUR ve olmayacak: bir SDK'nın `requests` sürümü dayatması,
+# müşterinin bağımlılık çözümlemesini kilitleyen en sık sebeptir.
+dependencies = []
+
+[project.urls]
+Homepage = "https://signalbird.io/sdk"
+Documentation = "https://signalbird.io/sdk/python"
+Source = "https://github.com/Pariette-Inc/signalbird.sdk"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/python/signalbird"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/python", "README.md", "LICENSE", "VERSION"]

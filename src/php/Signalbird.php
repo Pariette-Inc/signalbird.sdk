@@ -2,6 +2,7 @@
 
 namespace Signalbird\Sdk;
 
+use Signalbird\Sdk\Management\ManagementClient;
 use Signalbird\Sdk\Messaging\MessagingClient;
 
 /**
@@ -11,13 +12,16 @@ use Signalbird\Sdk\Messaging\MessagingClient;
  * kullanın — o, servis sağlayıcısı üzerinden yapılandırmayı okur.
  *
  * Telsiz için `Signalbird::info(...)` (statik yönlendirme), Gönderim için
- * `Signalbird::messaging()->sendEmail([...])`.
+ * `Signalbird::messaging()->sendEmail([...])`, Yönetim için
+ * `Signalbird::management()->createRadioProject([...])`.
  */
 class Signalbird
 {
     private static ?SignalbirdClient $client = null;
 
     private static ?MessagingClient $messaging = null;
+
+    private static ?ManagementClient $management = null;
 
     public static function configure(
         string $apiKey,
@@ -61,6 +65,29 @@ class Signalbird
         }
 
         return self::$messaging;
+    }
+
+    /** Yönetim istemcisini elle yapılandırır (`sb_…` takım anahtarı). */
+    public static function configureManagement(string $apiKey, ?string $baseUrl = null): void
+    {
+        self::$management = new ManagementClient($apiKey, $baseUrl);
+    }
+
+    /**
+     * Yönetim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_API_KEY` (yoksa
+     * `SIGNALBIRD_MESSAGING_KEY` — çoğu kurulumda tek takım anahtarı vardır)
+     * ortam değişkeninden okunur.
+     */
+    public static function management(): ManagementClient
+    {
+        if (! self::$management) {
+            self::$management = new ManagementClient(
+                (getenv('SIGNALBIRD_API_KEY') ?: null) ?: (getenv('SIGNALBIRD_MESSAGING_KEY') ?: ''),
+                (getenv('SIGNALBIRD_MESSAGING_URL') ?: null) ?: (getenv('SIGNALBIRD_URL') ?: null),
+            );
+        }
+
+        return self::$management;
     }
 
     /** @param array<int, mixed> $arguments */

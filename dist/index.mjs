@@ -374,6 +374,274 @@ function buildQuery(query) {
   const encoded = params.toString();
   return encoded ? `?${encoded}` : "";
 }
+
+// src/node/http.ts
+var SbTransport = class {
+  constructor(config) {
+    this.config = config;
+  }
+  async request(method, path, body, query) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.config.timeout);
+    const url = this.config.baseUrl + path + buildQuery2(query);
+    let status = 0;
+    let data;
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${this.config.apiKey}`,
+          ...body !== void 0 ? { "Content-Type": "application/json" } : {}
+        },
+        body: body !== void 0 ? JSON.stringify(body) : void 0,
+        signal: controller.signal
+      });
+      status = response.status;
+      const text = await response.text();
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = text;
+      }
+      if (response.ok) {
+        return { ok: true, status, data };
+      }
+    } catch (error) {
+      const timedOut = error instanceof Error && error.name === "AbortError";
+      return this.fail(
+        0,
+        timedOut ? "TIMEOUT" : "NETWORK_ERROR",
+        error instanceof Error ? error.message : "network error",
+        void 0
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+    const code = data && typeof data === "object" && typeof data.code === "string" && data.code || (status === 422 ? "VALIDATION_ERROR" : status === 401 ? "API_KEY_INVALID" : `HTTP_${status}`);
+    const message = data && typeof data === "object" && typeof data.message === "string" && data.message || `HTTP ${status}`;
+    return this.fail(status, code, message, data);
+  }
+  fail(status, code, message, data) {
+    if (this.config.throwOnError) {
+      throw new SignalbirdError(`Signalbird: ${code} \u2014 ${message}`, status, code, data);
+    }
+    if (this.config.debug) {
+      console.warn(`[signalbird] ${code} (HTTP ${status}): ${message}`);
+    }
+    return { ok: false, status, code, message, data };
+  }
+};
+function buildQuery2(query) {
+  if (!query) return "";
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value === void 0 || value === null) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) params.append(`${key}[]`, String(item));
+    } else {
+      params.append(key, String(value));
+    }
+  }
+  const encoded = params.toString();
+  return encoded ? `?${encoded}` : "";
+}
+function seg(value) {
+  return encodeURIComponent(String(value));
+}
+
+// src/node/management.ts
+var SignalbirdManagement = class {
+  constructor(config) {
+    if (!config.apiKey) {
+      throw new SignalbirdError("Signalbird: apiKey zorunlu.", 0, "NO_KEY");
+    }
+    if (!config.apiKey.startsWith("sb_")) {
+      throw new SignalbirdError(
+        "Signalbird: y\xF6netim istemcisi tak\u0131m API anahtar\u0131 ister (sb_\u2026). Telsiz (sbr_\u2026) ve uygulama (sbw_pub_\u2026) anahtarlar\u0131 burada \xE7al\u0131\u015Fmaz.",
+        0,
+        "WRONG_KEY_TYPE"
+      );
+    }
+    this.http = new SbTransport({
+      apiKey: config.apiKey,
+      baseUrl: (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, ""),
+      timeout: config.timeout ?? 15e3,
+      throwOnError: config.throwOnError ?? false,
+      debug: config.debug ?? false
+    });
+  }
+  // ── Telsiz: projeler ──────────────────────────────────────────────────
+  /** Panelin Telsiz özeti: proje sayısı, günlük hacim, son olaylar. */
+  radioSummary() {
+    return this.http.request("GET", "/v1/radio/summary");
+  }
+  /** Olay akışı — kanal, seviye ve tarihe göre süzülür. */
+  radioEvents(query) {
+    return this.http.request("GET", "/v1/radio/events", void 0, query);
+  }
+  listRadioProjects() {
+    return this.http.request("GET", "/v1/radio/projects");
+  }
+  /**
+   * Proje açar.
+   *
+   * Dönen `secret` (`sbr_live_…`) YALNIZ BURADA görünür: sunucuda yalnız
+   * SHA-256 özeti saklanır. Kaybedilirse `rotateRadioSecret` ile yenilenir.
+   */
+  createRadioProject(input) {
+    return this.http.request("POST", "/v1/radio/projects", input);
+  }
+  getRadioProject(id) {
+    return this.http.request("GET", `/v1/radio/projects/${seg(id)}`);
+  }
+  updateRadioProject(id, input) {
+    return this.http.request("PATCH", `/v1/radio/projects/${seg(id)}`, input);
+  }
+  deleteRadioProject(id) {
+    return this.http.request("DELETE", `/v1/radio/projects/${seg(id)}`);
+  }
+  /** Gizli anahtarı yeniler; eski anahtar ANINDA geçersizleşir. */
+  rotateRadioSecret(id) {
+    return this.http.request("POST", `/v1/radio/projects/${seg(id)}/rotate`);
+  }
+  // ── Telsiz: kanallar ──────────────────────────────────────────────────
+  createRadioChannel(projectId, input) {
+    return this.http.request("POST", `/v1/radio/projects/${seg(projectId)}/channels`, input);
+  }
+  /**
+   * Kanalı günceller. `key` DEĞİŞMEZ — müşterinin kodundaki `log('critical', …)`
+   * çağrısı ona bağlıdır; sunucu gönderilse de yok sayar.
+   */
+  updateRadioChannel(projectId, channelId, input) {
+    return this.http.request(
+      "PATCH",
+      `/v1/radio/projects/${seg(projectId)}/channels/${seg(channelId)}`,
+      input
+    );
+  }
+  deleteRadioChannel(projectId, channelId) {
+    return this.http.request(
+      "DELETE",
+      `/v1/radio/projects/${seg(projectId)}/channels/${seg(channelId)}`
+    );
+  }
+  // ── Sohbet: gelen kutusu ──────────────────────────────────────────────
+  chatSummary() {
+    return this.http.request("GET", "/v1/chat/summary");
+  }
+  /** Kısa aralıklı yoklama için: yalnız değişenler + çevrimiçi ajanlar. */
+  chatUpdates() {
+    return this.http.request("GET", "/v1/chat/updates");
+  }
+  listConversations(query) {
+    return this.http.request("GET", "/v1/chat/conversations", void 0, query);
+  }
+  getConversation(id) {
+    return this.http.request("GET", `/v1/chat/conversations/${seg(id)}`);
+  }
+  /** `after` imleci `cm_…` mesaj kimliğidir; yoklamada tam listeyi çekmez. */
+  listConversationMessages(id, query) {
+    return this.http.request("GET", `/v1/chat/conversations/${seg(id)}/messages`, void 0, query);
+  }
+  /** Proaktif sohbet — ziyaretçi yazmadan ajan başlatır. */
+  startConversation(input) {
+    return this.http.request("POST", "/v1/chat/conversations", input);
+  }
+  updateConversation(id, input) {
+    return this.http.request("PATCH", `/v1/chat/conversations/${seg(id)}`, input);
+  }
+  setConversationStatus(id, status) {
+    return this.http.request("POST", `/v1/chat/conversations/${seg(id)}/status`, { status });
+  }
+  /**
+   * Atama atomiktir: `userId` verilmezse çağıran anahtarın sahibine atanır.
+   * Başkasına atanmış sohbeti devralmak `chat:write` ister.
+   */
+  assignConversation(id, userId) {
+    return this.http.request("POST", `/v1/chat/conversations/${seg(id)}/assign`, {
+      user_id: userId ?? null
+    });
+  }
+  readConversation(id, lastMessageId) {
+    return this.http.request("POST", `/v1/chat/conversations/${seg(id)}/read`, {
+      last_message_id: lastMessageId
+    });
+  }
+  setTyping(id, isTyping) {
+    return this.http.request("POST", `/v1/chat/conversations/${seg(id)}/typing`, {
+      is_typing: isTyping
+    });
+  }
+  reply(id, input) {
+    return this.http.request("POST", `/v1/chat/conversations/${seg(id)}/messages`, input);
+  }
+  editChatMessage(id, messageId, body) {
+    return this.http.request("PATCH", `/v1/chat/conversations/${seg(id)}/messages/${seg(messageId)}`, {
+      body
+    });
+  }
+  deleteChatMessage(id, messageId) {
+    return this.http.request(
+      "DELETE",
+      `/v1/chat/conversations/${seg(id)}/messages/${seg(messageId)}`
+    );
+  }
+  /** Tepki açma/kapama — aynı emoji ikinci kez gönderilirse kaldırılır. */
+  reactToChatMessage(id, messageId, emoji) {
+    return this.http.request(
+      "POST",
+      `/v1/chat/conversations/${seg(id)}/messages/${seg(messageId)}/reactions`,
+      { emoji }
+    );
+  }
+  // ── Sohbet: ziyaretçi ve hazır yanıtlar ───────────────────────────────
+  getVisitor(id) {
+    return this.http.request("GET", `/v1/chat/visitors/${seg(id)}`);
+  }
+  updateVisitor(id, input) {
+    return this.http.request("PATCH", `/v1/chat/visitors/${seg(id)}`, input);
+  }
+  banVisitor(id) {
+    return this.http.request("POST", `/v1/chat/visitors/${seg(id)}/ban`);
+  }
+  listCannedReplies() {
+    return this.http.request("GET", "/v1/chat/canned-replies");
+  }
+  createCannedReply(input) {
+    return this.http.request("POST", "/v1/chat/canned-replies", input);
+  }
+  updateCannedReply(id, input) {
+    return this.http.request("PATCH", `/v1/chat/canned-replies/${seg(id)}`, input);
+  }
+  deleteCannedReply(id) {
+    return this.http.request("DELETE", `/v1/chat/canned-replies/${seg(id)}`);
+  }
+  // ── Uygulamalar ───────────────────────────────────────────────────────
+  listApps() {
+    return this.http.request("GET", "/v1/apps");
+  }
+  /** Yanıttaki `public_key` (`sbw_pub_…`) istemciye gömülür; gizli değildir. */
+  createApp(input) {
+    return this.http.request("POST", "/v1/apps", input);
+  }
+  getApp(id) {
+    return this.http.request("GET", `/v1/apps/${seg(id)}`);
+  }
+  updateApp(id, input) {
+    return this.http.request("PATCH", `/v1/apps/${seg(id)}`, input);
+  }
+  deleteApp(id) {
+    return this.http.request("DELETE", `/v1/apps/${seg(id)}`);
+  }
+  /** Açık anahtarı yeniler; siteye gömülü eski anahtar ANINDA çalışmaz olur. */
+  rotateAppKey(id) {
+    return this.http.request("POST", `/v1/apps/${seg(id)}/rotate-key`);
+  }
+  listAppDevices(id, query) {
+    return this.http.request("GET", `/v1/apps/${seg(id)}/devices`, void 0, query);
+  }
+};
 function verifyWebhook(rawBody, signatureHeader, secret) {
   if (!signatureHeader || !secret) return false;
   const match = /^\s*sha256=([a-f0-9]+)\s*$/i.exec(signatureHeader);
@@ -405,7 +673,25 @@ function signalbird(config) {
 function resetSignalbird() {
   singleton = null;
 }
+var managementSingleton = null;
+function management(config) {
+  if (managementSingleton && !config) {
+    return managementSingleton;
+  }
+  const client = new SignalbirdManagement({
+    apiKey: config?.apiKey ?? process.env.SIGNALBIRD_API_KEY ?? process.env.SIGNALBIRD_MESSAGING_KEY ?? "",
+    baseUrl: config?.baseUrl ?? process.env.SIGNALBIRD_URL,
+    ...config
+  });
+  if (!config) {
+    managementSingleton = client;
+  }
+  return client;
+}
+function resetManagement() {
+  managementSingleton = null;
+}
 
-export { DEFAULT_BASE_URL, SignalbirdClient, SignalbirdError, SignalbirdMessaging, resetSignalbird, signalbird, verifyWebhook };
+export { DEFAULT_BASE_URL, SignalbirdClient, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };
 //# sourceMappingURL=index.mjs.map
 //# sourceMappingURL=index.mjs.map

@@ -2,6 +2,83 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-19 — Yönetim yüzeyi + yedi yeni dil (v1.2.0)
+
+İstek tek cümleydi: *"müşteri ile ilgili her zerre kod SDK üzerinden
+desteklensin — admin değil, müşterinin kendi projesini yönetmesi."* Paket üç
+yüzeyden **dörde**, iki dilden **on iki giriş noktasına** çıktı.
+
+| Yüzey | Yeni mi | Anahtar | Diller |
+|---|---|---|---|
+| Telsiz | — | `sbr_live_` / `sbr_pub_` | Node, PHP, **Python**, **Go**, **.NET**, **Swift**, **Kotlin**, tarayıcı |
+| Gönderim | — | `sb_` | Node, PHP, **Python**, **Go**, **.NET** |
+| **Yönetim** | ✔ 40 metot | `sb_` + `radio\|chat\|apps` scope | Node, PHP, Python, Go, .NET |
+| **Uygulama** | ✔ 17 metot | `sbw_pub_` + ziyaretçi sırrı | **TypeScript**, **Swift**, **Kotlin** (+ React, Vue, Angular, React Native uyarlamaları) |
+
+**API tarafı (signalbird.api)**
+
+Panel uçları anahtarla erişilebilir hâle geldi; gövde değil KAPI eklendi:
+
+- `ApiKey::SCOPES` += `radio:read|write`, `chat:read|write`, `apps:read|write`.
+  `SCOPE_FALLBACKS` ile yazma scope'u okumayı kapsar — ikisini ayrı ayrı
+  işaretlemeye zorlamak, ilk entegrasyonda 403 alıp anahtarı yeniden üretmek
+  demekti.
+- Yeni rota grupları: `/v1/radio/{summary,events,projects…}`, `/v1/apps…`,
+  `/v1/chat/…` — hepsi `api-key:<scope>` ile korunuyor. Panel rotaları
+  (`/v1/panel/*`) aynen duruyor.
+- `RadioPanelController`, `AppController` ve `ChatPanelController::team()`
+  artık `api_key_team` niteliğini önce okuyor (`ContactController` deseni).
+- Sohbette "ajan" **anahtarı üreten kullanıcıdır** (`ChatPanelController::actor`).
+  Sahipsiz miras anahtar yazma yapamaz: gelen kutusundaki her satırın bir
+  sahibi olmalı. `canManage` anahtar modunda scope'a bakar — anahtarı üreten
+  kişi sonradan yetkisini kaybederse entegrasyon durmasın.
+- Testler: `ManagementApiTest` (10), `Chat/ChatAgentKeyTest` (7). Panel
+  regresyonu için 82 test yeşil.
+
+**SDK tarafı**
+
+- **Yönetim istemcisi** (`SignalbirdManagement` / `ManagementClient`) — Gönderim
+  ile aynı anahtar ailesi ama ayrı sınıf: biri ileti gönderip kota harcar,
+  diğeri yapılandırma değiştirir. Tek sınıfta birleşseydi "hangi scope
+  gerekiyordu" sorusu her metotta yeniden sorulurdu.
+- **Uygulama istemcisi** (`SignalbirdApp`) — son kullanıcı yüzeyi. Tek gövde;
+  platform farkı iki noktada toplandı ve ikisi de dışarıdan veriliyor:
+  `storage` ve `fetch`. React/Vue/Angular/React Native uyarlamaları bu sınıfın
+  ÜSTÜNE oturur, kopyası değildir.
+- **`ChatSession`** — çatısız durum katmanı: iyimser gönderim, yoklama
+  merdiveni, okunmamış sayısı, yazıyor durumu. Dört çatı buna abone olur;
+  dördünde ayrı yazmak dört ayrı hata takımı üretirdi.
+- **Angular dekoratör kullanmıyor.** `@Injectable()` yazsaydık paketin
+  derlenmesi Angular sürümüne bağlanırdı; düz sınıf + `provideSignalbird()`
+  fabrikası sürümden bağımsızdır.
+- **Kotlin'de PATCH.** Android'in `HttpURLConnection`'ı PATCH bilmez; istek
+  POST + `X-HTTP-Method-Override: PATCH` ile gider (Symfony/Laravel bunu
+  yerleşik destekler — `Request::getMethod()`).
+- **Swift'te aktör yok.** Aktör olsaydı başlık kurulumu (her istekte sırrı
+  okumak) yalıtımı delmek zorunda kalır ve Swift 6'da derlenmezdi. Paylaşılan
+  durum tek bir kilitli kutuda (`VisitorStore`).
+- **Bağımlılık eklenmedi.** Python `urllib`, Go standart kütüphane, .NET
+  `HttpClient` (+ yalnız DI uzantısında `Microsoft.Extensions.Http`), Swift
+  `URLSession`, Kotlin `HttpURLConnection` + `org.json`. Tek istisna Kotlin'de
+  coroutines ve o da her Android projesinde zaten var.
+- **Ziyaretçi sırrı `appKey` ile mühürlü.** Anahtar döndürülürse saklanan
+  kimlik yok sayılır; aksi hâlde eski sırla her çağrı 401 alır ve sohbet
+  sessizce ölürdü.
+
+**Parite.** `check-parity.mjs` artık dört küme × beş dil denetliyor ve dil
+başına ad normalizasyonu yapıyor (`send_email` ↔ `SendEmail` ↔ `sendEmail`).
+Bir dilin yazım geleneğini bozmak, paritenin kazandırdığından fazlasını
+götürürdü. Toplam: Telsiz 7, Gönderim 20, Yönetim 40, Uygulama 17.
+
+**Manifestler kökte.** `pyproject.toml`, `go.mod`, `Package.swift`,
+`build.gradle.kts`, `Signalbird.Sdk.csproj` eklendi; `sync-version.mjs` artık
+JSON olmayan manifestlerin sürüm satırını da yazıyor ve bulamazsa **hata
+veriyor** — sessizce geçmek, bir paketin eski sürümle yayınlanması demekti.
+
+**Yapılmayanlar:** Gönderim yüzeyi mobil dillerde yok (gizli anahtar telefona
+gömülmez); `uploadAttachment` sözleşmede yok (dosya tipi her platformda farklı);
+WebSocket taşıyıcısı yok.
+
 ## 2026-08-19 — Gönderim istemcisi + canlı sohbet widget'ı (v1.1.0)
 
 Platform genişlemesi (`signalbird.api/docs/PLATFORM_EXPANSION_2026-08-19.md` §3).

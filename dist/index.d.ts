@@ -132,7 +132,7 @@ interface MessagingConfig {
     debug?: boolean;
 }
 /** Her metodun döndüğü sonuç: ya `ok:true` + `data`, ya `ok:false` + `code`. */
-type SbResult<T> = {
+type SbResult$1<T> = {
     ok: true;
     status: number;
     data: T;
@@ -312,7 +312,7 @@ interface ListCampaignMessagesQuery {
     status?: string;
 }
 /** Laravel sayfalayıcısı. */
-interface Paginated<T> {
+interface Paginated$1<T> {
     data: T[];
     current_page: number;
     last_page: number;
@@ -330,15 +330,15 @@ declare class SignalbirdMessaging {
     private readonly throwOnError;
     private readonly debug;
     constructor(config: MessagingConfig);
-    sendEmail(input: SendEmailInput): Promise<SbResult<SendResult>>;
-    sendSms(input: SendSmsInput): Promise<SbResult<SendResult>>;
+    sendEmail(input: SendEmailInput): Promise<SbResult$1<SendResult>>;
+    sendSms(input: SendSmsInput): Promise<SbResult$1<SendResult>>;
     /** SMS parça/karakter hesabı — kota harcamaz. */
-    previewSms(body: string): Promise<SbResult<SmsPreview>>;
-    sendPush(input: SendPushInput): Promise<SbResult<SendResult>>;
-    listContacts(query?: ListContactsQuery): Promise<SbResult<Paginated<Contact>>>;
-    createContact(contact: ContactInput): Promise<SbResult<Contact>>;
-    updateContact(id: number | string, contact: Partial<ContactInput>): Promise<SbResult<Contact>>;
-    deleteContact(id: number | string): Promise<SbResult<unknown>>;
+    previewSms(body: string): Promise<SbResult$1<SmsPreview>>;
+    sendPush(input: SendPushInput): Promise<SbResult$1<SendResult>>;
+    listContacts(query?: ListContactsQuery): Promise<SbResult$1<Paginated$1<Contact>>>;
+    createContact(contact: ContactInput): Promise<SbResult$1<Contact>>;
+    updateContact(id: number | string, contact: Partial<ContactInput>): Promise<SbResult$1<Contact>>;
+    deleteContact(id: number | string): Promise<SbResult$1<unknown>>;
     /**
      * Toplu kişi yükleme.
      *
@@ -347,15 +347,15 @@ declare class SignalbirdMessaging {
      * birleştirilir. Bir parça başarısız olursa o noktada durulur ve o ana kadar
      * biriken sayımlar `data` içinde döner — çağıran kaç kişinin işlendiğini görür.
      */
-    bulkContacts(input: BulkContactsInput): Promise<SbResult<BulkContactsResult>>;
-    listContactLists(): Promise<SbResult<ContactList[] | Paginated<ContactList>>>;
-    createContactList(input: CreateContactListInput): Promise<SbResult<ContactList>>;
-    deleteContactList(id: number | string): Promise<SbResult<unknown>>;
-    listCampaigns(query?: ListCampaignsQuery): Promise<SbResult<Paginated<Batch> | Batch[]>>;
-    createCampaign(input: CreateCampaignInput): Promise<SbResult<CampaignCreateResult>>;
-    getCampaign(id: number | string): Promise<SbResult<CampaignDetail>>;
-    cancelCampaign(id: number | string): Promise<SbResult<unknown>>;
-    listCampaignMessages(id: number | string, query?: ListCampaignMessagesQuery): Promise<SbResult<Paginated<Message>>>;
+    bulkContacts(input: BulkContactsInput): Promise<SbResult$1<BulkContactsResult>>;
+    listContactLists(): Promise<SbResult$1<ContactList[] | Paginated$1<ContactList>>>;
+    createContactList(input: CreateContactListInput): Promise<SbResult$1<ContactList>>;
+    deleteContactList(id: number | string): Promise<SbResult$1<unknown>>;
+    listCampaigns(query?: ListCampaignsQuery): Promise<SbResult$1<Paginated$1<Batch> | Batch[]>>;
+    createCampaign(input: CreateCampaignInput): Promise<SbResult$1<CampaignCreateResult>>;
+    getCampaign(id: number | string): Promise<SbResult$1<CampaignDetail>>;
+    cancelCampaign(id: number | string): Promise<SbResult$1<unknown>>;
+    listCampaignMessages(id: number | string, query?: ListCampaignMessagesQuery): Promise<SbResult$1<Paginated$1<Message>>>;
     /**
      * Bir kampanyanın tüm mesajlarını sayfa sayfa gezer.
      *
@@ -365,10 +365,383 @@ declare class SignalbirdMessaging {
      * "hepsi bu" sanılır — o daha tehlikeli).
      */
     iterateCampaignMessages(id: number | string, query?: Omit<ListCampaignMessagesQuery, 'page'>): AsyncGenerator<Message, void, undefined>;
-    listMessages(query?: ListMessagesQuery): Promise<SbResult<Paginated<Message>>>;
-    getMessage(id: string): Promise<SbResult<Message>>;
+    listMessages(query?: ListMessagesQuery): Promise<SbResult$1<Paginated$1<Message>>>;
+    getMessage(id: string): Promise<SbResult$1<Message>>;
     private request;
     private fail;
+}
+
+/** Her metodun döndüğü zarf. Başarısızlık istisna değil, veridir. */
+interface SbResult<T = unknown> {
+    ok: boolean;
+    status: number;
+    data?: T;
+    code?: string;
+    message?: string;
+}
+
+/**
+ * Yönetim (Management) yüzeyinin tipleri.
+ *
+ * Alan adları API ile BİREBİR aynıdır (snake_case). SDK yeniden adlandırmaz:
+ * müşteri bir alanı belgede görüp kodda başka adla bulursa, kaybettiği zaman
+ * SDK'nın kazandırdığı zamandan fazladır.
+ */
+
+interface ManagementConfig {
+    /** Takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
+    apiKey: string;
+    /** Varsayılan: https://signalbird.io/api */
+    baseUrl?: string;
+    /** İstek zaman aşımı (ms). Varsayılan 15000. */
+    timeout?: number;
+    /** Açıksa `SignalbirdError` fırlatılır; varsayılan `false`. */
+    throwOnError?: boolean;
+    debug?: boolean;
+}
+/** Sayfalı Laravel yanıtı. */
+interface Paginated<T> {
+    data: T[];
+    current_page?: number;
+    last_page?: number;
+    per_page?: number;
+    total?: number;
+}
+type RadioLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
+interface RadioProject {
+    id: number;
+    name: string;
+    slug?: string;
+    description?: string | null;
+    /** Gizli anahtarın tanınacak kadarı; tamamı yalnız oluşturmada döner. */
+    secret_hint?: string | null;
+    public_key?: string | null;
+    is_active?: boolean;
+    channels_count?: number;
+    events_count?: number;
+    last_event_at?: string | null;
+    channels?: RadioChannel[];
+}
+interface RadioChannel {
+    id: number;
+    key: string;
+    name: string;
+    description?: string | null;
+    level?: RadioLevel;
+    notify_push?: boolean;
+    notify_email?: boolean;
+    recipient_user_ids?: number[] | null;
+    quiet_from?: number | null;
+    quiet_to?: number | null;
+    dedupe_seconds?: number;
+    is_active?: boolean;
+    is_auto?: boolean;
+}
+interface CreateRadioProjectInput {
+    name: string;
+}
+interface UpdateRadioProjectInput {
+    name?: string;
+    description?: string | null;
+    is_active?: boolean;
+    /** Tarayıcıdan yazılabilen kanallar ve izinli kökenler. */
+    browser_channels?: string[] | null;
+    allowed_origins?: string[] | null;
+}
+interface RadioChannelInput {
+    key?: string;
+    name?: string;
+    description?: string | null;
+    level?: RadioLevel;
+    notify_push?: boolean;
+    notify_email?: boolean;
+    recipient_user_ids?: number[] | null;
+    quiet_from?: number | null;
+    quiet_to?: number | null;
+    dedupe_seconds?: number;
+    is_active?: boolean;
+}
+/** Proje açılışı: gizli anahtar YALNIZ burada döner, bir daha okunamaz. */
+interface RadioProjectCreated {
+    project: RadioProject;
+    secret: string;
+}
+interface RadioEvent {
+    id: string;
+    channel?: string;
+    channel_id?: number;
+    project_id?: number;
+    message: string;
+    level: RadioLevel;
+    context?: Record<string, unknown> | null;
+    source?: string | null;
+    created_at?: string;
+}
+interface ListRadioEventsQuery {
+    project_id?: number;
+    channel_id?: number;
+    level?: RadioLevel;
+    q?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    per_page?: number;
+}
+type ConversationStatus = 'open' | 'pending' | 'resolved' | 'closed';
+interface ChatConversation {
+    id: string;
+    status: ConversationStatus;
+    subject?: string | null;
+    priority?: string | null;
+    tags?: string[] | null;
+    unread_count?: number;
+    assigned_user_id?: number | null;
+    visitor?: ChatVisitor | null;
+    last_message_preview?: string | null;
+    last_message_at?: string | null;
+    created_at?: string;
+}
+interface ChatVisitor {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    external_id?: string | null;
+    attributes?: Record<string, unknown> | null;
+    is_banned?: boolean;
+    last_seen_at?: string | null;
+}
+interface ChatMessage {
+    id: string;
+    conversation_id?: string;
+    sender_type: 'visitor' | 'agent' | 'system';
+    sender_id?: number | string | null;
+    body?: string | null;
+    is_internal?: boolean;
+    attachments?: unknown[] | null;
+    reply_to_id?: string | null;
+    reactions?: Record<string, unknown> | null;
+    created_at?: string;
+}
+interface ListConversationsQuery {
+    status?: ConversationStatus | ConversationStatus[];
+    assigned_user_id?: number | 'me' | 'none';
+    app_id?: number;
+    q?: string;
+    page?: number;
+    per_page?: number;
+}
+interface ListChatMessagesQuery {
+    after?: string;
+    before?: string;
+    limit?: number;
+    /** Ajan tarafı iç notları da okuyabilir; ziyaretçi asla göremez. */
+    include_internal?: boolean;
+}
+interface StartConversationInput {
+    /** Ziyaretçi ya da kişi — biri zorunlu. */
+    visitor_id?: string;
+    contact_id?: number;
+    body: string;
+    app_id?: number;
+}
+interface UpdateConversationInput {
+    subject?: string | null;
+    priority?: string | null;
+    tags?: string[] | null;
+}
+interface ReplyInput {
+    body?: string;
+    /** İç not: gelen kutusunda görünür, ziyaretçiye ASLA gitmez. */
+    is_internal?: boolean;
+    reply_to_id?: string | null;
+    attachments?: unknown[];
+}
+interface UpdateVisitorInput {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    attributes?: Record<string, unknown> | null;
+}
+interface CannedReply {
+    id: number;
+    shortcut: string;
+    title?: string | null;
+    body: string;
+    usage_count?: number;
+}
+interface CannedReplyInput {
+    shortcut?: string;
+    title?: string | null;
+    body?: string;
+}
+type AppPlatform = 'web' | 'ios' | 'android' | 'other';
+interface AppRecord {
+    id: number;
+    name: string;
+    platform: AppPlatform;
+    /** `sbw_pub_…` — açık anahtar, zaten istemciye gömülür. */
+    public_key: string;
+    allowed_origins?: string[] | null;
+    chat_enabled?: boolean;
+    push_enabled?: boolean;
+    is_active?: boolean;
+    settings?: Record<string, unknown> | null;
+    devices_count?: number;
+    conversations_count?: number;
+}
+interface AppInput {
+    name?: string;
+    platform?: AppPlatform;
+    allowed_origins?: string[] | null;
+    chat_enabled?: boolean;
+    push_enabled?: boolean;
+    is_active?: boolean;
+    settings?: Record<string, unknown> | null;
+}
+interface AppDevice {
+    id: number;
+    /** Maskeli token — tamamı hiçbir zaman dönmez. */
+    token_masked?: string;
+    platform?: string;
+    provider?: string | null;
+    device_name?: string | null;
+    app_version?: string | null;
+    locale?: string | null;
+    is_active?: boolean;
+    last_seen_at?: string | null;
+}
+interface ListAppDevicesQuery {
+    page?: number;
+    per_page?: number;
+}
+
+/**
+ * Yönetim (Management) istemcisi — sunucu tarafı.
+ *
+ * Müşterinin panelde tıklayarak yaptığı her şeyi kodla yapar: Telsiz projesi ve
+ * kanalı açar, olay akışını okur, sohbet gelen kutusunu işler, uygulama kaydı
+ * ve cihaz listesi yönetir.
+ *
+ * Bu ADMIN yüzeyi DEĞİLDİR. Anahtar tek bir takıma bağlıdır ve yalnız o takımın
+ * kayıtlarına dokunur; başka takımın kaydı 404 döner.
+ *
+ * Neden ayrı sınıf: Gönderim (`SignalbirdMessaging`) ileti gönderir ve kota
+ * harcar; bu istemci yapılandırma değiştirir. Aynı anahtar ailesini kullanırlar
+ * (`sb_…`) ama scope'ları ve hata kümeleri farklıdır — tek sınıfta birleşseydi
+ * "hangi scope gerekiyordu" sorusu her metotta yeniden sorulurdu.
+ *
+ * Sözleşme: docs/CONTRACT.md § 10
+ */
+
+declare class SignalbirdManagement {
+    private readonly http;
+    constructor(config: ManagementConfig);
+    /** Panelin Telsiz özeti: proje sayısı, günlük hacim, son olaylar. */
+    radioSummary(): Promise<SbResult<Record<string, unknown>>>;
+    /** Olay akışı — kanal, seviye ve tarihe göre süzülür. */
+    radioEvents(query?: ListRadioEventsQuery): Promise<SbResult<Paginated<RadioEvent>>>;
+    listRadioProjects(): Promise<SbResult<{
+        data: RadioProject[];
+    }>>;
+    /**
+     * Proje açar.
+     *
+     * Dönen `secret` (`sbr_live_…`) YALNIZ BURADA görünür: sunucuda yalnız
+     * SHA-256 özeti saklanır. Kaybedilirse `rotateRadioSecret` ile yenilenir.
+     */
+    createRadioProject(input: CreateRadioProjectInput): Promise<SbResult<RadioProjectCreated>>;
+    getRadioProject(id: number | string): Promise<SbResult<{
+        project: RadioProject;
+    }>>;
+    updateRadioProject(id: number | string, input: UpdateRadioProjectInput): Promise<SbResult<{
+        project: RadioProject;
+    }>>;
+    deleteRadioProject(id: number | string): Promise<SbResult<unknown>>;
+    /** Gizli anahtarı yeniler; eski anahtar ANINDA geçersizleşir. */
+    rotateRadioSecret(id: number | string): Promise<SbResult<{
+        secret: string;
+    }>>;
+    createRadioChannel(projectId: number | string, input: RadioChannelInput): Promise<SbResult<{
+        channel: RadioChannel;
+    }>>;
+    /**
+     * Kanalı günceller. `key` DEĞİŞMEZ — müşterinin kodundaki `log('critical', …)`
+     * çağrısı ona bağlıdır; sunucu gönderilse de yok sayar.
+     */
+    updateRadioChannel(projectId: number | string, channelId: number | string, input: RadioChannelInput): Promise<SbResult<{
+        channel: RadioChannel;
+    }>>;
+    deleteRadioChannel(projectId: number | string, channelId: number | string): Promise<SbResult<unknown>>;
+    chatSummary(): Promise<SbResult<Record<string, unknown>>>;
+    /** Kısa aralıklı yoklama için: yalnız değişenler + çevrimiçi ajanlar. */
+    chatUpdates(): Promise<SbResult<Record<string, unknown>>>;
+    listConversations(query?: ListConversationsQuery): Promise<SbResult<Paginated<ChatConversation>>>;
+    getConversation(id: string): Promise<SbResult<{
+        conversation: ChatConversation;
+    }>>;
+    /** `after` imleci `cm_…` mesaj kimliğidir; yoklamada tam listeyi çekmez. */
+    listConversationMessages(id: string, query?: ListChatMessagesQuery): Promise<SbResult<{
+        messages: ChatMessage[];
+    }>>;
+    /** Proaktif sohbet — ziyaretçi yazmadan ajan başlatır. */
+    startConversation(input: StartConversationInput): Promise<SbResult<{
+        conversation: ChatConversation;
+    }>>;
+    updateConversation(id: string, input: UpdateConversationInput): Promise<SbResult<{
+        conversation: ChatConversation;
+    }>>;
+    setConversationStatus(id: string, status: ConversationStatus): Promise<SbResult<{
+        conversation: ChatConversation;
+    }>>;
+    /**
+     * Atama atomiktir: `userId` verilmezse çağıran anahtarın sahibine atanır.
+     * Başkasına atanmış sohbeti devralmak `chat:write` ister.
+     */
+    assignConversation(id: string, userId?: number | null): Promise<SbResult<{
+        conversation: ChatConversation;
+    }>>;
+    readConversation(id: string, lastMessageId?: string): Promise<SbResult<unknown>>;
+    setTyping(id: string, isTyping: boolean): Promise<SbResult<unknown>>;
+    reply(id: string, input: ReplyInput): Promise<SbResult<{
+        message: ChatMessage;
+    }>>;
+    editChatMessage(id: string, messageId: string, body: string): Promise<SbResult<{
+        message: ChatMessage;
+    }>>;
+    deleteChatMessage(id: string, messageId: string): Promise<SbResult<unknown>>;
+    /** Tepki açma/kapama — aynı emoji ikinci kez gönderilirse kaldırılır. */
+    reactToChatMessage(id: string, messageId: string, emoji: string): Promise<SbResult<{
+        message: ChatMessage;
+    }>>;
+    getVisitor(id: string): Promise<SbResult<{
+        visitor: ChatVisitor;
+    }>>;
+    updateVisitor(id: string, input: UpdateVisitorInput): Promise<SbResult<{
+        visitor: ChatVisitor;
+    }>>;
+    banVisitor(id: string): Promise<SbResult<{
+        visitor: ChatVisitor;
+    }>>;
+    listCannedReplies(): Promise<SbResult<{
+        data: CannedReply[];
+    }>>;
+    createCannedReply(input: CannedReplyInput): Promise<SbResult<{
+        reply: CannedReply;
+    }>>;
+    updateCannedReply(id: number | string, input: CannedReplyInput): Promise<SbResult<{
+        reply: CannedReply;
+    }>>;
+    deleteCannedReply(id: number | string): Promise<SbResult<unknown>>;
+    listApps(): Promise<SbResult<AppRecord[]>>;
+    /** Yanıttaki `public_key` (`sbw_pub_…`) istemciye gömülür; gizli değildir. */
+    createApp(input: AppInput): Promise<SbResult<AppRecord>>;
+    getApp(id: number | string): Promise<SbResult<AppRecord>>;
+    updateApp(id: number | string, input: AppInput): Promise<SbResult<AppRecord>>;
+    deleteApp(id: number | string): Promise<SbResult<unknown>>;
+    /** Açık anahtarı yeniler; siteye gömülü eski anahtar ANINDA çalışmaz olur. */
+    rotateAppKey(id: number | string): Promise<SbResult<AppRecord>>;
+    listAppDevices(id: number | string, query?: ListAppDevicesQuery): Promise<SbResult<Paginated<AppDevice>>>;
 }
 
 declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: string | null | undefined, secret: string): boolean;
@@ -380,9 +753,15 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
  * Node betikleri buradan alır. TARAYICI için `@signalbird/sdk/browser`
  * kullanılır — gizli anahtar istemciye inmez.
  *
- * İki istemci vardır ve anahtarları farklıdır:
- *  - `SignalbirdClient`    → Telsiz (log), `sbr_live_…`
- *  - `SignalbirdMessaging` → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
+ * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
+ *  - `SignalbirdClient`     → Telsiz (log yazma), `sbr_live_…`
+ *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
+ *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
+ *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
+ *
+ * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
+ * `@signalbird/sdk/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
+ * `/angular`, `/react-native`.
  */
 
 /**
@@ -397,5 +776,17 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
 declare function signalbird(config?: Partial<SignalbirdConfig>): SignalbirdClient;
 /** Test ve sıcak yeniden yükleme için tekil istemciyi sıfırlar. */
 declare function resetSignalbird(): void;
+/**
+ * Ortam değişkeninden kurulan paylaşımlı yönetim istemcisi.
+ *
+ * `SIGNALBIRD_API_KEY` okunur (yoksa `SIGNALBIRD_MESSAGING_KEY` — ikisi de aynı
+ * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
+ *
+ *   import { management } from '@signalbird/sdk'
+ *   await management().createRadioProject({ name: 'ödeme-servisi' })
+ */
+declare function management(config?: Partial<ManagementConfig>): SignalbirdManagement;
+/** Test ve sıcak yeniden yükleme için yönetim istemcisini sıfırlar. */
+declare function resetManagement(): void;
 
-export { type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type Channel, type Contact, type ContactInput, type ContactList, type CreateCampaignInput, type CreateContactListInput, DEFAULT_BASE_URL, type Level, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListContactsQuery, type ListMessagesQuery, type LogInput, type LogResult, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type Paginated, type SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdMessaging, type SmsPreview, resetSignalbird, signalbird, verifyWebhook };
+export { type AppDevice, type AppInput, type AppPlatform, type AppRecord, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateContactListInput, type CreateRadioProjectInput, DEFAULT_BASE_URL, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type Paginated$1 as Paginated, type RadioChannel, type RadioChannelInput, type RadioEvent, type RadioLevel, type RadioProject, type RadioProjectCreated, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, type SmsPreview, type StartConversationInput, type UpdateConversationInput, type UpdateRadioProjectInput, type UpdateVisitorInput, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };

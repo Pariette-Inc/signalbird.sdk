@@ -1,0 +1,280 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.Signalbird-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/sources",
+      "importPath" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/SignalbirdApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/SignalbirdClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/Storage.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/Transport.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "Signalbird",
+      "moduleOutputPath" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Modules/Signalbird.swiftmodule",
+      "objects" : [
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/SignalbirdApp.swift.o",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/SignalbirdClient.swift.o",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/Storage.swift.o",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/Transport.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx12.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/include/Signalbird-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "signalbird_sdk"
+      ],
+      "outputFileMapPath" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/SignalbirdApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/SignalbirdClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/Storage.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/Transport.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Modules/Signalbird.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/SignalbirdApp.swift",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/SignalbirdClient.swift",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/Storage.swift",
+        "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/Transport.swift"
+      ],
+      "tempsPath" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "Signalbird" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "Signalbird",
+      "-package-name",
+      "signalbird_sdk",
+      "-c",
+      "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/SignalbirdApp.swift",
+      "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/SignalbirdClient.swift",
+      "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/Storage.swift",
+      "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/Transport.swift",
+      "-I",
+      "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx12.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/include/Signalbird-Swift.h",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "signalbird_sdk",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "Signalbird" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/SignalbirdApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/SignalbirdClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/Storage.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/src/swift/Sources/Signalbird/Transport.swift"
+        }
+      ],
+      "outputFilePath" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/Signalbird.build/sources"
+    },
+    "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Volumes/solidCloud/git/signalbird/signalbird.sdk/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

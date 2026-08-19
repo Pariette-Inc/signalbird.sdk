@@ -57,6 +57,7 @@ jobs:
               "Signalbird\\Sdk\\SignalbirdException",
               "Signalbird\\Sdk\\Messaging\\MessagingClient",
               "Signalbird\\Sdk\\Messaging\\Webhook",
+              "Signalbird\\Sdk\\Management\\ManagementClient",
             ];
             foreach ($classes as $c) {
               if (!class_exists($c)) { fwrite(STDERR, "Çözülemedi: $c\n"); exit(1); }
@@ -67,6 +68,75 @@ jobs:
             }
             echo "PHP paketi tamam\n";
           '
+
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Derleme ve içe aktarma
+        run: |
+          python -m compileall -q src/python/signalbird
+          PYTHONPATH=src/python python -c "
+          import signalbird
+          radio = signalbird.SignalbirdClient(api_key='sbr_live_test')
+          send = signalbird.SignalbirdMessaging(api_key='sb_test')
+          admin = signalbird.SignalbirdManagement(api_key='sb_test')
+          # Yanlış aileden anahtar kurulum anında reddedilmeli
+          for cls, key in ((signalbird.SignalbirdMessaging, 'sbr_live_x'), (signalbird.SignalbirdClient, 'sbr_pub_x')):
+              try:
+                  cls(api_key=key); raise SystemExit('WRONG_KEY_TYPE bekleniyordu')
+              except signalbird.SignalbirdError:
+                  pass
+          print('python paketi tamam', signalbird.__version__)
+          "
+      - name: Paket derleniyor mu
+        run: |
+          pip install --quiet build
+          python -m build --wheel --outdir /tmp/dist
+
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - run: go vet ./src/go/...
+      - run: go build ./src/go/...
+
+  dotnet:
+    name: .NET
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet build Signalbird.Sdk.csproj -c Release
+
+  swift:
+    name: Swift
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift build
+
+  kotlin:
+    name: Kotlin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: gradle compileKotlin --no-daemon
 
   contract:
     name: Sözleşme ve sürüm
@@ -92,6 +162,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: node scripts/sync-version.mjs --check-tag "${GITHUB_REF#refs/tags/}"
 
-      # Sözleşme: her dil aynı yedi metodu sunmak zorunda
+      # Sözleşme: dört yüzeyin metot kümesi her dilde birebir aynı olmalı
       - name: Metot paritesi
         run: node scripts/check-parity.mjs

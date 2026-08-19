@@ -23,6 +23,13 @@ return [
     'throw_on_error' => env('SIGNALBIRD_THROW', false),
 
     /*
+    | Yönetim (Management) takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`,
+    | `apps:*` scope'larıyla. Boşsa `messaging_key` kullanılır; çoğu kurulumda
+    | tek takım anahtarı vardır ve iki yüzeyi de o taşır.
+    */
+    'api_key' => env('SIGNALBIRD_API_KEY', ''),
+
+    /*
     | Gönderim (Messaging) takım API anahtarı (`sb_…`). E-posta/SMS/push,
     | kişi ve kampanya uçları bu anahtarla çalışır; Telsiz anahtarından ayrıdır.
     */

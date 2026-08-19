@@ -5,13 +5,49 @@
  * Node betikleri buradan alır. TARAYICI için `@signalbird/sdk/browser`
  * kullanılır — gizli anahtar istemciye inmez.
  *
- * İki istemci vardır ve anahtarları farklıdır:
- *  - `SignalbirdClient`    → Telsiz (log), `sbr_live_…`
- *  - `SignalbirdMessaging` → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
+ * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
+ *  - `SignalbirdClient`     → Telsiz (log yazma), `sbr_live_…`
+ *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
+ *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
+ *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
+ *
+ * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
+ * `@signalbird/sdk/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
+ * `/angular`, `/react-native`.
  */
 export { SignalbirdClient } from './client';
 export { SignalbirdMessaging } from './messaging';
+export { SignalbirdManagement } from './management';
 export { verifyWebhook } from './webhook';
+export type {
+  ManagementConfig,
+  AppDevice,
+  AppInput,
+  AppPlatform,
+  AppRecord,
+  CannedReply,
+  CannedReplyInput,
+  ChatConversation,
+  ChatMessage,
+  ChatVisitor,
+  ConversationStatus,
+  CreateRadioProjectInput,
+  ListAppDevicesQuery,
+  ListChatMessagesQuery,
+  ListConversationsQuery,
+  ListRadioEventsQuery,
+  RadioChannel,
+  RadioChannelInput,
+  RadioEvent,
+  RadioLevel,
+  RadioProject,
+  RadioProjectCreated,
+  ReplyInput,
+  StartConversationInput,
+  UpdateConversationInput,
+  UpdateRadioProjectInput,
+  UpdateVisitorInput,
+} from './management-types';
 export type {
   MessagingConfig,
   SbResult,
@@ -51,6 +87,8 @@ export {
 } from './types';
 
 import { SignalbirdClient } from './client';
+import { SignalbirdManagement } from './management';
+import type { ManagementConfig } from './management-types';
 import type { SignalbirdConfig } from './types';
 
 let singleton: SignalbirdClient | null = null;
@@ -88,4 +126,42 @@ export function signalbird(config?: Partial<SignalbirdConfig>): SignalbirdClient
 /** Test ve sıcak yeniden yükleme için tekil istemciyi sıfırlar. */
 export function resetSignalbird(): void {
   singleton = null;
+}
+
+let managementSingleton: SignalbirdManagement | null = null;
+
+/**
+ * Ortam değişkeninden kurulan paylaşımlı yönetim istemcisi.
+ *
+ * `SIGNALBIRD_API_KEY` okunur (yoksa `SIGNALBIRD_MESSAGING_KEY` — ikisi de aynı
+ * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
+ *
+ *   import { management } from '@signalbird/sdk'
+ *   await management().createRadioProject({ name: 'ödeme-servisi' })
+ */
+export function management(config?: Partial<ManagementConfig>): SignalbirdManagement {
+  if (managementSingleton && !config) {
+    return managementSingleton;
+  }
+
+  const client = new SignalbirdManagement({
+    apiKey:
+      config?.apiKey ??
+      process.env.SIGNALBIRD_API_KEY ??
+      process.env.SIGNALBIRD_MESSAGING_KEY ??
+      '',
+    baseUrl: config?.baseUrl ?? process.env.SIGNALBIRD_URL,
+    ...config,
+  });
+
+  if (!config) {
+    managementSingleton = client;
+  }
+
+  return client;
+}
+
+/** Test ve sıcak yeniden yükleme için yönetim istemcisini sıfırlar. */
+export function resetManagement(): void {
+  managementSingleton = null;
 }

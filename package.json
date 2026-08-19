@@ -1,7 +1,7 @@
 {
   "name": "@signalbird/sdk",
-  "version": "1.1.0",
-  "description": "Signalbird SDK — Telsiz (Radio), Gönderim (Messaging) ve sohbet widget'ı: sunucu ve tarayıcı",
+  "version": "1.2.0",
+  "description": "Signalbird SDK — Telsiz (Radio), Gönderim (Messaging), Yönetim (Management) ve son kullanıcı sohbet/push istemcisi: sunucu, tarayıcı, mobil",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -15,6 +15,31 @@
       "types": "./dist/browser.d.ts",
       "import": "./dist/browser.mjs",
       "require": "./dist/browser.js"
+    },
+    "./app": {
+      "types": "./dist/app.d.ts",
+      "import": "./dist/app.mjs",
+      "require": "./dist/app.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.mjs",
+      "require": "./dist/react.js"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "import": "./dist/vue.mjs",
+      "require": "./dist/vue.js"
+    },
+    "./angular": {
+      "types": "./dist/angular.d.ts",
+      "import": "./dist/angular.mjs",
+      "require": "./dist/angular.js"
+    },
+    "./react-native": {
+      "types": "./dist/react-native.d.ts",
+      "import": "./dist/react-native.mjs",
+      "require": "./dist/react-native.js"
     }
   },
   "files": [
@@ -44,15 +69,24 @@
     "push",
     "chat",
     "live-chat",
-    "widget"
+    "widget",
+    "react",
+    "vue",
+    "angular",
+    "react-native",
+    "expo"
   ],
   "author": "Signalbird",
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "rxjs": "^7.8.0",
     "tsup": "^8.3.0",
     "typescript": "^5.6.0",
-    "@types/node": "^22.0.0"
+    "vue": "^3.5.0"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -67,5 +101,25 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-native": ">=0.72",
+    "vue": ">=3.3",
+    "rxjs": ">=7"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "rxjs": {
+      "optional": true
+    }
   }
 }

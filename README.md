@@ -1,12 +1,42 @@
 # Signalbird SDK
 
-Tek paket, üç yüzey:
+**Tek paket, dört yüzey, on iki giriş noktası.** Panelde tıklayarak yapabildiğiniz her şey
+kodla da yapılabilir.
 
 | Yüzey | Ne yapar | Anahtar | Nerede |
 |---|---|---|---|
 | **Telsiz** (Radio) | projenizden bir **kanala** log/olay yazar | `sbr_live_…` / `sbr_pub_…` | sunucu / tarayıcı |
 | **Gönderim** (Messaging) | e-posta, SMS, push gönderir; kişi, liste, kampanya yönetir; mesaj durumu okur; webhook imzası doğrular | `sb_…` | yalnız sunucu |
-| **Widget** (`signalbird.js`) | müşterinin sitesine canlı sohbet balonu + push cihaz kaydı | `sbw_pub_…` | tarayıcı, tek `<script>` |
+| **Yönetim** (Management) | Telsiz projesi/kanalı açar, olay akışını okur, **sohbet gelen kutusunu** işler, uygulama ve cihaz yönetir | `sb_…` + scope | yalnız sunucu |
+| **Uygulama** (App) | müşterinizin **son kullanıcısına** canlı sohbet + push cihaz kaydı | `sbw_pub_…` | web, iOS, Android |
+
+Beşinci bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
+(`signalbird.js`), siteye tek `<script>` ile gömülür.
+
+### Dil matrisi
+
+| Dil / platform | Telsiz | Gönderim | Yönetim | Uygulama | Kurulum |
+|---|:--:|:--:|:--:|:--:|---|
+| Node.js / TypeScript | ✓ | ✓ | ✓ | ✓ | `npm i @signalbird/sdk` |
+| Tarayıcı (düz JS) | ✓ | — | — | ✓ | `@signalbird/sdk/browser` · `/app` |
+| React / Next.js | ✓ | ✓ | ✓ | ✓ | `@signalbird/sdk/react` |
+| Vue 3 | ✓ | — | — | ✓ | `@signalbird/sdk/vue` |
+| Angular | ✓ | — | — | ✓ | `@signalbird/sdk/angular` |
+| React Native / Expo | ✓ | — | — | ✓ | `@signalbird/sdk/react-native` |
+| PHP / Laravel | ✓ | ✓ | ✓ | — | `composer require signalbird/sdk` |
+| Python | ✓ | ✓ | ✓ | — | `pip install signalbird` |
+| Go | ✓ | ✓ | ✓ | — | `go get github.com/Pariette-Inc/signalbird.sdk` |
+| .NET / ASP.NET Core | ✓ | ✓ | ✓ | — | `dotnet add package Signalbird.Sdk` |
+| Swift (iOS) | ✓ | — | — | ✓ | SPM: `Signalbird` |
+| Kotlin (Android) | ✓ | — | — | ✓ | `io.signalbird:signalbird-sdk` |
+
+Metot adları diller arasında **birebir** aynıdır; her dil kendi yazım
+geleneğini korur (`createRadioProject` / `create_radio_project` /
+`CreateRadioProject`). `node scripts/check-parity.mjs` bunu her derlemede
+denetler.
+
+Uygulama yüzeyi mobil ve tarayıcı içindir: gizli anahtar oraya gömülmez.
+Gönderim ve Yönetim yüzeyleri yalnız sunucudadır.
 
 ## Telsiz
 
@@ -41,12 +71,18 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Dil / çatı | Kurulum |
 |---|---|
 | Node.js, Next.js (sunucu), Express, NestJS, Fastify | `npm install @signalbird/sdk` |
-| React, Vue, Angular, Svelte, düz JS (tarayıcı) | `npm install @signalbird/sdk` → `@signalbird/sdk/browser` |
+| React, Vue, Angular, Svelte, düz JS (tarayıcı) | `npm install @signalbird/sdk` → `/browser`, `/app`, `/react`, `/vue`, `/angular` |
+| React Native, Expo | `npm install @signalbird/sdk` → `/react-native` |
 | PHP, Laravel | `composer require signalbird/sdk` |
+| Python (Django, FastAPI, Flask, Celery) | `pip install signalbird` |
+| Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
+| .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
+| Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:1.2.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>` |
 
-> Yol haritası: Go, .NET, Swift, Kotlin. Hepsi bu repoya gelir — ayrı SDK
-> reposu ya da dil başına sürüm yoktur.
+> Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır — ayrı SDK reposu ya da
+> dil başına sürüm yoktur.
 
 ## Node.js / TypeScript
 
@@ -300,6 +336,155 @@ abort_unless(Webhook::verify($request->getContent(), $request->header('X-Signalb
 Doğrulama **ham gövde** üzerinde yapılır; JSON'u ayrıştırıp yeniden
 serileştirmek imzayı bozar.
 
+## Yönetim (Management)
+
+Panelde tıklayarak yaptığınız her şeyi kodla yapar. Ortam kurulumunuz, CI
+akışınız ya da kendi ajan arayüzünüz artık panel oturumu taklit etmek zorunda
+değil.
+
+**Bu bir admin yüzeyi değildir:** anahtar tek bir takıma bağlıdır ve yalnız o
+takımın kayıtlarına dokunur. Kullanıcı, faturalama ve abonelik işlemleri SDK'da
+yoktur.
+
+Panelden `radio:*`, `chat:*`, `apps:*` scope'larıyla bir `sb_…` anahtarı açın.
+
+```ts
+import { management } from '@signalbird/sdk'
+
+// Yeni ortam kurulumu: proje aç, kanalını tanımla, anahtarı sakla
+const { data } = await management().createRadioProject({ name: 'ödeme-servisi' })
+
+// `secret` YALNIZ burada döner — sunucuda yalnız özeti saklanır
+await vault.write('SIGNALBIRD_KEY', data!.secret)
+
+await management().createRadioChannel(data!.project.id, {
+  key: 'odeme',
+  name: 'Ödeme',
+  level: 'critical',
+  notify_push: true,
+  quiet_from: 0,
+  quiet_to: 7,        // kritik seviye sessiz saatleri yine de deler
+})
+```
+
+Sohbet gelen kutusunu kendi botunuzla işleyin:
+
+```ts
+const inbox = await management().listConversations({ status: 'open', per_page: 20 })
+
+for (const conversation of inbox.data?.data ?? []) {
+  await management().reply(conversation.id, {
+    body: 'Merhaba! Ekibimiz birkaç dakika içinde yanıtlayacak.',
+  })
+
+  // İç not: gelen kutusunda görünür, ziyaretçiye ASLA gitmez
+  await management().reply(conversation.id, { body: 'Bot yanıtladı', is_internal: true })
+}
+```
+
+Aynısı PHP, Python, Go ve .NET'te birebir aynı metot adlarıyla:
+
+```php
+Signalbird::management()->createRadioProject(['name' => 'ödeme-servisi']);
+```
+
+```python
+signalbird.SignalbirdManagement(api_key=key).create_radio_project({"name": "ödeme-servisi"})
+```
+
+```go
+admin.CreateRadioProject(ctx, map[string]any{"name": "ödeme-servisi"})
+```
+
+```csharp
+await management.CreateRadioProjectAsync(new { name = "ödeme-servisi" });
+```
+
+Tam liste (40 metot): `docs/CONTRACT.md § 10`.
+
+## Uygulama (App) — kendi sohbet arayüzünüz
+
+Hazır widget yerine kendi arayüzünüzü yazmak, ya da sohbeti **mobil
+uygulamanıza** koymak istiyorsanız bu yüzey içindir. Açık uygulama anahtarı
+(`sbw_pub_…`) kullanır ve yalnız ziyaretçinin kendi verisine dokunur.
+
+**React / Next.js**
+
+```tsx
+import { SignalbirdProvider, useChat } from '@signalbird/sdk/react'
+
+export function App() {
+  return (
+    <SignalbirdProvider appKey={process.env.NEXT_PUBLIC_SIGNALBIRD_APP_KEY!}>
+      <Chat />
+    </SignalbirdProvider>
+  )
+}
+
+function Chat() {
+  const { messages, unread, agentTyping, send } = useChat({ open: true })
+
+  return (
+    <>
+      {messages.map((m) => <Bubble key={m.id} message={m} />)}
+      {agentTyping && <Typing />}
+      <Composer onSend={send} />
+    </>
+  )
+}
+```
+
+**Vue 3**
+
+```ts
+app.use(signalbirdPlugin, { appKey: import.meta.env.VITE_SIGNALBIRD_APP_KEY })
+
+const { state, send } = useChat({ open: isOpen })
+```
+
+**Angular**
+
+```ts
+bootstrapApplication(App, { providers: [provideSignalbird({ appKey })] })
+
+// bileşende
+chat$ = inject(SignalbirdService).chat$()
+```
+
+**React Native / Expo**
+
+```tsx
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { createSignalbirdApp, asyncStorageAdapter, useNativeChat } from '@signalbird/sdk/react-native'
+
+// Depoyu vermek ZORUNLU: sır cihazda kalmazsa geçmiş her açılışta kaybolur
+const client = createSignalbirdApp({ appKey, storage: asyncStorageAdapter(AsyncStorage) })
+
+const { messages, send } = useNativeChat(client, { open: true, isForeground })
+```
+
+**Swift (iOS)**
+
+```swift
+let client = try SignalbirdApp(config: .init(appKey: "sbw_pub_…"))
+
+try await client.startSession(["name": "Ayşe"])
+try await client.startConversation(body: "Kargom nerede?")
+try await client.registerDevice(token: apnsToken)
+```
+
+**Kotlin (Android)**
+
+```kotlin
+val client = SignalbirdApp(SignalbirdAppConfig(appKey = "sbw_pub_…", storage = prefsStorage))
+
+client.startSession(mapOf("name" to "Ayşe"))
+client.startConversation("Kargom nerede?")
+client.registerDevice(token = fcmToken)
+```
+
+Tam liste (17 metot) ve yoklama merdiveni: `docs/CONTRACT.md § 11`.
+
 ## Widget (canlı sohbet)
 
 Panelde **Gelen Kutusu → Ayarlar → Uygulamalar**'dan bir uygulama açın; verilen
@@ -337,8 +522,11 @@ Signalbird.destroy()
 | `LIMIT_REACHED` | Aylık kayıt limitiniz doldu |
 | `CHANNEL_DISABLED` | Kanal kapalı — kayıt yazılmaz, kota da harcanmaz |
 
-Gönderim istemcisine özgü: `WRONG_KEY_TYPE` (kurulumda), `API_KEY_INVALID`,
-`API_KEY_SCOPE`, `VALIDATION_ERROR` (422), `NO_CONSENT`, `SUPPRESSED`,
-`NO_SENDING_DOMAIN`, `LIST_NOT_FOUND`, `NETWORK_ERROR`, `TIMEOUT`, `HTTP_<durum>`.
-Widget: `VISITOR_INVALID` (yerel kimlik silinir, yeni oturum), `CHAT_UNAVAILABLE`
-(kota — "sohbet kullanılamıyor" bandı).
+Gönderim ve Yönetim istemcilerine özgü: `WRONG_KEY_TYPE` (kurulumda),
+`API_KEY_INVALID`, `API_KEY_SCOPE` (anahtarda gereken scope yok),
+`VALIDATION_ERROR` (422), `NO_CONSENT`, `SUPPRESSED`, `NO_SENDING_DOMAIN`,
+`LIST_NOT_FOUND`, `MODULE_DISABLED`, `NETWORK_ERROR`, `TIMEOUT`, `HTTP_<durum>`.
+
+Uygulama yüzeyi ve widget: `VISITOR_INVALID` (yerel kimlik silinir, yeni
+oturum açılır), `CHAT_UNAVAILABLE` (kota — "sohbet kullanılamıyor" bandı),
+`NOT_INITIALIZED`.
