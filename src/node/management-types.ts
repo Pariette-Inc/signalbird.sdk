@@ -269,3 +269,74 @@ export interface ListAppDevicesQuery {
   page?: number;
   per_page?: number;
 }
+
+// ── Sohbet tetikleyicileri ve rapor ──────────────────────────────────────────
+// Sözleşme: docs/CONTRACT.md § 10.3 · signalbird.api §8 (sohbet eksikleri)
+
+export type ChatTriggerEvent = 'conversation.created' | 'visitor.message' | 'no_reply';
+
+export interface ChatTriggerRule {
+  field: string;
+  op: string;
+  value?: string | number | boolean | null;
+}
+
+export interface ChatTriggerAction {
+  type: 'reply' | 'internal_note' | 'tag' | 'priority' | 'assign';
+  body?: string;
+  value?: string;
+  user_id?: number;
+}
+
+export interface ChatTrigger {
+  id: number;
+  name: string;
+  event: ChatTriggerEvent;
+  /** Boş = takımın tüm uygulamaları. */
+  app_id: number | null;
+  conditions: { match: 'all' | 'any'; rules: ChatTriggerRule[] };
+  actions: ChatTriggerAction[];
+  /** Yalnız `no_reply` olayında okunur. */
+  delay_seconds: number;
+  is_active: boolean;
+  priority: number;
+  stop_after_match: boolean;
+  fired_count: number;
+  last_fired_at: string | null;
+}
+
+export interface ChatTriggerInput {
+  name: string;
+  event: ChatTriggerEvent;
+  app_id?: number | null;
+  conditions?: { match: 'all' | 'any'; rules: ChatTriggerRule[] };
+  actions: ChatTriggerAction[];
+  delay_seconds?: number;
+  is_active?: boolean;
+  priority?: number;
+  stop_after_match?: boolean;
+}
+
+export type ChatReportRange = '7d' | '30d' | '90d';
+
+export interface ChatReportAgent {
+  user_id: number;
+  name: string | null;
+  assigned: number;
+  replies: number;
+  resolved: number;
+  median_first_response_s: number | null;
+  rating_average: number | null;
+  rating_count: number;
+}
+
+export interface ChatReport {
+  range: string;
+  since: string;
+  volume: { total: number; open: number; resolved: number; closed: number; unanswered: number };
+  /** Ortalama DEĞİL ortanca; veri yoksa `null` döner, 0 değil. */
+  first_response: { median_s: number | null; p90_s: number | null; answered: number };
+  resolution: { median_s: number | null; p90_s: number | null; resolved: number };
+  satisfaction: { average: number | null; count: number; breakdown: Record<string, number> };
+  agents: ChatReportAgent[];
+}

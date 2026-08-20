@@ -166,6 +166,30 @@ class SignalbirdManagement:
     def delete_canned_reply(self, id: Any) -> Result:
         return self._http.request("DELETE", f"/v1/chat/canned-replies/{seg(id)}")
 
+    # ── Sohbet: tetikleyiciler ───────────────────────────────────────────
+    # "Şu olduğunda şunu yap." Kural KAYITTA durur, kodda değil.
+
+    def list_chat_triggers(self) -> Result:
+        return self._http.request("GET", "/v1/chat/triggers")
+
+    def create_chat_trigger(self, input: Mapping[str, Any]) -> Result:
+        return self._http.request("POST", "/v1/chat/triggers", input)
+
+    def update_chat_trigger(self, id: Any, input: Mapping[str, Any]) -> Result:
+        return self._http.request("PATCH", f"/v1/chat/triggers/{seg(id)}", input)
+
+    def delete_chat_trigger(self, id: Any) -> Result:
+        return self._http.request("DELETE", f"/v1/chat/triggers/{seg(id)}")
+
+    # ── Sohbet: rapor ────────────────────────────────────────────────────
+
+    def chat_report(self, range: str = "30d") -> Result:
+        """Yanıt/çözüm süresi, memnuniyet, ajan kırılımı.
+
+        Veri yoksa süreler ``None`` döner — 0 DEĞİL.
+        """
+        return self._http.request("GET", "/v1/chat/reports", None, {"range": range})
+
     # ── Uygulamalar ──────────────────────────────────────────────────────
 
     def list_apps(self) -> Result:

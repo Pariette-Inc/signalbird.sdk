@@ -288,6 +288,44 @@ class ManagementClient
         return $this->request('DELETE', '/v1/chat/canned-replies/' . self::seg($id));
     }
 
+    // ── Sohbet: tetikleyiciler ────────────────────────────────────────────
+    // "Şu olduğunda şunu yap." Kural KAYITTA durur, kodda değil.
+
+    public function listChatTriggers(): array
+    {
+        return $this->request('GET', '/v1/chat/triggers');
+    }
+
+    /** @param array<string, mixed> $input */
+    public function createChatTrigger(array $input): array
+    {
+        return $this->request('POST', '/v1/chat/triggers', $input);
+    }
+
+    /** @param array<string, mixed> $input */
+    public function updateChatTrigger(int|string $id, array $input): array
+    {
+        return $this->request('PATCH', '/v1/chat/triggers/' . self::seg($id), $input);
+    }
+
+    public function deleteChatTrigger(int|string $id): array
+    {
+        return $this->request('DELETE', '/v1/chat/triggers/' . self::seg($id));
+    }
+
+    // ── Sohbet: rapor ─────────────────────────────────────────────────────
+
+    /**
+     * Yanıt süresi, çözüm süresi, memnuniyet ve ajan kırılımı.
+     * Veri yoksa süreler `null` döner — 0 DEĞİL.
+     *
+     * @param string $range `7d` | `30d` | `90d`
+     */
+    public function chatReport(string $range = '30d'): array
+    {
+        return $this->request('GET', '/v1/chat/reports', null, ['range' => $range]);
+    }
+
     // ── Uygulamalar ───────────────────────────────────────────────────────
 
     public function listApps(): array

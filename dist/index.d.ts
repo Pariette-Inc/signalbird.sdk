@@ -626,6 +626,90 @@ interface ListAppDevicesQuery {
     page?: number;
     per_page?: number;
 }
+type ChatTriggerEvent = 'conversation.created' | 'visitor.message' | 'no_reply';
+interface ChatTriggerRule {
+    field: string;
+    op: string;
+    value?: string | number | boolean | null;
+}
+interface ChatTriggerAction {
+    type: 'reply' | 'internal_note' | 'tag' | 'priority' | 'assign';
+    body?: string;
+    value?: string;
+    user_id?: number;
+}
+interface ChatTrigger {
+    id: number;
+    name: string;
+    event: ChatTriggerEvent;
+    /** Boş = takımın tüm uygulamaları. */
+    app_id: number | null;
+    conditions: {
+        match: 'all' | 'any';
+        rules: ChatTriggerRule[];
+    };
+    actions: ChatTriggerAction[];
+    /** Yalnız `no_reply` olayında okunur. */
+    delay_seconds: number;
+    is_active: boolean;
+    priority: number;
+    stop_after_match: boolean;
+    fired_count: number;
+    last_fired_at: string | null;
+}
+interface ChatTriggerInput {
+    name: string;
+    event: ChatTriggerEvent;
+    app_id?: number | null;
+    conditions?: {
+        match: 'all' | 'any';
+        rules: ChatTriggerRule[];
+    };
+    actions: ChatTriggerAction[];
+    delay_seconds?: number;
+    is_active?: boolean;
+    priority?: number;
+    stop_after_match?: boolean;
+}
+type ChatReportRange = '7d' | '30d' | '90d';
+interface ChatReportAgent {
+    user_id: number;
+    name: string | null;
+    assigned: number;
+    replies: number;
+    resolved: number;
+    median_first_response_s: number | null;
+    rating_average: number | null;
+    rating_count: number;
+}
+interface ChatReport {
+    range: string;
+    since: string;
+    volume: {
+        total: number;
+        open: number;
+        resolved: number;
+        closed: number;
+        unanswered: number;
+    };
+    /** Ortalama DEĞİL ortanca; veri yoksa `null` döner, 0 değil. */
+    first_response: {
+        median_s: number | null;
+        p90_s: number | null;
+        answered: number;
+    };
+    resolution: {
+        median_s: number | null;
+        p90_s: number | null;
+        resolved: number;
+    };
+    satisfaction: {
+        average: number | null;
+        count: number;
+        breakdown: Record<string, number>;
+    };
+    agents: ChatReportAgent[];
+}
 
 /**
  * Yönetim (Management) istemcisi — sunucu tarafı.
@@ -744,6 +828,22 @@ declare class SignalbirdManagement {
         reply: CannedReply;
     }>>;
     deleteCannedReply(id: number | string): Promise<SbResult<unknown>>;
+    listChatTriggers(): Promise<SbResult<{
+        data: ChatTrigger[];
+        schema: Record<string, string[]>;
+    }>>;
+    createChatTrigger(input: ChatTriggerInput): Promise<SbResult<{
+        trigger: ChatTrigger;
+    }>>;
+    updateChatTrigger(id: number | string, input: Partial<ChatTriggerInput>): Promise<SbResult<{
+        trigger: ChatTrigger;
+    }>>;
+    deleteChatTrigger(id: number | string): Promise<SbResult<unknown>>;
+    /**
+     * Yanıt süresi, çözüm süresi, memnuniyet ve ajan kırılımı.
+     * Veri yoksa süreler `null` döner — 0 DEĞİL.
+     */
+    chatReport(range?: ChatReportRange): Promise<SbResult<ChatReport>>;
     listApps(): Promise<SbResult<AppRecord[]>>;
     /** Yanıttaki `public_key` (`sbw_pub_…`) istemciye gömülür; gizli değildir. */
     createApp(input: AppInput): Promise<SbResult<AppRecord>>;

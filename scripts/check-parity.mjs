@@ -8,12 +8,11 @@
  * Beş yüzey, beş küme:
  *   - Telsiz    (docs/CONTRACT.md § 4)   — 7 metot   · sunucu dilleri
  *   - Gönderim  (docs/CONTRACT.md § 8.3) — 20 metot  · sunucu dilleri
- *   - Yönetim   (docs/CONTRACT.md § 10)  — 40 metot  · sunucu dilleri
+ *   - Yönetim   (docs/CONTRACT.md § 10)  — 45 metot  · sunucu dilleri
  *   - Uygulama  (docs/CONTRACT.md § 11)  — 17 metot  · istemci dilleri
  *                                                     (TS, Swift, Kotlin)
- *   - Partner   (docs/CONTRACT.md § 12)  — 20 metot  · node + php
- *       Yalnız iki dil: partner entegrasyonu sunucu tarafında ve sözleşmeli
- *       platformlarda yaşar; mobil dile ya da tarayıcıya İNMEZ.
+ *   - Partner   (docs/CONTRACT.md § 12)  — 20 metot  · sunucu dilleri
+ *       Mobil dile ya da tarayıcıya İNMEZ: partner anahtarı sunucuda kalır.
  * Adlar camelCase ve diller arasında birebirdir; her dil kendi yazım
  * geleneğini korur (`send_email` / `SendEmail` / `sendEmail` aynı metottur).
  *
@@ -128,6 +127,8 @@ const SURFACES = [
       'setTyping', 'reply', 'editChatMessage', 'deleteChatMessage', 'reactToChatMessage',
       'getVisitor', 'updateVisitor', 'banVisitor',
       'listCannedReplies', 'createCannedReply', 'updateCannedReply', 'deleteCannedReply',
+      'listChatTriggers', 'createChatTrigger', 'updateChatTrigger', 'deleteChatTrigger',
+      'chatReport',
       // Uygulamalar
       'listApps', 'createApp', 'getApp', 'updateApp', 'deleteApp', 'rotateAppKey', 'listAppDevices',
     ],
@@ -177,10 +178,14 @@ const SURFACES = [
       'createEmbedToken',
     ],
     aliases: noProto({}),
-    ignored: new Set(['constructor', '__construct', 'request', 'transport', 'fail', 'buildQuery']),
+    // `uptimeQuery` Go'da paket düzeyinde bir yardımcıdır, metot değil.
+    ignored: new Set(['constructor', '__construct', 'request', 'transport', 'fail', 'buildQuery', 'uptimeQuery', 'newPartner']),
     languages: [
       { name: 'node', file: 'src/node/partner.ts', pattern: NODE_METHOD },
       { name: 'php', file: 'src/php/Partner/PartnerClient.php', pattern: PHP_METHOD },
+      { name: 'python', file: 'src/python/signalbird/partner.py', pattern: PYTHON_METHOD, normalize: toCamel },
+      { name: 'go', file: 'src/go/signalbird/partner.go', pattern: GO_METHOD, normalize: toCamel },
+      { name: 'dotnet', file: 'src/dotnet/Signalbird.Sdk/PartnerClient.cs', pattern: CSHARP_METHOD, normalize: (n) => toCamel(stripAsync(n)) },
     ],
   },
 ]

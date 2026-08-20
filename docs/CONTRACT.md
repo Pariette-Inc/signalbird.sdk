@@ -12,7 +12,7 @@ kural yoktur.
 | §8 | **Gönderim** (Messaging) | müşterinin sunucusu | `sb_…` | Node, PHP, Python, Go, .NET |
 | §10 | **Yönetim** (Management) | müşterinin sunucusu / otomasyonu | `sb_…` + `radio\|chat\|apps` scope'ları | Node, PHP, Python, Go, .NET |
 | §11 | **Uygulama** (App) | müşterinin **müşterisi** | `sbw_pub_…` + ziyaretçi sırrı | TypeScript (web/RN), Swift, Kotlin |
-| §12 | **Partner** | sözleşmeli platform (veribenim, submitcms) | `sbp_live_…` | Node, PHP |
+| §12 | **Partner** | sözleşmeli platform (veribenim, submitcms) | `sbp_live_…` | Node, PHP, Python, Go, .NET |
 
 İlk üçü **sunucu** yüzeyidir ve gizli anahtar ister. Dördüncüsü **istemci**
 yüzeyidir: açık anahtar taşır, yalnız ziyaretçinin KENDİ verisine dokunur ve
@@ -296,7 +296,7 @@ zorlamak, ilk entegrasyonda 403 alıp anahtarı yeniden üretmek demekti.
 (`Authorization: Bearer sb_…`) kullanır; hata kodlarının ayrışması müşterinin
 tek bir hata işleyicisi yazmasını imkânsız kılardı.
 
-### 10.3 Metot kümesi — 40 metot
+### 10.3 Metot kümesi — 45 metot
 
 Adlar diller arasında birebir aynıdır; her dil kendi yazım geleneğini korur
 (`createRadioProject` / `create_radio_project` / `CreateRadioProject` /
@@ -325,7 +325,7 @@ Kanalın `key` alanı güncellemede DEĞİŞMEZ — müşterinin kodundaki
 `log('critical', …)` çağrısı ona bağlıdır ve değiştirmek sessizce yeni kanal
 açardı.
 
-**Sohbet — ajan tarafı (22)**
+**Sohbet — ajan tarafı (27)**
 
 | Metot | HTTP |
 |---|---|
@@ -338,6 +338,18 @@ açardı.
 | `reply(id, input)` · `editChatMessage(id, mid, body)` · `deleteChatMessage(id, mid)` · `reactToChatMessage(id, mid, emoji)` | `…/{id}/messages…` |
 | `getVisitor(id)` · `updateVisitor(id, input)` · `banVisitor(id)` | `/v1/chat/visitors/{id}…` |
 | `listCannedReplies()` · `createCannedReply(input)` · `updateCannedReply(id, input)` · `deleteCannedReply(id)` | `/v1/chat/canned-replies…` |
+| `listChatTriggers()` · `createChatTrigger(input)` · `updateChatTrigger(id, input)` · `deleteChatTrigger(id)` | `/v1/chat/triggers…` |
+| `chatReport(range?)` — `7d` \| `30d` \| `90d` | `GET /v1/chat/reports` |
+
+**Tetikleyiciler** ("şu olduğunda şunu yap") kural kaydıdır: üç olay
+(`conversation.created`, `visitor.message`, `no_reply`), koşul listesi ve beş
+eylem (`reply`, `internal_note`, `tag`, `priority`, `assign`). Otomatik yanıt
+`system` göndericisiyle yazılır, ajan olarak DEĞİL — ajan gibi görünseydi
+`first_response_at` damgası yalan söyler ve SLA raporu bozulurdu.
+
+**Rapor** ortalama değil **ortanca + p90** döner ve veri yoksa süreler `null`
+olur, `0` değil: "0 saniyede yanıtlıyoruz" rapor ekranındaki en tehlikeli
+yalandır.
 
 "Ajan" **anahtarı üreten kullanıcıdır**. Sahipsiz anahtar (miras kayıt) yazma
 yapamaz: gelen kutusundaki her satırın bir sahibi olmalı, yoksa liste okunmaz
@@ -453,6 +465,9 @@ kuralının aynısı, artık dört dilde geçerli.
 |---|---|
 | Node | `SignalbirdPartner` (`@signalbird/sdk`) |
 | PHP | `Signalbird\Sdk\Partner\PartnerClient` — Laravel: `Signalbird::partner()` |
+| Python | `signalbird.SignalbirdPartner` |
+| Go | `signalbird.Partner` |
+| .NET | `Signalbird.Sdk.PartnerClient` |
 
 Sunucu sözleşmesi: `signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md`.
 

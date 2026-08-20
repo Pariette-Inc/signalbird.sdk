@@ -25,6 +25,10 @@ import type {
   CannedReplyInput,
   ChatConversation,
   ChatMessage,
+  ChatReport,
+  ChatReportRange,
+  ChatTrigger,
+  ChatTriggerInput,
   ChatVisitor,
   ConversationStatus,
   CreateRadioProjectInput,
@@ -293,6 +297,36 @@ export class SignalbirdManagement {
 
   deleteCannedReply(id: number | string): Promise<SbResult<unknown>> {
     return this.http.request('DELETE', `/v1/chat/canned-replies/${seg(id)}`);
+  }
+
+  // ── Sohbet: tetikleyiciler ────────────────────────────────────────────
+  // "Şu olduğunda şunu yap." Kural KAYITTA durur, kodda değil: müşteri
+  // davranışı değiştirmek için sürüm çıkarmak zorunda kalmasın.
+
+  listChatTriggers(): Promise<SbResult<{ data: ChatTrigger[]; schema: Record<string, string[]> }>> {
+    return this.http.request('GET', '/v1/chat/triggers');
+  }
+
+  createChatTrigger(input: ChatTriggerInput): Promise<SbResult<{ trigger: ChatTrigger }>> {
+    return this.http.request('POST', '/v1/chat/triggers', input);
+  }
+
+  updateChatTrigger(id: number | string, input: Partial<ChatTriggerInput>): Promise<SbResult<{ trigger: ChatTrigger }>> {
+    return this.http.request('PATCH', `/v1/chat/triggers/${seg(id)}`, input);
+  }
+
+  deleteChatTrigger(id: number | string): Promise<SbResult<unknown>> {
+    return this.http.request('DELETE', `/v1/chat/triggers/${seg(id)}`);
+  }
+
+  // ── Sohbet: rapor ─────────────────────────────────────────────────────
+
+  /**
+   * Yanıt süresi, çözüm süresi, memnuniyet ve ajan kırılımı.
+   * Veri yoksa süreler `null` döner — 0 DEĞİL.
+   */
+  chatReport(range: ChatReportRange = '30d'): Promise<SbResult<ChatReport>> {
+    return this.http.request('GET', '/v1/chat/reports', undefined, { range });
   }
 
   // ── Uygulamalar ───────────────────────────────────────────────────────

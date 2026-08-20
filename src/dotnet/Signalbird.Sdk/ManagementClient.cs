@@ -147,6 +147,31 @@ public sealed class ManagementClient
     public Task<SbResult> DeleteCannedReplyAsync(object id, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Delete, $"/v1/chat/canned-replies/{Transport.Seg(id)}", null, null, ct);
 
+    // ── Sohbet: tetikleyiciler ────────────────────────────────────────────
+    // "Şu olduğunda şunu yap." Kural KAYITTA durur, kodda değil.
+
+    public Task<SbResult> ListChatTriggersAsync(CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Get, "/v1/chat/triggers", null, null, ct);
+
+    public Task<SbResult> CreateChatTriggerAsync(object input, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Post, "/v1/chat/triggers", input, null, ct);
+
+    public Task<SbResult> UpdateChatTriggerAsync(object id, object input, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Patch, $"/v1/chat/triggers/{Transport.Seg(id)}", input, null, ct);
+
+    public Task<SbResult> DeleteChatTriggerAsync(object id, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Delete, $"/v1/chat/triggers/{Transport.Seg(id)}", null, null, ct);
+
+    // ── Sohbet: rapor ─────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Yanıt/çözüm süresi, memnuniyet ve ajan kırılımı.
+    /// Veri yoksa süreler null döner — 0 DEĞİL.
+    /// </summary>
+    public Task<SbResult> ChatReportAsync(string range = "30d", CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Get, "/v1/chat/reports", null,
+            new Dictionary<string, object?> { ["range"] = range }, ct);
+
     // ── Uygulamalar ──────────────────────────────────────────────────────
 
     public Task<SbResult> ListAppsAsync(CancellationToken ct = default)

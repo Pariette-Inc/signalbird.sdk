@@ -9,7 +9,7 @@ npm paketi, bir Composer paketi ve (eklendikçe) bir Go modülü, Swift paketi,
 NuGet ve Maven artefaktıdır. Hepsi aynı etiketten çıkar, aynı sürümü ve aynı
 davranışı taşır. Ayrı SDK reposu, ayna repo veya alt modül YOKTUR.
 
-Paket **dört yüzey** taşır; her birinin anahtarı ve kapısı farklıdır:
+Paket **beş yüzey** taşır; her birinin anahtarı ve kapısı farklıdır:
 
 | Yüzey | Anahtar | Uçlar | Kaynak |
 |---|---|---|---|
@@ -17,13 +17,20 @@ Paket **dört yüzey** taşır; her birinin anahtarı ve kapısı farklıdır:
 | **Gönderim** (Messaging) — e-posta/SMS/push, kişi, liste, kampanya, mesaj, webhook imzası | `sb_…` takım API anahtarı (yalnız sunucu) | `/v1/email/send`, `/v1/sms/*`, `/v1/push/send`, `/v1/contacts*`, `/v1/contact-lists*`, `/v1/campaigns*`, `/v1/messages*` | `src/{node,php,python,go,dotnet}` |
 | **Yönetim** (Management) — Telsiz projesi/kanalı, olay akışı, sohbet gelen kutusu, uygulama ve cihaz | `sb_…` + `radio\|chat\|apps` scope'ları (yalnız sunucu) | `/v1/radio/{summary,events,projects…}`, `/v1/chat/*`, `/v1/apps*` | `src/node/management.ts`, `src/php/Management/`, `src/{python,go,dotnet}` |
 | **Uygulama** (App) — son kullanıcıya canlı sohbet + push cihaz kaydı | `sbw_pub_…` uygulama anahtarı (`X-Signalbird-App-Key`) + ziyaretçi sırrı (`X-Signalbird-Visitor`) | `/v1/sdk/bootstrap`, `/v1/sdk/chat/*`, `/v1/sdk/devices`, `/v1/sdk/identify` | `src/app/`, `src/{react,vue,angular,react-native}`, `src/swift`, `src/kotlin`, `src/widget/` → `dist/signalbird.js` |
+| **Partner** — sözleşmeli platformun müşteri sağlaması, modül yetkisi, gömme jetonu | `sbp_live_…` partner anahtarı (yalnız sunucu) | `/v1/partner/*` | `src/node/partner.ts`, `src/php/Partner/`, `src/{python,go,dotnet}` |
 
 **Yönetim ADMIN yüzeyi DEĞİLDİR.** Anahtar tek bir takıma bağlıdır ve yalnız o
 takımın kayıtlarına dokunur. Kullanıcı yönetimi, faturalama, abonelik ve plan
 işlemleri SDK'ya GİRMEZ.
 
+**Partner yüzeyi bu kuralın BİLİNÇLİ istisnasıdır** (CONTRACT §12.1) ve istisna
+olduğu için ayrı anahtar türü taşır. Kural, müşterinin kendi anahtarıyla (`sb_`)
+şirket açamaması içindi ve o kural aynen duruyor; sözleşmeli partner farklı bir
+taraftır. Partner da süper yönetici değildir: yalnız KENDİ açtığı company'lere
+erişir, başkasınınki 404 döner.
+
 Ana kaynak sözleşme: `docs/CONTRACT.md` (§0 yüzey tablosu, §1–7 Telsiz,
-§8 Gönderim, §9 Widget, §10 Yönetim, §11 Uygulama) ve platform sözleşmesi
+§8 Gönderim, §9 Widget, §10 Yönetim, §11 Uygulama, §12 Partner) ve platform sözleşmesi
 `../signalbird.api/docs/PLATFORM_EXPANSION_2026-08-19.md` §3.
 
 ## Repo yapısı
@@ -44,7 +51,7 @@ signalbird.sdk/
 ├── docs/CONTRACT.md        # diller arası davranış sözleşmesi ← ÖNCE BUNU OKU
 ├── scripts/
 │   ├── sync-version.mjs    # VERSION → package.json, pyproject, csproj, gradle, __init__.py
-│   ├── check-parity.mjs    # 4 küme × 5 dil: Telsiz 7 · Gönderim 20 · Yönetim 40 · Uygulama 17
+│   ├── check-parity.mjs    # 5 küme: Telsiz 7 · Gönderim 20 · Yönetim 45 · Uygulama 17 · Partner 20
 │   └── publish-web.mjs     # dist/signalbird.js → ../signalbird.web/public/sdk/v1/
 ├── src/
 │   ├── node/               # TS sunucu: client (Telsiz), messaging + webhook, management, http
@@ -52,10 +59,10 @@ signalbird.sdk/
 │   ├── app/                # Son kullanıcı yüzeyi: client.ts + session.ts (ChatSession)
 │   ├── react/ vue/ angular/ react-native/   # app'in üstüne oturan ince uyarlamalar
 │   ├── widget/             # Hazır sohbet widget'ı (chat.ts, ui/, store, poller, i18n)
-│   ├── php/                # SignalbirdClient · Messaging/ · Management/ · Laravel provider
-│   ├── python/signalbird/  # client · messaging · management · webhook · _http
-│   ├── go/signalbird/      # radio · messaging · management · webhook · http
-│   ├── dotnet/Signalbird.Sdk/  # SignalbirdClient · MessagingClient · ManagementClient · DI
+│   ├── php/                # SignalbirdClient · Messaging/ · Management/ · Partner/ · Mail/ · Laravel provider
+│   ├── python/signalbird/  # client · messaging · management · partner · webhook · _http
+│   ├── go/signalbird/      # radio · messaging · management · partner · webhook · http
+│   ├── dotnet/Signalbird.Sdk/  # SignalbirdClient · MessagingClient · ManagementClient · PartnerClient · DI
 │   ├── swift/Sources/Signalbird/   # SignalbirdApp (sohbet/push) · SignalbirdClient · Storage
 │   └── kotlin/src/main/kotlin/io/signalbird/sdk/   # SignalbirdApp · SignalbirdClient · Storage
 ├── config/                 # Laravel config (vendor:publish)
@@ -93,7 +100,7 @@ CDN'den (`https://signalbird.io/sdk/v1/signalbird.js`) alır.
 ```
 npm run typecheck              # tsc
 npm run build                  # tsup (7 giriş + signalbird.js) + publish-web
-node scripts/check-parity.mjs  # 4 yüzey × 5 dil metot paritesi
+node scripts/check-parity.mjs  # 5 yüzey metot paritesi
 vendor/bin/phpunit             # PHP testleri (composer install gerekir)
 swift build                    # Swift paketi
 python3 -c "import signalbird"  # src/python içinden
@@ -112,8 +119,8 @@ dosyalarda da güncellenir:
 3. `DEVELOPMENT.md` — tarihli kayıt (en yeni üstte)
 4. `signalbird.web/public/docs/{tr,en}/` — `sdk-node.md`, `sdk-browser.md`,
    `sdk-php.md`, `sdk-messaging.md`, `sdk-widget.md`, `sdk-management.md`,
-   `sdk-app.md`, `sdk-python.md`, `sdk-go.md`, `sdk-dotnet.md`, `sdk-swift.md`,
-   `sdk-kotlin.md`
+   `sdk-app.md`, `sdk-partner.md`, `sdk-python.md`, `sdk-go.md`, `sdk-dotnet.md`,
+   `sdk-swift.md`, `sdk-kotlin.md`
 5. `signalbird.web/src/app/[locale]/(marketing)/sdk/page.tsx` — yüzey × dil
    seçicili ana sayfa; oradaki her kod örneği pakette GERÇEKTEN olmalı
 
@@ -136,7 +143,8 @@ docs/CONTRACT.md güncelle
 - Auth token / Sanctum token SDK'da OLMAYACAK (uçlar anahtarla çalışır)
 - Incoming Webhook veya API anahtarı CRUD işlemleri OLMAYACAK (panelden yapılır)
 - **Admin yüzeyi OLMAYACAK**: kullanıcı yönetimi, faturalama, abonelik, plan,
-  şirket/takım CRUD. Yönetim yüzeyi müşterinin KENDİ projesi içindir
+  şirket/takım CRUD. Yönetim yüzeyi müşterinin KENDİ projesi içindir.
+  **Tek istisna Partner yüzeyidir** ve ayrı anahtar türü taşır (CONTRACT §12.1)
 - Mobil dillerde (Swift, Kotlin) Gönderim ya da Yönetim istemcisi OLMAYACAK —
   `sb_` anahtarı telefona gömülmez
 - Anahtar dışında kimlik doğrulama OLMAYACAK (widget'ta ziyaretçi sırrı da bir anahtardır)

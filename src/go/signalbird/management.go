@@ -181,6 +181,37 @@ func (m *Management) DeleteCannedReply(ctx context.Context, id any) (Result, err
 	return m.http.request(ctx, "DELETE", "/v1/chat/canned-replies/"+seg(id), nil, nil)
 }
 
+// ── Sohbet: tetikleyiciler ───────────────────────────────────────────────
+// "Şu olduğunda şunu yap." Kural KAYITTA durur, kodda değil.
+
+func (m *Management) ListChatTriggers(ctx context.Context) (Result, error) {
+	return m.http.request(ctx, "GET", "/v1/chat/triggers", nil, nil)
+}
+
+func (m *Management) CreateChatTrigger(ctx context.Context, input map[string]any) (Result, error) {
+	return m.http.request(ctx, "POST", "/v1/chat/triggers", input, nil)
+}
+
+func (m *Management) UpdateChatTrigger(ctx context.Context, id any, input map[string]any) (Result, error) {
+	return m.http.request(ctx, "PATCH", "/v1/chat/triggers/"+seg(id), input, nil)
+}
+
+func (m *Management) DeleteChatTrigger(ctx context.Context, id any) (Result, error) {
+	return m.http.request(ctx, "DELETE", "/v1/chat/triggers/"+seg(id), nil, nil)
+}
+
+// ── Sohbet: rapor ────────────────────────────────────────────────────────
+
+// ChatReport yanıt/çözüm süresi, memnuniyet ve ajan kırılımını döner.
+// Veri yoksa süreler null döner — 0 DEĞİL.
+func (m *Management) ChatReport(ctx context.Context, rng string) (Result, error) {
+	if rng == "" {
+		rng = "30d"
+	}
+
+	return m.http.request(ctx, "GET", "/v1/chat/reports", nil, map[string]any{"range": rng})
+}
+
 // ── Uygulamalar ────────────────────────────────────────────────────────
 
 func (m *Management) ListApps(ctx context.Context) (Result, error) {

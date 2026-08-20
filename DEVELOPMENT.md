@@ -2,6 +2,29 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 1.4.0 — 2026-08-21 · Partner beş dilde, sohbet tetikleyicileri ve raporu
+
+### Partner yüzeyi tamamlandı
+
+1.3.0'da yalnız Node ve PHP vardı; artık **Python, Go ve .NET** de aynı 20
+metodu sunuyor (`SignalbirdPartner` / `signalbird.Partner` /
+`Signalbird.Sdk.PartnerClient`). `check-parity.mjs` beş yüzeyin beşini de beş
+dilde denetliyor.
+
+### Yönetim yüzeyi 40 → 45 metot
+
+Sunucudaki sohbet eksikleri kapandı; SDK geride kalmasın diye aynı gün eklendi:
+
+- `listChatTriggers` `createChatTrigger` `updateChatTrigger` `deleteChatTrigger`
+- `chatReport(range)` — `7d` | `30d` | `90d`
+
+Tetikleyici = "şu olduğunda şunu yap" kural kaydı: üç olay
+(`conversation.created`, `visitor.message`, `no_reply`), koşul listesi, beş
+eylem. Rapor ortalama değil **ortanca + p90** döner ve veri yoksa süreler
+`null` olur — `0` değil.
+
+Beş dile birden yazıldı (node, php, python, go, dotnet).
+
 ## 1.3.0 — 2026-08-20 · Partner yüzeyi + Signalbird posta taşıyıcısı
 
 Sözleşme: `docs/CONTRACT.md` §12 ve

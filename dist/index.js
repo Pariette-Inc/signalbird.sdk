@@ -619,6 +619,29 @@ var SignalbirdManagement = class {
   deleteCannedReply(id) {
     return this.http.request("DELETE", `/v1/chat/canned-replies/${seg(id)}`);
   }
+  // ── Sohbet: tetikleyiciler ────────────────────────────────────────────
+  // "Şu olduğunda şunu yap." Kural KAYITTA durur, kodda değil: müşteri
+  // davranışı değiştirmek için sürüm çıkarmak zorunda kalmasın.
+  listChatTriggers() {
+    return this.http.request("GET", "/v1/chat/triggers");
+  }
+  createChatTrigger(input) {
+    return this.http.request("POST", "/v1/chat/triggers", input);
+  }
+  updateChatTrigger(id, input) {
+    return this.http.request("PATCH", `/v1/chat/triggers/${seg(id)}`, input);
+  }
+  deleteChatTrigger(id) {
+    return this.http.request("DELETE", `/v1/chat/triggers/${seg(id)}`);
+  }
+  // ── Sohbet: rapor ─────────────────────────────────────────────────────
+  /**
+   * Yanıt süresi, çözüm süresi, memnuniyet ve ajan kırılımı.
+   * Veri yoksa süreler `null` döner — 0 DEĞİL.
+   */
+  chatReport(range = "30d") {
+    return this.http.request("GET", "/v1/chat/reports", void 0, { range });
+  }
   // ── Uygulamalar ───────────────────────────────────────────────────────
   listApps() {
     return this.http.request("GET", "/v1/apps");
