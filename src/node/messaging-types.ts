@@ -139,7 +139,14 @@ export interface CreateContactListInput {
 export interface CreateCampaignInput {
   name: string;
   channel: Channel;
-  list_id: number;
+  /**
+   * TXT ile doğrulanmış müşteri domaininin id'si — ZORUNLU. Doğrulanmamış
+   * domain adına kampanya açılamaz (`DOMAIN_NOT_VERIFIED`).
+   */
+  domain_id: number;
+  /** Hedef: `list_id` VEYA `segment_id` — ikisinden tam biri. */
+  list_id?: number;
+  segment_id?: number;
   subject?: string;
   body: string;
   template_hash?: string;
@@ -147,6 +154,10 @@ export interface CreateCampaignInput {
   brand_id?: number;
   /** ISO-8601; verilirse parti `scheduled` açılır. */
   scheduled_at?: string;
+  /** E-postada görünen isim; zarf adresi sendsignalbird havuzunda kalır. */
+  from_name?: string;
+  /** Yanıt adresi (Reply-To). */
+  reply_to?: string;
   metadata?: Record<string, unknown>;
   external_ref?: string;
 }

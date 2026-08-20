@@ -142,7 +142,7 @@ denetler. Alan adları API ile aynıdır (snake_case) — SDK yeniden adlandırm
 | push | `sendPush({to, class, subject, body, vars?, contact_id?})` — `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
 | kişiler | `listContacts(q)` · `createContact(c)` · `updateContact(id, c)` · `deleteContact(id)` · `bulkContacts({contacts[], list_id?, consent_source?, consent_text?})` | `/v1/contacts…` |
 | listeler | `listContactLists()` · `createContactList({name, description?})` · `deleteContactList(id)` | `/v1/contact-lists…` |
-| kampanyalar | `listCampaigns(q)` · `createCampaign({name, channel, list_id, subject?, body, template_hash?, sending_domain_id?, brand_id?, scheduled_at?, metadata?, external_ref?})` · `getCampaign(id)` · `cancelCampaign(id)` · `listCampaignMessages(id, q)` · `iterateCampaignMessages(id, q)` (yardımcı, sayfa sayfa gezer) | `/v1/campaigns…` |
+| kampanyalar | `listCampaigns(q)` · `createCampaign({name, channel, domain_id, list_id?|segment_id?, subject?, body, template_hash?, sending_domain_id?, brand_id?, scheduled_at?, from_name?, reply_to?, metadata?, external_ref?})` — `domain_id` TXT ile doğrulanmış müşteri domaini (zorunlu); hedef liste VEYA segment · `getCampaign(id)` · `cancelCampaign(id)` · `listCampaignMessages(id, q)` · `iterateCampaignMessages(id, q)` (yardımcı, sayfa sayfa gezer) | `/v1/campaigns…` |
 | mesajlar | `listMessages(q)` · `getMessage(id)` | `/v1/messages…` |
 
 `class` (`transactional` | `commercial`) zorunludur ve **varsayılanı yoktur** —
