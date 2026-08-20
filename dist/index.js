@@ -644,6 +644,127 @@ var SignalbirdManagement = class {
     return this.http.request("GET", `/v1/apps/${seg(id)}/devices`, void 0, query);
   }
 };
+
+// src/node/partner.ts
+var SignalbirdPartner = class {
+  constructor(config) {
+    if (!config.apiKey) {
+      throw new SignalbirdError("Signalbird: apiKey zorunlu.", 0, "NO_KEY");
+    }
+    if (!config.apiKey.startsWith("sbp_live_")) {
+      throw new SignalbirdError(
+        "Signalbird: partner istemcisi partner anahtar\u0131 ister (sbp_live_\u2026). Tak\u0131m (sb_\u2026), Telsiz (sbr_\u2026) ve uygulama (sbw_pub_\u2026) anahtarlar\u0131 burada \xE7al\u0131\u015Fmaz.",
+        0,
+        "WRONG_KEY_TYPE"
+      );
+    }
+    this.http = new SbTransport({
+      apiKey: config.apiKey,
+      baseUrl: (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, ""),
+      timeout: config.timeout ?? 15e3,
+      throwOnError: config.throwOnError ?? false,
+      debug: config.debug ?? false
+    });
+  }
+  // ── Müşteri ───────────────────────────────────────────────────────────
+  /**
+   * Company + takım + owner açar. **Idempotenttir**: aynı `external_id` ile
+   * ikinci çağrı yeni kayıt açmaz, `created:false` ile var olanı döner.
+   * Anahtarlar (`keys`) yalnız ilk oluşturmada gelir.
+   */
+  createCompany(input) {
+    return this.http.request("POST", "/v1/partner/companies", input);
+  }
+  listCompanies(query) {
+    return this.http.request("GET", "/v1/partner/companies", void 0, query);
+  }
+  getCompany(externalId) {
+    return this.http.request("GET", `/v1/partner/companies/${seg(externalId)}`);
+  }
+  updateCompany(externalId, input) {
+    return this.http.request("PATCH", `/v1/partner/companies/${seg(externalId)}`, input);
+  }
+  /** Askıya alır — SİLMEZ. Müşterinin izleme ve mesaj geçmişi durur. */
+  suspendCompany(externalId) {
+    return this.http.request("DELETE", `/v1/partner/companies/${seg(externalId)}`);
+  }
+  rotateKey(externalId, type) {
+    return this.http.request("POST", `/v1/partner/companies/${seg(externalId)}/keys/rotate`, { type });
+  }
+  // ── Domain ────────────────────────────────────────────────────────────
+  /**
+   * Domain ekler ve (istenirse) izlemeye alır. Kayıt `verified_via:'partner'`
+   * ile doğar: izleme, sohbet ve push için yeter — **e-posta/SMS kampanyası
+   * için TXT şarttır**. Yanıttaki `dns` kaydını yayınlayıp `verifyDomain`
+   * çağırmak kapıyı açar.
+   */
+  addDomain(companyExternalId, input) {
+    return this.http.request("POST", `/v1/partner/companies/${seg(companyExternalId)}/domains`, input);
+  }
+  listDomains(companyExternalId) {
+    return this.http.request("GET", `/v1/partner/companies/${seg(companyExternalId)}/domains`);
+  }
+  getDomain(externalId) {
+    return this.http.request("GET", `/v1/partner/domains/${seg(externalId)}`);
+  }
+  /** TXT'yi hemen sorgular; eşleşirse domain kampanya kapısından geçer olur. */
+  verifyDomain(externalId) {
+    return this.http.request("POST", `/v1/partner/domains/${seg(externalId)}/verify`);
+  }
+  removeDomain(externalId) {
+    return this.http.request("DELETE", `/v1/partner/domains/${seg(externalId)}`);
+  }
+  domainUptime(externalId, range = "24h") {
+    return this.http.request("GET", `/v1/partner/domains/${seg(externalId)}/uptime`, void 0, { range });
+  }
+  /** Tek istekte müşterinin tüm domainleri — liste ekranı N+1 atmasın. */
+  companyUptime(companyExternalId, range = "24h") {
+    return this.http.request(
+      "GET",
+      `/v1/partner/companies/${seg(companyExternalId)}/uptime`,
+      void 0,
+      { range }
+    );
+  }
+  // ── Modül yetkisi ─────────────────────────────────────────────────────
+  listModules(companyExternalId) {
+    return this.http.request("GET", `/v1/partner/companies/${seg(companyExternalId)}/modules`);
+  }
+  /** "Bu müşteri şu modül için ödeme yaptı, kullanabilir." */
+  grantModule(companyExternalId, input) {
+    return this.http.request("POST", `/v1/partner/companies/${seg(companyExternalId)}/modules`, input);
+  }
+  /** Yalnız partner'ın KENDİ verdiği hakkı geri alır; plan hakkına dokunmaz. */
+  revokeModule(companyExternalId, module) {
+    return this.http.request(
+      "DELETE",
+      `/v1/partner/companies/${seg(companyExternalId)}/modules/${seg(module)}`
+    );
+  }
+  // ── Kullanıcı ─────────────────────────────────────────────────────────
+  createUser(companyExternalId, input) {
+    return this.http.request("POST", `/v1/partner/companies/${seg(companyExternalId)}/users`, input);
+  }
+  listUsers(companyExternalId) {
+    return this.http.request("GET", `/v1/partner/companies/${seg(companyExternalId)}/users`);
+  }
+  /** Üyeliği kaldırır, kişinin Signalbird hesabını SİLMEZ. */
+  removeUser(companyExternalId, userExternalId) {
+    return this.http.request(
+      "DELETE",
+      `/v1/partner/companies/${seg(companyExternalId)}/users/${seg(userExternalId)}`
+    );
+  }
+  // ── Gömme ─────────────────────────────────────────────────────────────
+  /**
+   * Panel ekranını partner sayfasına gömmek için kısa ömürlü jeton üretir.
+   * 120 saniye yaşar ve TEK KULLANIMLIKTIR — jeton URL'de gider, log ve
+   * `Referer` başlığına düşer.
+   */
+  createEmbedToken(companyExternalId, input) {
+    return this.http.request("POST", `/v1/partner/companies/${seg(companyExternalId)}/embed`, input);
+  }
+};
 function verifyWebhook(rawBody, signatureHeader, secret) {
   if (!signatureHeader || !secret) return false;
   const match = /^\s*sha256=([a-f0-9]+)\s*$/i.exec(signatureHeader);
@@ -699,6 +820,7 @@ exports.SignalbirdClient = SignalbirdClient;
 exports.SignalbirdError = SignalbirdError;
 exports.SignalbirdManagement = SignalbirdManagement;
 exports.SignalbirdMessaging = SignalbirdMessaging;
+exports.SignalbirdPartner = SignalbirdPartner;
 exports.management = management;
 exports.resetManagement = resetManagement;
 exports.resetSignalbird = resetSignalbird;

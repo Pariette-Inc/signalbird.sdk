@@ -4,7 +4,7 @@ Bu belge, `src/` altındaki **her** dil istemcisinin uyması gereken kuralları
 tanımlar. Yeni bir dil eklerken tek referans budur; bir kural burada yoksa o
 kural yoktur.
 
-## 0. Dört yüzey
+## 0. Beş yüzey
 
 | # | Yüzey | Kim kullanır | Anahtar | Diller |
 |---|---|---|---|---|
@@ -12,12 +12,14 @@ kural yoktur.
 | §8 | **Gönderim** (Messaging) | müşterinin sunucusu | `sb_…` | Node, PHP, Python, Go, .NET |
 | §10 | **Yönetim** (Management) | müşterinin sunucusu / otomasyonu | `sb_…` + `radio\|chat\|apps` scope'ları | Node, PHP, Python, Go, .NET |
 | §11 | **Uygulama** (App) | müşterinin **müşterisi** | `sbw_pub_…` + ziyaretçi sırrı | TypeScript (web/RN), Swift, Kotlin |
+| §12 | **Partner** | sözleşmeli platform (veribenim, submitcms) | `sbp_live_…` | Node, PHP |
 
 İlk üçü **sunucu** yüzeyidir ve gizli anahtar ister. Dördüncüsü **istemci**
 yüzeyidir: açık anahtar taşır, yalnız ziyaretçinin KENDİ verisine dokunur ve
-mobil uygulamaya gömülür.
+mobil uygulamaya gömülür. Beşincisi de sunucu yüzeyidir ama **takımlar
+üstüdür** ve yalnız sözleşmeli platformlara verilir (§12).
 
-`scripts/check-parity.mjs` dört kümeyi de denetler; bir dilde olup diğerinde
+`scripts/check-parity.mjs` beş kümeyi de denetler; bir dilde olup diğerinde
 olmayan metot CI'ı kırar.
 
 ## 1. Uç noktalar
@@ -439,3 +441,88 @@ yazmak, dört ayrı hata takımı üretmek demekti.
 Hiçbir metot istisna FIRLATMAZ (kurucudaki anahtar denetimi hariç). Sohbet
 balonunun hatası müşterinin ödeme sayfasını çökertmemeli — §9'daki widget
 kuralının aynısı, artık dört dilde geçerli.
+
+---
+
+## 12. Partner istemcisi
+
+**Beşinci yüzey.** Signalbird'ü kendi ürününün içinde satan sözleşmeli platform
+(veribenim, submitcms) müşterisini bununla sağlar ve yetkilendirir.
+
+| Dil | Sınıf |
+|---|---|
+| Node | `SignalbirdPartner` (`@signalbird/sdk`) |
+| PHP | `Signalbird\Sdk\Partner\PartnerClient` — Laravel: `Signalbird::partner()` |
+
+Sunucu sözleşmesi: `signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md`.
+
+### 12.1 Neden kuralın istisnası
+
+`CLAUDE.md` "Admin yüzeyi OLMAYACAK: kullanıcı yönetimi, faturalama, abonelik,
+plan, şirket/takım CRUD" der. Partner yüzeyi bunu **bilerek** deler.
+
+Kural, müşterinin kendi anahtarıyla (`sb_…`) şirket açamaması içindi ve o kural
+aynen duruyor: `sb_` anahtarı hâlâ tek takıma bağlıdır. Partner **farklı bir
+taraftır** — sözleşmesi vardır, müşterisini kendi panelinden yönetir ve
+Signalbird onun için bir alt sistemdir. Bu yüzden ayrı anahtar türü, ayrı
+tablo, ayrı kapı taşır.
+
+Partner **süper yönetici DEĞİLDİR**: yalnız KENDİ açtığı company'lere erişir;
+başka partnerin ya da self-servis müşterinin kaydı **404** döner.
+
+### 12.2 Kurucu
+
+Gönderim (§8.1) ile aynı kurallar: `sbp_live_` dışı anahtar kurulum anında
+`WRONG_KEY_TYPE`, boş anahtar `NO_KEY`; `baseUrl` serbest, sondaki `/` kırpılır;
+`timeout` 15 s; `throwOnError` varsayılan `false`. Zarf ve kod eşlemesi §8.2 ile
+birebir aynıdır.
+
+Anahtar **tarayıcıya İNMEZ**. Gömme jetonunu partner'ın kendi sunucusu üretir;
+tarayıcı yalnız o kısa ömürlü jetonu görür (§12.5).
+
+### 12.3 Metot kümesi — 20 metot
+
+| Alan | Metot |
+|---|---|
+| müşteri | `createCompany(input)` · `listCompanies(q?)` · `getCompany(ext)` · `updateCompany(ext, input)` · `suspendCompany(ext)` · `rotateKey(ext, 'api'\|'app')` |
+| domain | `addDomain(companyExt, input)` · `listDomains(companyExt)` · `getDomain(ext)` · `verifyDomain(ext)` · `removeDomain(ext)` |
+| izleme | `domainUptime(ext, range?)` · `companyUptime(companyExt, range?)` |
+| modül | `listModules(companyExt)` · `grantModule(companyExt, input)` · `revokeModule(companyExt, module)` |
+| kullanıcı | `createUser(companyExt, input)` · `listUsers(companyExt)` · `removeUser(companyExt, userExt)` |
+| gömme | `createEmbedToken(companyExt, input)` |
+
+`range`: `24h` \| `7d` \| `30d` (varsayılan `24h`).
+
+### 12.4 Idempotens
+
+Her yazma işlemi partner'ın kendi kimliğiyle (`external_id`) yapılır ve
+**idempotenttir**: aynı kimlikle ikinci çağrı yeni kayıt açmaz, `created:false`
+ile var olanı döner. Partner'ın webhook'u iki kez tetiklenebilir, kuyruğu
+yeniden deneyebilir — SDK bunu gizlemez, sunucu garanti eder.
+
+`createCompany` yanıtındaki `keys` (`api_key`, `app_key`) **yalnız ilk
+oluşturmada** gelir. Kaybedilirse `rotateKey` yenisini üretir; eskisini geri
+veren yol yoktur.
+
+### 12.5 Gömme jetonu
+
+`createEmbedToken` 120 saniye yaşayan, **tek kullanımlık** bir jeton döner.
+Tarayıcı `url` alanını `<iframe>`e koyar; panel ekranı partner'ın sayfasında
+kabuğu olmadan çizilir.
+
+Kısa ömür ve tek kullanım isteğe bağlı değildir: jeton URL'de gider, yani
+tarayıcı geçmişine, sunucu loglarına ve `Referer` başlığına düşer.
+
+### 12.6 TXT kuralı
+
+`addDomain` ile açılan domain `verified_via:'partner'` ile doğar. Bu **izleme,
+sohbet ve push** için yeter; **e-posta/SMS kampanyası** için yetmez
+(`can_send_campaigns:false`). Yanıttaki `dns` kaydını yayınlayıp
+`verifyDomain` çağırmak kapıyı açar.
+
+Gerekçe: gönderim zarfı Signalbird havuzundan çıkar, yani itibar bizimdir.
+"Bu domain adına gönderebilir" kararı partner'ın beyanına bırakılamaz.
+
+### 12.7 Retry
+
+Yoktur — §8.7 ile aynı ilke.

@@ -10,6 +10,8 @@
  *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
  *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
  *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
+ *  - `SignalbirdPartner`    → Partner (müşteri sağlama, modül yetkisi, gömme),
+ *                             `sbp_live_…` — yalnız sözleşmeli platformlar
  *
  * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
  * `@signalbird/sdk/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
@@ -18,6 +20,7 @@
 export { SignalbirdClient } from './client';
 export { SignalbirdMessaging } from './messaging';
 export { SignalbirdManagement } from './management';
+export { SignalbirdPartner } from './partner';
 export { verifyWebhook } from './webhook';
 export type {
   ManagementConfig,
@@ -76,6 +79,28 @@ export type {
   Paginated,
   MessagingErrorCode,
 } from './messaging-types';
+export type {
+  PartnerConfig,
+  AddDomainInput,
+  AddDomainResult,
+  CreateCompanyInput,
+  CreateCompanyResult,
+  DnsRecord,
+  EmbedModule,
+  EmbedToken,
+  EmbedTokenInput,
+  GrantModuleInput,
+  ModuleEntitlement,
+  PartnerCompany,
+  PartnerDomain,
+  PartnerOwnerInput,
+  PartnerUser,
+  PartnerUserInput,
+  UptimeIncident,
+  UptimeRange,
+  UptimeReport,
+  VerifyDomainResult,
+} from './partner-types';
 export {
   SignalbirdError,
   DEFAULT_BASE_URL,

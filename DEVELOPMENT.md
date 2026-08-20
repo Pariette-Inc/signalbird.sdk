@@ -2,6 +2,41 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 1.3.0 — 2026-08-20 · Partner yüzeyi + Signalbird posta taşıyıcısı
+
+Sözleşme: `docs/CONTRACT.md` §12 ve
+`../signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md`.
+
+### Beşinci yüzey: Partner
+
+`SignalbirdPartner` (node) / `Signalbird\Sdk\Partner\PartnerClient` (php),
+Laravel'de `Signalbird::partner()`. Anahtar `sbp_live_…`; `sb_`/`sbr_`/`sbw_pub_`
+kurulum anında `WRONG_KEY_TYPE`.
+
+20 metot: `createCompany` `listCompanies` `getCompany` `updateCompany`
+`suspendCompany` `rotateKey` · `addDomain` `listDomains` `getDomain`
+`verifyDomain` `removeDomain` · `domainUptime` `companyUptime` · `listModules`
+`grantModule` `revokeModule` · `createUser` `listUsers` `removeUser` ·
+`createEmbedToken`.
+
+Bu yüzey `CLAUDE.md`'deki "Admin yüzeyi OLMAYACAK" kuralının **bilinçli
+istisnasıdır** — gerekçesi CONTRACT §12.1'de yazılı. Kural `sb_` anahtarı için
+aynen duruyor.
+
+`scripts/check-parity.mjs` artık **beş** yüzey denetliyor (Partner: node + php).
+
+### Posta taşıyıcısı
+
+`Signalbird\Sdk\Mail\SignalbirdTransport` + sağlayıcıda `Mail::extend`.
+`MAIL_MAILER=signalbird` ile uygulamanın HER `Mailable`'ı
+`POST /v1/email/send` üzerinden gider ve Signalbird'de kayda geçer; hiçbir
+Mailable sınıfı değişmez. Alıcı başına ayrı istek (Signalbird'de her alıcı ayrı
+`message` kaydıdır). `From` görünen adı ve `Reply-To` korunur, zarf adresi
+havuzda kalır. Hata yutulmaz (`TransportException`). **Ek gönderimi henüz
+yok** — sessizce düşürmek yerine açıkça hata verir.
+
+Yeni konfig: `signalbird.partner_key`, `signalbird.mail_class`.
+
 ## 2026-08-19 — Yönetim yüzeyi + yedi yeni dil (v1.2.0)
 
 İstek tek cümleydi: *"müşteri ile ilgili her zerre kod SDK üzerinden

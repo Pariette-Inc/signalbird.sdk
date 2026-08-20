@@ -1,6 +1,6 @@
 {
   "name": "signalbird/sdk",
-  "description": "Signalbird SDK — Telsiz (Radio), Gönderim (Messaging) ve Yönetim (Management) istemcisi (PHP / Laravel)",
+  "description": "Signalbird SDK — Telsiz (Radio), Gönderim (Messaging), Yönetim (Management) ve Partner istemcisi (PHP / Laravel)",
   "type": "library",
   "keywords": [
     "signalbird",
@@ -17,7 +17,11 @@
     "push",
     "chat",
     "webhook",
-    "management"
+    "management",
+    "partner",
+    "provisioning",
+    "embed",
+    "mail-transport"
   ],
   "license": "MIT",
   "authors": [
@@ -94,6 +98,7 @@
     ]
   },
   "suggest": {
-    "monolog/monolog": "Laravel log kanalını Telsiz'e bağlamak için (SignalbirdLogHandler)"
+    "monolog/monolog": "Laravel log kanalını Telsiz'e bağlamak için (SignalbirdLogHandler)",
+    "symfony/mailer": "MAIL_MAILER=signalbird posta taşıyıcısı için (Laravel'de zaten vardır)"
   }
 }

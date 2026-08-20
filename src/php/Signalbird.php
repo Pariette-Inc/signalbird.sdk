@@ -4,6 +4,7 @@ namespace Signalbird\Sdk;
 
 use Signalbird\Sdk\Management\ManagementClient;
 use Signalbird\Sdk\Messaging\MessagingClient;
+use Signalbird\Sdk\Partner\PartnerClient;
 
 /**
  * Laravel dışı PHP projeleri için tekil erişim.
@@ -22,6 +23,8 @@ class Signalbird
     private static ?MessagingClient $messaging = null;
 
     private static ?ManagementClient $management = null;
+
+    private static ?PartnerClient $partner = null;
 
     public static function configure(
         string $apiKey,
@@ -94,5 +97,27 @@ class Signalbird
     public static function __callStatic(string $method, array $arguments): mixed
     {
         return self::client()->{$method}(...$arguments);
+    }
+
+    /** Partner istemcisini elle yapılandırır (`sbp_live_…`). */
+    public static function configurePartner(string $apiKey, ?string $baseUrl = null): void
+    {
+        self::$partner = new PartnerClient($apiKey, $baseUrl);
+    }
+
+    /**
+     * Partner istemcisi — YALNIZ sözleşmeli platformlar için. Yapılandırılmadıysa
+     * `SIGNALBIRD_PARTNER_KEY` okunur.
+     */
+    public static function partner(): PartnerClient
+    {
+        if (! self::$partner) {
+            self::$partner = new PartnerClient(
+                getenv('SIGNALBIRD_PARTNER_KEY') ?: '',
+                (getenv('SIGNALBIRD_MESSAGING_URL') ?: null) ?: (getenv('SIGNALBIRD_URL') ?: null),
+            );
+        }
+
+        return self::$partner;
     }
 }

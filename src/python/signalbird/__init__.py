@@ -23,7 +23,7 @@ from .management import SignalbirdManagement
 from .messaging import SignalbirdMessaging
 from .webhook import verify_webhook
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 __all__ = [
     "SignalbirdClient",

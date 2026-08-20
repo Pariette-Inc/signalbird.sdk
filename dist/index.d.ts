@@ -237,7 +237,14 @@ interface CreateContactListInput {
 interface CreateCampaignInput {
     name: string;
     channel: Channel;
-    list_id: number;
+    /**
+     * TXT ile doğrulanmış müşteri domaininin id'si — ZORUNLU. Doğrulanmamış
+     * domain adına kampanya açılamaz (`DOMAIN_NOT_VERIFIED`).
+     */
+    domain_id: number;
+    /** Hedef: `list_id` VEYA `segment_id` — ikisinden tam biri. */
+    list_id?: number;
+    segment_id?: number;
     subject?: string;
     body: string;
     template_hash?: string;
@@ -245,6 +252,10 @@ interface CreateCampaignInput {
     brand_id?: number;
     /** ISO-8601; verilirse parti `scheduled` açılır. */
     scheduled_at?: string;
+    /** E-postada görünen isim; zarf adresi sendsignalbird havuzunda kalır. */
+    from_name?: string;
+    /** Yanıt adresi (Reply-To). */
+    reply_to?: string;
     metadata?: Record<string, unknown>;
     external_ref?: string;
 }
@@ -744,6 +755,271 @@ declare class SignalbirdManagement {
     listAppDevices(id: number | string, query?: ListAppDevicesQuery): Promise<SbResult<Paginated<AppDevice>>>;
 }
 
+/**
+ * Partner (beşinci yüzey) tipleri.
+ *
+ * Sözleşme: docs/CONTRACT.md § 12 ve
+ * signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md.
+ *
+ * Alan adları API ile birebir aynıdır (snake_case) — SDK yeniden adlandırmaz.
+ */
+
+interface PartnerConfig {
+    /** `sbp_live_…` — sözleşmeli partner anahtarı. Tarayıcıya İNMEZ. */
+    apiKey: string;
+    baseUrl?: string;
+    timeout?: number;
+    throwOnError?: boolean;
+    debug?: boolean;
+}
+interface PartnerOwnerInput {
+    email: string;
+    name?: string;
+    /** Partner'ın kendi tarafındaki kullanıcı kimliği. */
+    external_id?: string;
+    locale?: string;
+}
+interface CreateCompanyInput {
+    /** Partner'ın kendi tarafındaki müşteri kimliği — idempotens anahtarı. */
+    external_id: string;
+    name: string;
+    owner: PartnerOwnerInput;
+    team_name?: string;
+    link_email?: string;
+}
+interface PartnerCompany {
+    id: number;
+    external_id: string;
+    name: string;
+    status: string;
+    billing_managed_by_partner: boolean;
+    modules: string[];
+    created_at: string | null;
+}
+interface CreateCompanyResult {
+    created: boolean;
+    company: PartnerCompany;
+    team: {
+        id: number | null;
+        name: string | null;
+    };
+    owner: {
+        id: number | null;
+        email: string | null;
+        name: string | null;
+    };
+    /** YALNIZ ilk oluşturmada döner. Kaybedilirse `rotateKey` yenisini üretir. */
+    keys?: {
+        api_key: string;
+        app_key: string;
+    };
+}
+interface DnsRecord {
+    host: string;
+    type: string;
+    value: string;
+}
+interface PartnerDomain {
+    id: number;
+    external_id: string;
+    domain: string;
+    verified_at: string | null;
+    /** `txt` | `partner` — partner beyanı kampanya için YETMEZ. */
+    verified_via: string | null;
+    can_send_campaigns: boolean;
+    is_active: boolean;
+}
+interface AddDomainInput {
+    external_id: string;
+    domain: string;
+    monitoring?: {
+        enabled?: boolean;
+        frequency?: number;
+    };
+}
+interface AddDomainResult {
+    created: boolean;
+    domain: PartnerDomain;
+    watcher: {
+        id: number;
+        frequency: number;
+    } | null;
+    dns: DnsRecord[];
+    note: string;
+}
+interface VerifyDomainResult {
+    verified: boolean;
+    domain: PartnerDomain;
+    dns: DnsRecord[];
+}
+interface UptimeIncident {
+    started_at: string;
+    ended_at: string | null;
+    duration_s: number;
+    reason: string | null;
+}
+interface UptimeReport {
+    domain?: string;
+    external_id?: string;
+    monitored?: boolean;
+    range: string;
+    /** Hiç kontrol yoksa `null` döner — %100 DEĞİL. */
+    uptime: number | null;
+    avg_response_ms: number | null;
+    checks: number;
+    status: string | null;
+    last_checked_at: string | null;
+    incidents: UptimeIncident[];
+}
+type UptimeRange = '24h' | '7d' | '30d';
+interface ModuleEntitlement {
+    module: string;
+    limits: Record<string, number>;
+    source: string;
+    expires_at: string | null;
+}
+interface GrantModuleInput {
+    module: string;
+    limits?: Record<string, number>;
+    /** Aboneliğin bittiği tarih; yenilemede tazelenmezse modül kendi kapanır. */
+    expires_at?: string;
+    reason?: string;
+}
+interface PartnerUserInput {
+    external_id: string;
+    email: string;
+    name?: string;
+    role?: 'owner' | 'billing' | 'member';
+    team_role?: string;
+    permissions?: string[];
+}
+interface PartnerUser {
+    id: number;
+    external_id: string | null;
+    email: string;
+    name: string | null;
+    role: string | null;
+}
+type EmbedModule = 'chat' | 'monitoring' | 'campaigns' | 'contacts' | 'radio';
+interface EmbedTokenInput {
+    user_external_id: string;
+    module: EmbedModule;
+    locale?: string;
+    theme?: 'light' | 'dark';
+    accent?: string;
+}
+interface EmbedToken {
+    url: string;
+    token: string;
+    expires_at: string;
+    ttl: number;
+}
+
+/**
+ * Partner istemcisi — BEŞİNCİ yüzey.
+ *
+ * Signalbird'ü kendi ürününün içinde satan sözleşmeli platform (veribenim,
+ * submitcms) müşterisini bununla sağlar ve yetkilendirir: company + takım +
+ * owner açar, domain ekler ve izlemeye alır, uptime okur, modül açar/kapatır,
+ * gömme jetonu üretir.
+ *
+ * **Bu, CLAUDE.md'deki "Admin yüzeyi OLMAYACAK" kuralının bilinçli
+ * istisnasıdır** ve istisna olduğu için ayrı anahtar türü taşır. Kural,
+ * müşterinin kendi anahtarıyla (`sb_`) şirket açamaması içindi; o kural aynen
+ * duruyor. Sözleşmeli partner farklı bir taraftır.
+ *
+ * Anahtar `sbp_live_…` **asla tarayıcıya inmez**: gömme jetonunu partner'ın
+ * kendi sunucusu üretir, tarayıcı yalnız o kısa ömürlü jetonu görür.
+ *
+ * Sözleşme: docs/CONTRACT.md § 12
+ */
+
+declare class SignalbirdPartner {
+    private readonly http;
+    constructor(config: PartnerConfig);
+    /**
+     * Company + takım + owner açar. **Idempotenttir**: aynı `external_id` ile
+     * ikinci çağrı yeni kayıt açmaz, `created:false` ile var olanı döner.
+     * Anahtarlar (`keys`) yalnız ilk oluşturmada gelir.
+     */
+    createCompany(input: CreateCompanyInput): Promise<SbResult<CreateCompanyResult>>;
+    listCompanies(query?: {
+        page?: number;
+        q?: string;
+        per_page?: number;
+    }): Promise<SbResult<{
+        data: PartnerCompany[];
+        meta: Record<string, number>;
+    }>>;
+    getCompany(externalId: string): Promise<SbResult<{
+        company: PartnerCompany;
+    }>>;
+    updateCompany(externalId: string, input: {
+        name?: string;
+        is_active?: boolean;
+    }): Promise<SbResult<{
+        company: PartnerCompany;
+    }>>;
+    /** Askıya alır — SİLMEZ. Müşterinin izleme ve mesaj geçmişi durur. */
+    suspendCompany(externalId: string): Promise<SbResult<{
+        company: PartnerCompany;
+    }>>;
+    rotateKey(externalId: string, type: 'api' | 'app'): Promise<SbResult<{
+        type: string;
+        key: string;
+    }>>;
+    /**
+     * Domain ekler ve (istenirse) izlemeye alır. Kayıt `verified_via:'partner'`
+     * ile doğar: izleme, sohbet ve push için yeter — **e-posta/SMS kampanyası
+     * için TXT şarttır**. Yanıttaki `dns` kaydını yayınlayıp `verifyDomain`
+     * çağırmak kapıyı açar.
+     */
+    addDomain(companyExternalId: string, input: AddDomainInput): Promise<SbResult<AddDomainResult>>;
+    listDomains(companyExternalId: string): Promise<SbResult<{
+        data: PartnerDomain[];
+    }>>;
+    getDomain(externalId: string): Promise<SbResult<{
+        domain: PartnerDomain;
+    }>>;
+    /** TXT'yi hemen sorgular; eşleşirse domain kampanya kapısından geçer olur. */
+    verifyDomain(externalId: string): Promise<SbResult<VerifyDomainResult>>;
+    removeDomain(externalId: string): Promise<SbResult<{
+        deleted: boolean;
+    }>>;
+    domainUptime(externalId: string, range?: UptimeRange): Promise<SbResult<UptimeReport>>;
+    /** Tek istekte müşterinin tüm domainleri — liste ekranı N+1 atmasın. */
+    companyUptime(companyExternalId: string, range?: UptimeRange): Promise<SbResult<{
+        range: string;
+        data: UptimeReport[];
+    }>>;
+    listModules(companyExternalId: string): Promise<SbResult<{
+        data: ModuleEntitlement[];
+    }>>;
+    /** "Bu müşteri şu modül için ödeme yaptı, kullanabilir." */
+    grantModule(companyExternalId: string, input: GrantModuleInput): Promise<SbResult<ModuleEntitlement>>;
+    /** Yalnız partner'ın KENDİ verdiği hakkı geri alır; plan hakkına dokunmaz. */
+    revokeModule(companyExternalId: string, module: string): Promise<SbResult<{
+        removed: boolean;
+    }>>;
+    createUser(companyExternalId: string, input: PartnerUserInput): Promise<SbResult<{
+        created: boolean;
+        user: PartnerUser;
+    }>>;
+    listUsers(companyExternalId: string): Promise<SbResult<{
+        data: PartnerUser[];
+    }>>;
+    /** Üyeliği kaldırır, kişinin Signalbird hesabını SİLMEZ. */
+    removeUser(companyExternalId: string, userExternalId: string): Promise<SbResult<{
+        removed: boolean;
+    }>>;
+    /**
+     * Panel ekranını partner sayfasına gömmek için kısa ömürlü jeton üretir.
+     * 120 saniye yaşar ve TEK KULLANIMLIKTIR — jeton URL'de gider, log ve
+     * `Referer` başlığına düşer.
+     */
+    createEmbedToken(companyExternalId: string, input: EmbedTokenInput): Promise<SbResult<EmbedToken>>;
+}
+
 declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: string | null | undefined, secret: string): boolean;
 
 /**
@@ -758,6 +1034,8 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
  *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
  *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
  *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
+ *  - `SignalbirdPartner`    → Partner (müşteri sağlama, modül yetkisi, gömme),
+ *                             `sbp_live_…` — yalnız sözleşmeli platformlar
  *
  * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
  * `@signalbird/sdk/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
@@ -789,4 +1067,4 @@ declare function management(config?: Partial<ManagementConfig>): SignalbirdManag
 /** Test ve sıcak yeniden yükleme için yönetim istemcisini sıfırlar. */
 declare function resetManagement(): void;
 
-export { type AppDevice, type AppInput, type AppPlatform, type AppRecord, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateContactListInput, type CreateRadioProjectInput, DEFAULT_BASE_URL, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type Paginated$1 as Paginated, type RadioChannel, type RadioChannelInput, type RadioEvent, type RadioLevel, type RadioProject, type RadioProjectCreated, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, type SmsPreview, type StartConversationInput, type UpdateConversationInput, type UpdateRadioProjectInput, type UpdateVisitorInput, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };
+export { type AddDomainInput, type AddDomainResult, type AppDevice, type AppInput, type AppPlatform, type AppRecord, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateCompanyInput, type CreateCompanyResult, type CreateContactListInput, type CreateRadioProjectInput, DEFAULT_BASE_URL, type DnsRecord, type EmbedModule, type EmbedToken, type EmbedTokenInput, type GrantModuleInput, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type ModuleEntitlement, type Paginated$1 as Paginated, type PartnerCompany, type PartnerConfig, type PartnerDomain, type PartnerOwnerInput, type PartnerUser, type PartnerUserInput, type RadioChannel, type RadioChannelInput, type RadioEvent, type RadioLevel, type RadioProject, type RadioProjectCreated, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, SignalbirdPartner, type SmsPreview, type StartConversationInput, type UpdateConversationInput, type UpdateRadioProjectInput, type UpdateVisitorInput, type UptimeIncident, type UptimeRange, type UptimeReport, type VerifyDomainResult, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };

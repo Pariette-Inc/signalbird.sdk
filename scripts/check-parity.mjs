@@ -5,12 +5,15 @@
  * "Tek paket, tek davranış" iddiasını ayakta tutan şey budur — bir dile metot
  * eklenip diğerine eklenmezse CI kırılır.
  *
- * Dört yüzey, dört küme:
+ * Beş yüzey, beş küme:
  *   - Telsiz    (docs/CONTRACT.md § 4)   — 7 metot   · sunucu dilleri
  *   - Gönderim  (docs/CONTRACT.md § 8.3) — 20 metot  · sunucu dilleri
  *   - Yönetim   (docs/CONTRACT.md § 10)  — 40 metot  · sunucu dilleri
  *   - Uygulama  (docs/CONTRACT.md § 11)  — 17 metot  · istemci dilleri
  *                                                     (TS, Swift, Kotlin)
+ *   - Partner   (docs/CONTRACT.md § 12)  — 20 metot  · node + php
+ *       Yalnız iki dil: partner entegrasyonu sunucu tarafında ve sözleşmeli
+ *       platformlarda yaşar; mobil dile ya da tarayıcıya İNMEZ.
  * Adlar camelCase ve diller arasında birebirdir; her dil kendi yazım
  * geleneğini korur (`send_email` / `SendEmail` / `sendEmail` aynı metottur).
  *
@@ -160,6 +163,24 @@ const SURFACES = [
       { name: 'typescript', file: 'src/app/client.ts', pattern: NODE_METHOD },
       { name: 'swift', file: 'src/swift/Sources/Signalbird/SignalbirdApp.swift', pattern: SWIFT_METHOD },
       { name: 'kotlin', file: 'src/kotlin/src/main/kotlin/io/signalbird/sdk/SignalbirdApp.kt', pattern: KOTLIN_METHOD },
+    ],
+  },
+  {
+    name: 'Partner',
+    ref: 'docs/CONTRACT.md § 12',
+    contract: [
+      'createCompany', 'listCompanies', 'getCompany', 'updateCompany', 'suspendCompany', 'rotateKey',
+      'addDomain', 'listDomains', 'getDomain', 'verifyDomain', 'removeDomain',
+      'domainUptime', 'companyUptime',
+      'listModules', 'grantModule', 'revokeModule',
+      'createUser', 'listUsers', 'removeUser',
+      'createEmbedToken',
+    ],
+    aliases: noProto({}),
+    ignored: new Set(['constructor', '__construct', 'request', 'transport', 'fail', 'buildQuery']),
+    languages: [
+      { name: 'node', file: 'src/node/partner.ts', pattern: NODE_METHOD },
+      { name: 'php', file: 'src/php/Partner/PartnerClient.php', pattern: PHP_METHOD },
     ],
   },
 ]

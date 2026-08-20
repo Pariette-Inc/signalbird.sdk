@@ -41,4 +41,19 @@ return [
     /* Gönderim istek zaman aşımı (sn). Toplu kişi yükleme uzun sürebilir. */
     'messaging_timeout' => env('SIGNALBIRD_MESSAGING_TIMEOUT', 15),
 
+
+    /*
+    | Partner anahtarı (`sbp_live_…`) — YALNIZ sözleşmeli platformlar için
+    | (veribenim, submitcms). Müşteri sağlama, modül yetkisi ve gömme jetonu
+    | bu anahtarla yapılır. Tarayıcıya İNMEZ.
+    */
+    'partner_key' => env('SIGNALBIRD_PARTNER_KEY', ''),
+
+    /*
+    | Posta taşıyıcısı (`MAIL_MAILER=signalbird`) hangi ileti sınıfını
+    | kullansın. Hukuki kapı: `commercial` iletide RFC 8058 çıkış zorunludur ve
+    | onu kampanya yolu üretir — bu taşıyıcıdan işlemsel posta çıkar.
+    */
+    'mail_class' => env('SIGNALBIRD_MAIL_CLASS', 'transactional'),
+
 ];

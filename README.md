@@ -9,8 +9,9 @@ kodla da yapılabilir.
 | **Gönderim** (Messaging) | e-posta, SMS, push gönderir; kişi, liste, kampanya yönetir; mesaj durumu okur; webhook imzası doğrular | `sb_…` | yalnız sunucu |
 | **Yönetim** (Management) | Telsiz projesi/kanalı açar, olay akışını okur, **sohbet gelen kutusunu** işler, uygulama ve cihaz yönetir | `sb_…` + scope | yalnız sunucu |
 | **Uygulama** (App) | müşterinizin **son kullanıcısına** canlı sohbet + push cihaz kaydı | `sbw_pub_…` | web, iOS, Android |
+| **Partner** | Signalbird'ü kendi ürününde satan **sözleşmeli platform** müşterisini sağlar ve yetkilendirir | `sbp_live_…` | yalnız sunucu |
 
-Beşinci bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
+Bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
 (`signalbird.js`), siteye tek `<script>` ile gömülür.
 
 ### Dil matrisi
@@ -401,6 +402,49 @@ await management.CreateRadioProjectAsync(new { name = "ödeme-servisi" });
 ```
 
 Tam liste (40 metot): `docs/CONTRACT.md § 10`.
+
+## Partner — müşteri sağlama
+
+Signalbird'ü kendi ürününüzün içinde satıyorsanız (sözleşmeli platform) bu yüzey
+sizindir: müşteri hesabı açar, domain ekleyip izlemeye alır, uptime okur, ödeme
+alındığında modül açar ve panel ekranını kendi sayfanıza gömersiniz.
+
+```ts
+import { SignalbirdPartner } from '@signalbird/sdk'
+
+const partner = new SignalbirdPartner({ apiKey: process.env.SIGNALBIRD_PARTNER_KEY! })
+
+// Müşteri açıldı — idempotent: aynı external_id ikinci kez yeni hesap AÇMAZ
+const { data } = await partner.createCompany({
+  external_id: 'sc_9911',
+  name: 'Acme',
+  owner: { email: 'sahip@acme.com', name: 'Acme Sahibi', external_id: 'u_88' },
+})
+
+// Domain açıldı → anında izlemeye girsin
+await partner.addDomain('sc_9911', {
+  external_id: 'd_5',
+  domain: 'acme.com',
+  monitoring: { enabled: true, frequency: 5 },
+})
+
+// Ödeme alındı → modül açılsın
+await partner.grantModule('sc_9911', { module: 'email', expires_at: '2027-08-20' })
+
+// Kendi domain listesi ekranınızda uptime
+const uptime = await partner.companyUptime('sc_9911', '7d')
+
+// Sohbet ekranını kendi sayfanıza gömün (jetonu SUNUCUNUZ üretir)
+const embed = await partner.createEmbedToken('sc_9911', {
+  user_external_id: 'u_88', module: 'chat', theme: 'dark',
+})
+// → <iframe src={embed.data.url} />
+```
+
+PHP'de `Signalbird::partner()->createCompany([...])`.
+
+İki kural: **anahtar tarayıcıya inmez** ve **TXT'siz domain kampanya
+gönderemez** (izleme, sohbet ve push açıktır). Ayrıntı: `docs/CONTRACT.md § 12`.
 
 ## Uygulama (App) — kendi sohbet arayüzünüz
 
