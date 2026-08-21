@@ -2,6 +2,33 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## Yayın adları — 2026-08-21
+
+| Kayıt defteri | Ad | Durum |
+|---|---|---|
+| npm | `signalbird` (kapsamsız) | ad müsait, yayınlanmadı |
+| Packagist | `pariette/signalbird` | ad müsait, kaydedilmedi |
+| PyPI | `signalbird` | ad müsait, yayınlanmadı |
+| Go | `github.com/Pariette-Inc/signalbird.sdk` | modül yolu depo adresidir, değiştirilemez |
+| NuGet | `Signalbird.Sdk` | değişmedi |
+| Maven | `io.signalbird:signalbird-sdk` | değişmedi |
+
+npm'de kapsam kaldırıldı: `@signalbird/sdk` → `signalbird`, alt girişler
+`signalbird/browser` · `/app` · `/react` · `/vue` · `/angular` · `/react-native`.
+
+Composer'da **tek kelimelik ad mümkün değil**: Packagist paket adları zorunlu
+olarak `satıcı/paket` biçiminde. `pariette/signalbird` seçildi.
+
+PHP ad uzayı (`Signalbird\Sdk\…`) ve Kotlin paket yolu (`io.signalbird.sdk`)
+DEĞİŞMEDİ — paket adından bağımsızdırlar, değiştirmek her tüketicinin kodunu
+kırardı.
+
+> **Tüketiciler henüz eski adda.** `veribenim.api` ve `submit.api`
+> `signalbird/sdk`'yi GitHub VCS girdisiyle çekiyor. Composer paket adını
+> UZAKTAKİ depodan okuduğu için yeni ad ancak bu depo push edildikten sonra
+> çözülebilir; erken çevirmek deploy'u kırardı. Yayından sonra iki repoda da:
+> `composer require pariette/signalbird:^1.4 && composer remove signalbird/sdk`
+
 ## 1.4.0 — 2026-08-21 · Partner beş dilde, sohbet tetikleyicileri ve raporu
 
 ### Partner yüzeyi tamamlandı
@@ -193,7 +220,7 @@ Telsiz modeline göre baştan yazıldı.
 |---|---|---|
 | `signalbird` (Node 18+) | `Authorization: Bearer sbr_live_…` | `POST /api/v1/radio/log`, `POST /api/v1/radio/log/batch` |
 | `signalbird/browser` | `X-Signalbird-Key: sbr_pub_…` (+ `Origin`) | aynı uçlar; sekme kapanışında `?key=` sorgu parametresiyle `sendBeacon` |
-| `signalbird/sdk` (PHP/Laravel) | `Authorization: Bearer sbr_live_…` | aynı uçlar |
+| `pariette/signalbird` (PHP/Laravel) | `Authorization: Bearer sbr_live_…` | aynı uçlar |
 
 **Kararlar ve gerekçeleri**
 

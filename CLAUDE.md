@@ -41,7 +41,7 @@ kökte arar. Kaynaklar dile göre ayrılır, her manifest kendi dizinini göster
 ```
 signalbird.sdk/
 ├── package.json            # npm       → signalbird       (src/node, browser, app, react, vue, angular, react-native)
-├── composer.json           # Packagist → signalbird/sdk        (psr-4: src/php)
+├── composer.json           # Packagist → pariette/signalbird        (psr-4: src/php)
 ├── pyproject.toml          # PyPI      → signalbird            (src/python)
 ├── go.mod                  # Go        → …/signalbird.sdk      (src/go/signalbird)
 ├── Package.swift           # SPM       → Signalbird            (src/swift/Sources)

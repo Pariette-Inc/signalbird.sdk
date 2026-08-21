@@ -24,7 +24,7 @@ Bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
 | Vue 3 | ✓ | — | — | ✓ | `signalbird/vue` |
 | Angular | ✓ | — | — | ✓ | `signalbird/angular` |
 | React Native / Expo | ✓ | — | — | ✓ | `signalbird/react-native` |
-| PHP / Laravel | ✓ | ✓ | ✓ | — | `composer require signalbird/sdk` |
+| PHP / Laravel | ✓ | ✓ | ✓ | — | `composer require pariette/signalbird` |
 | Python | ✓ | ✓ | ✓ | — | `pip install signalbird` |
 | Go | ✓ | ✓ | ✓ | — | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET / ASP.NET Core | ✓ | ✓ | ✓ | — | `dotnet add package Signalbird.Sdk` |
@@ -59,7 +59,7 @@ olay   →  tek bir kayıt
 | | Sunucu | Tarayıcı |
 |---|---|---|
 | Anahtar | `sbr_live_…` **gizli** | `sbr_pub_…` **açık** |
-| Giriş noktası | `signalbird` · `signalbird/sdk` | `signalbird/browser` |
+| Giriş noktası | `signalbird` · `pariette/signalbird` | `signalbird/browser` |
 | Yazabildiği kanal | hepsi | yalnız izin verilenler |
 | Kısıt | — | yalnız izinli alan adlarından |
 
@@ -74,7 +74,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Node.js, Next.js (sunucu), Express, NestJS, Fastify | `npm install signalbird` |
 | React, Vue, Angular, Svelte, düz JS (tarayıcı) | `npm install signalbird` → `/browser`, `/app`, `/react`, `/vue`, `/angular` |
 | React Native, Expo | `npm install signalbird` → `/react-native` |
-| PHP, Laravel | `composer require signalbird/sdk` |
+| PHP, Laravel | `composer require pariette/signalbird` |
 | Python (Django, FastAPI, Flask, Celery) | `pip install signalbird` |
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
