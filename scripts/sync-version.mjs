@@ -44,7 +44,7 @@ if (checkTagIndex !== -1) {
 
 /** Manifestinde "version" alanı taşıyan diller (kökte dururlar). */
 const TARGETS = [
-  'package.json',   // npm → @signalbird/sdk
+  'package.json',   // npm → signalbird
 ]
 
 /**

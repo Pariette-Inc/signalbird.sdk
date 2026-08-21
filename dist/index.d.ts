@@ -13,7 +13,7 @@ interface SignalbirdConfig {
      * Sunucu anahtarı (`sbr_live_…`).
      *
      * Bu anahtar GİZLİDİR ve tarayıcıya gömülemez: sunucu `Origin` başlığı taşıyan
-     * istekleri reddeder. Tarayıcı için `@signalbird/sdk/browser` ve açık anahtar
+     * istekleri reddeder. Tarayıcı için `signalbird/browser` ve açık anahtar
      * (`sbr_pub_…`) kullanılır.
      */
     apiKey: string;
@@ -1123,10 +1123,10 @@ declare class SignalbirdPartner {
 declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: string | null | undefined, secret: string): boolean;
 
 /**
- * @signalbird/sdk — sunucu tarafı giriş noktası.
+ * signalbird — sunucu tarafı giriş noktası.
  *
  * Next.js sunucu bileşenleri, API route'ları, Express/Fastify/NestJS ve düz
- * Node betikleri buradan alır. TARAYICI için `@signalbird/sdk/browser`
+ * Node betikleri buradan alır. TARAYICI için `signalbird/browser`
  * kullanılır — gizli anahtar istemciye inmez.
  *
  * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
@@ -1138,7 +1138,7 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
  *                             `sbp_live_…` — yalnız sözleşmeli platformlar
  *
  * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
- * `@signalbird/sdk/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
+ * `signalbird/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
  * `/angular`, `/react-native`.
  */
 
@@ -1148,7 +1148,7 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
  * `SIGNALBIRD_KEY` okunur. Uygulamanın her köşesinde istemci kurup anahtarı
  * elden ele taşımak yerine tek çağrı yeter:
  *
- *   import { signalbird } from '@signalbird/sdk'
+ *   import { signalbird } from 'signalbird'
  *   await signalbird().critical('critical', 'ödeme servisi öldü')
  */
 declare function signalbird(config?: Partial<SignalbirdConfig>): SignalbirdClient;
@@ -1160,7 +1160,7 @@ declare function resetSignalbird(): void;
  * `SIGNALBIRD_API_KEY` okunur (yoksa `SIGNALBIRD_MESSAGING_KEY` — ikisi de aynı
  * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
  *
- *   import { management } from '@signalbird/sdk'
+ *   import { management } from 'signalbird'
  *   await management().createRadioProject({ name: 'ödeme-servisi' })
  */
 declare function management(config?: Partial<ManagementConfig>): SignalbirdManagement;

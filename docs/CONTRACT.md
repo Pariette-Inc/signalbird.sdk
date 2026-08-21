@@ -101,7 +101,7 @@ istemcisiyle karışmaz. Yalnız **sunucuda** çalışır; tarayıcı girişi yo
 
 | Dil | Sınıf |
 |---|---|
-| Node | `SignalbirdMessaging` (`@signalbird/sdk`) |
+| Node | `SignalbirdMessaging` (`signalbird`) |
 | PHP | `Signalbird\Sdk\Messaging\MessagingClient` — Laravel: `Signalbird::messaging()` |
 
 ### 8.1 Kurucu
@@ -273,7 +273,7 @@ olmayacaktır — onlar panelin ve şirket sahibinin işidir.
 
 | Dil | Sınıf |
 |---|---|
-| Node | `SignalbirdManagement` (`@signalbird/sdk`) |
+| Node | `SignalbirdManagement` (`signalbird`) |
 | PHP | `Signalbird\Sdk\Management\ManagementClient` — Laravel: `Signalbird::management()` |
 | Python | `signalbird.SignalbirdManagement` |
 | Go | `signalbird.Management` |
@@ -385,11 +385,11 @@ açmak hariç).
 
 | Dil | Sınıf | Giriş |
 |---|---|---|
-| TypeScript | `SignalbirdApp`, `ChatSession` | `@signalbird/sdk/app` |
-| React / Next.js | `SignalbirdProvider`, `useChat` | `@signalbird/sdk/react` |
-| Vue 3 | `signalbirdPlugin`, `useChat` | `@signalbird/sdk/vue` |
-| Angular | `SignalbirdService`, `provideSignalbird` | `@signalbird/sdk/angular` |
-| React Native / Expo | `useNativeChat`, `asyncStorageAdapter` | `@signalbird/sdk/react-native` |
+| TypeScript | `SignalbirdApp`, `ChatSession` | `signalbird/app` |
+| React / Next.js | `SignalbirdProvider`, `useChat` | `signalbird/react` |
+| Vue 3 | `signalbirdPlugin`, `useChat` | `signalbird/vue` |
+| Angular | `SignalbirdService`, `provideSignalbird` | `signalbird/angular` |
+| React Native / Expo | `useNativeChat`, `asyncStorageAdapter` | `signalbird/react-native` |
 | Swift (iOS) | `SignalbirdApp` | SPM `Signalbird` |
 | Kotlin (Android) | `SignalbirdApp` | Maven `io.signalbird:signalbird-sdk` |
 | Kod yazmadan | global `Signalbird` | `<script src=…/sdk/v1/signalbird.js>` (§9) |
@@ -463,7 +463,7 @@ kuralının aynısı, artık dört dilde geçerli.
 
 | Dil | Sınıf |
 |---|---|
-| Node | `SignalbirdPartner` (`@signalbird/sdk`) |
+| Node | `SignalbirdPartner` (`signalbird`) |
 | PHP | `Signalbird\Sdk\Partner\PartnerClient` — Laravel: `Signalbird::partner()` |
 | Python | `signalbird.SignalbirdPartner` |
 | Go | `signalbird.Partner` |

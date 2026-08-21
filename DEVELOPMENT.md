@@ -144,7 +144,7 @@ Paket artık üç yüzey taşır; Telsiz istemcisine dokunulmadı.
 
 | Yüzey | Giriş noktası | Kimlik | Uçlar |
 |---|---|---|---|
-| Gönderim — Node | `@signalbird/sdk` → `SignalbirdMessaging`, `verifyWebhook` | `Authorization: Bearer sb_…` | `POST /v1/email/send`, `/v1/sms/send`, `/v1/sms/preview`, `/v1/push/send`; `GET/POST /v1/contacts`, `PATCH/DELETE /v1/contacts/{id}`, `POST /v1/contacts/bulk`; `GET/POST /v1/contact-lists`, `DELETE /v1/contact-lists/{id}`; `GET/POST /v1/campaigns`, `GET /v1/campaigns/{id}`, `POST /v1/campaigns/{id}/cancel`, `GET /v1/campaigns/{id}/messages`; `GET /v1/messages`, `GET /v1/messages/{id}` |
+| Gönderim — Node | `signalbird` → `SignalbirdMessaging`, `verifyWebhook` | `Authorization: Bearer sb_…` | `POST /v1/email/send`, `/v1/sms/send`, `/v1/sms/preview`, `/v1/push/send`; `GET/POST /v1/contacts`, `PATCH/DELETE /v1/contacts/{id}`, `POST /v1/contacts/bulk`; `GET/POST /v1/contact-lists`, `DELETE /v1/contact-lists/{id}`; `GET/POST /v1/campaigns`, `GET /v1/campaigns/{id}`, `POST /v1/campaigns/{id}/cancel`, `GET /v1/campaigns/{id}/messages`; `GET /v1/messages`, `GET /v1/messages/{id}` |
 | Gönderim — PHP | `Signalbird\Sdk\Messaging\MessagingClient`, `Messaging\Webhook::verify()`, Laravel `Signalbird::messaging()` (`SIGNALBIRD_MESSAGING_KEY`) | aynı | aynı |
 | Widget | `dist/signalbird.js` (IIFE, global `Signalbird`) → `signalbird.web/public/sdk/v1/signalbird.js` | `X-Signalbird-App-Key: sbw_pub_…` + `X-Signalbird-Visitor: <sır>` | `POST /v1/sdk/bootstrap`, `POST /v1/sdk/chat/session`, `GET/POST /v1/sdk/chat/conversations`, `GET …/{id}?after=&limit=`, `POST …/{id}/messages`, `PATCH/DELETE …/{id}/messages/{mid}`, `POST …/{id}/messages/{mid}/reactions`, `POST …/{id}/typing`, `POST …/{id}/read`, `POST …/{id}/attachments`, `POST …/{id}/close`, `POST …/{id}/rate`; `POST /v1/sdk/devices`, `POST /v1/sdk/identify` |
 
@@ -191,8 +191,8 @@ Telsiz modeline göre baştan yazıldı.
 
 | Giriş noktası | Kimlik | Endpoint |
 |---|---|---|
-| `@signalbird/sdk` (Node 18+) | `Authorization: Bearer sbr_live_…` | `POST /api/v1/radio/log`, `POST /api/v1/radio/log/batch` |
-| `@signalbird/sdk/browser` | `X-Signalbird-Key: sbr_pub_…` (+ `Origin`) | aynı uçlar; sekme kapanışında `?key=` sorgu parametresiyle `sendBeacon` |
+| `signalbird` (Node 18+) | `Authorization: Bearer sbr_live_…` | `POST /api/v1/radio/log`, `POST /api/v1/radio/log/batch` |
+| `signalbird/browser` | `X-Signalbird-Key: sbr_pub_…` (+ `Origin`) | aynı uçlar; sekme kapanışında `?key=` sorgu parametresiyle `sendBeacon` |
 | `signalbird/sdk` (PHP/Laravel) | `Authorization: Bearer sbr_live_…` | aynı uçlar |
 
 **Kararlar ve gerekçeleri**

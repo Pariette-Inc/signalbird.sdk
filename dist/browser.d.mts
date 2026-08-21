@@ -1,5 +1,5 @@
 /**
- * @signalbird/sdk/browser — tarayıcı istemcisi.
+ * signalbird/browser — tarayıcı istemcisi.
  *
  * Ayrı bir giriş noktası olmasının sebebi teknik değil, GÜVENLİKTİR: sunucu
  * anahtarı istemciye gömülemez ve sunucu `Origin` başlığı taşıyan bir istekte

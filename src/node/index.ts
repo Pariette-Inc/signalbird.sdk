@@ -1,8 +1,8 @@
 /**
- * @signalbird/sdk — sunucu tarafı giriş noktası.
+ * signalbird — sunucu tarafı giriş noktası.
  *
  * Next.js sunucu bileşenleri, API route'ları, Express/Fastify/NestJS ve düz
- * Node betikleri buradan alır. TARAYICI için `@signalbird/sdk/browser`
+ * Node betikleri buradan alır. TARAYICI için `signalbird/browser`
  * kullanılır — gizli anahtar istemciye inmez.
  *
  * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
@@ -14,7 +14,7 @@
  *                             `sbp_live_…` — yalnız sözleşmeli platformlar
  *
  * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
- * `@signalbird/sdk/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
+ * `signalbird/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
  * `/angular`, `/react-native`.
  */
 export { SignalbirdClient } from './client';
@@ -124,7 +124,7 @@ let singleton: SignalbirdClient | null = null;
  * `SIGNALBIRD_KEY` okunur. Uygulamanın her köşesinde istemci kurup anahtarı
  * elden ele taşımak yerine tek çağrı yeter:
  *
- *   import { signalbird } from '@signalbird/sdk'
+ *   import { signalbird } from 'signalbird'
  *   await signalbird().critical('critical', 'ödeme servisi öldü')
  */
 export function signalbird(config?: Partial<SignalbirdConfig>): SignalbirdClient {
@@ -161,7 +161,7 @@ let managementSingleton: SignalbirdManagement | null = null;
  * `SIGNALBIRD_API_KEY` okunur (yoksa `SIGNALBIRD_MESSAGING_KEY` — ikisi de aynı
  * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
  *
- *   import { management } from '@signalbird/sdk'
+ *   import { management } from 'signalbird'
  *   await management().createRadioProject({ name: 'ödeme-servisi' })
  */
 export function management(config?: Partial<ManagementConfig>): SignalbirdManagement {

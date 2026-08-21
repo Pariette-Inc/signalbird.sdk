@@ -2,7 +2,7 @@ import { InjectionKey, Ref, App } from 'vue';
 import { SignalbirdApp, SessionInput, ChatState, IdentifyInput, RegisterDeviceInput, AppConfig } from './app.mjs';
 
 /**
- * `@signalbird/sdk/vue` — Vue 3 eklentisi ve composable'ları.
+ * `signalbird/vue` — Vue 3 eklentisi ve composable'ları.
  *
  * React uyarlamasıyla aynı `ChatSession` motorunu kullanır; buradaki tek iş
  * durumu Vue'nun tepkimeli sistemine bağlamaktır.

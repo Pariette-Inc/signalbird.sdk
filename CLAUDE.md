@@ -40,7 +40,7 @@ kökte arar. Kaynaklar dile göre ayrılır, her manifest kendi dizinini göster
 
 ```
 signalbird.sdk/
-├── package.json            # npm       → @signalbird/sdk       (src/node, browser, app, react, vue, angular, react-native)
+├── package.json            # npm       → signalbird       (src/node, browser, app, react, vue, angular, react-native)
 ├── composer.json           # Packagist → signalbird/sdk        (psr-4: src/php)
 ├── pyproject.toml          # PyPI      → signalbird            (src/python)
 ├── go.mod                  # Go        → …/signalbird.sdk      (src/go/signalbird)
@@ -55,7 +55,7 @@ signalbird.sdk/
 │   └── publish-web.mjs     # dist/signalbird.js → ../signalbird.web/public/sdk/v1/
 ├── src/
 │   ├── node/               # TS sunucu: client (Telsiz), messaging + webhook, management, http
-│   ├── browser/            # Telsiz tarayıcı istemcisi (@signalbird/sdk/browser)
+│   ├── browser/            # Telsiz tarayıcı istemcisi (signalbird/browser)
 │   ├── app/                # Son kullanıcı yüzeyi: client.ts + session.ts (ChatSession)
 │   ├── react/ vue/ angular/ react-native/   # app'in üstüne oturan ince uyarlamalar
 │   ├── widget/             # Hazır sohbet widget'ı (chat.ts, ui/, store, poller, i18n)

@@ -18,12 +18,12 @@ Bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
 
 | Dil / platform | Telsiz | Gönderim | Yönetim | Uygulama | Kurulum |
 |---|:--:|:--:|:--:|:--:|---|
-| Node.js / TypeScript | ✓ | ✓ | ✓ | ✓ | `npm i @signalbird/sdk` |
-| Tarayıcı (düz JS) | ✓ | — | — | ✓ | `@signalbird/sdk/browser` · `/app` |
-| React / Next.js | ✓ | ✓ | ✓ | ✓ | `@signalbird/sdk/react` |
-| Vue 3 | ✓ | — | — | ✓ | `@signalbird/sdk/vue` |
-| Angular | ✓ | — | — | ✓ | `@signalbird/sdk/angular` |
-| React Native / Expo | ✓ | — | — | ✓ | `@signalbird/sdk/react-native` |
+| Node.js / TypeScript | ✓ | ✓ | ✓ | ✓ | `npm i signalbird` |
+| Tarayıcı (düz JS) | ✓ | — | — | ✓ | `signalbird/browser` · `/app` |
+| React / Next.js | ✓ | ✓ | ✓ | ✓ | `signalbird/react` |
+| Vue 3 | ✓ | — | — | ✓ | `signalbird/vue` |
+| Angular | ✓ | — | — | ✓ | `signalbird/angular` |
+| React Native / Expo | ✓ | — | — | ✓ | `signalbird/react-native` |
 | PHP / Laravel | ✓ | ✓ | ✓ | — | `composer require signalbird/sdk` |
 | Python | ✓ | ✓ | ✓ | — | `pip install signalbird` |
 | Go | ✓ | ✓ | ✓ | — | `go get github.com/Pariette-Inc/signalbird.sdk` |
@@ -59,7 +59,7 @@ olay   →  tek bir kayıt
 | | Sunucu | Tarayıcı |
 |---|---|---|
 | Anahtar | `sbr_live_…` **gizli** | `sbr_pub_…` **açık** |
-| Giriş noktası | `@signalbird/sdk` · `signalbird/sdk` | `@signalbird/sdk/browser` |
+| Giriş noktası | `signalbird` · `signalbird/sdk` | `signalbird/browser` |
 | Yazabildiği kanal | hepsi | yalnız izin verilenler |
 | Kısıt | — | yalnız izinli alan adlarından |
 
@@ -71,9 +71,9 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 
 | Dil / çatı | Kurulum |
 |---|---|
-| Node.js, Next.js (sunucu), Express, NestJS, Fastify | `npm install @signalbird/sdk` |
-| React, Vue, Angular, Svelte, düz JS (tarayıcı) | `npm install @signalbird/sdk` → `/browser`, `/app`, `/react`, `/vue`, `/angular` |
-| React Native, Expo | `npm install @signalbird/sdk` → `/react-native` |
+| Node.js, Next.js (sunucu), Express, NestJS, Fastify | `npm install signalbird` |
+| React, Vue, Angular, Svelte, düz JS (tarayıcı) | `npm install signalbird` → `/browser`, `/app`, `/react`, `/vue`, `/angular` |
+| React Native, Expo | `npm install signalbird` → `/react-native` |
 | PHP, Laravel | `composer require signalbird/sdk` |
 | Python (Django, FastAPI, Flask, Celery) | `pip install signalbird` |
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
@@ -88,7 +88,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 ## Node.js / TypeScript
 
 ```ts
-import { signalbird } from '@signalbird/sdk'
+import { signalbird } from 'signalbird'
 
 // SIGNALBIRD_KEY ortam değişkeninden okunur
 await signalbird().critical('critical', 'ödeme servisi yanıt vermiyor', {
@@ -102,7 +102,7 @@ await signalbird().info('info', 'ahmet@x.com yeni hesap oluşturdu')
 Kendi istemcinizi kurmak isterseniz:
 
 ```ts
-import { SignalbirdClient } from '@signalbird/sdk'
+import { SignalbirdClient } from 'signalbird'
 
 const sb = new SignalbirdClient({
   apiKey: process.env.SIGNALBIRD_KEY!,
@@ -131,12 +131,12 @@ const result = await signalbird().batch([
 ### Next.js
 
 Sunucu tarafında (route handler, server action, `app/api/**`) doğrudan
-`@signalbird/sdk` kullanılır. **İstemci bileşenlerinde kullanmayın** — anahtar
+`signalbird` kullanılır. **İstemci bileşenlerinde kullanmayın** — anahtar
 paketle birlikte tarayıcıya iner.
 
 ```ts
 // app/api/webhook/route.ts
-import { signalbird } from '@signalbird/sdk'
+import { signalbird } from 'signalbird'
 
 export async function POST(req: Request) {
   try {
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
 
 ```ts
 // uygulama açılışında bir kez
-import { initSignalbird } from '@signalbird/sdk/browser'
+import { initSignalbird } from 'signalbird/browser'
 
 const sb = initSignalbird({
   publicKey: 'sbr_pub_…',
@@ -263,7 +263,7 @@ ile çalışır. Telsiz anahtarı burada geçmez — istemci kurulurken
 Node:
 
 ```ts
-import { SignalbirdMessaging } from '@signalbird/sdk'
+import { SignalbirdMessaging } from 'signalbird'
 
 const sb = new SignalbirdMessaging({ apiKey: process.env.SIGNALBIRD_MESSAGING_KEY! })
 
@@ -321,7 +321,7 @@ Metot kümesi iki dilde aynıdır: `sendEmail` `sendSms` `previewSms` `sendPush`
 **Webhook imzası** (`message.*`, `campaign.*` olayları):
 
 ```ts
-import { verifyWebhook } from '@signalbird/sdk'
+import { verifyWebhook } from 'signalbird'
 // Express: app.post('/hooks/signalbird', express.raw({ type: '*/*' }), (req, res) => {
 if (!verifyWebhook(req.body, req.header('X-Signalbird-Signature'), process.env.SIGNALBIRD_WEBHOOK_SECRET!)) {
   return res.status(401).end()
@@ -350,7 +350,7 @@ yoktur.
 Panelden `radio:*`, `chat:*`, `apps:*` scope'larıyla bir `sb_…` anahtarı açın.
 
 ```ts
-import { management } from '@signalbird/sdk'
+import { management } from 'signalbird'
 
 // Yeni ortam kurulumu: proje aç, kanalını tanımla, anahtarı sakla
 const { data } = await management().createRadioProject({ name: 'ödeme-servisi' })
@@ -410,7 +410,7 @@ sizindir: müşteri hesabı açar, domain ekleyip izlemeye alır, uptime okur, �
 alındığında modül açar ve panel ekranını kendi sayfanıza gömersiniz.
 
 ```ts
-import { SignalbirdPartner } from '@signalbird/sdk'
+import { SignalbirdPartner } from 'signalbird'
 
 const partner = new SignalbirdPartner({ apiKey: process.env.SIGNALBIRD_PARTNER_KEY! })
 
@@ -455,7 +455,7 @@ uygulamanıza** koymak istiyorsanız bu yüzey içindir. Açık uygulama anahtar
 **React / Next.js**
 
 ```tsx
-import { SignalbirdProvider, useChat } from '@signalbird/sdk/react'
+import { SignalbirdProvider, useChat } from 'signalbird/react'
 
 export function App() {
   return (
@@ -499,7 +499,7 @@ chat$ = inject(SignalbirdService).chat$()
 
 ```tsx
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { createSignalbirdApp, asyncStorageAdapter, useNativeChat } from '@signalbird/sdk/react-native'
+import { createSignalbirdApp, asyncStorageAdapter, useNativeChat } from 'signalbird/react-native'
 
 // Depoyu vermek ZORUNLU: sır cihazda kalmazsa geçmiş her açılışta kaybolur
 const client = createSignalbirdApp({ appKey, storage: asyncStorageAdapter(AsyncStorage) })

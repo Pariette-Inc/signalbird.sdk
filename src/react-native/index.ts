@@ -1,5 +1,5 @@
 /**
- * `@signalbird/sdk/react-native` — Expo ve düz React Native.
+ * `signalbird/react-native` — Expo ve düz React Native.
  *
  * React uyarlamasının aynısı, iki farkla ve ikisi de platform gereğidir:
  *

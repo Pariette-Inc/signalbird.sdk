@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { SignalbirdApp, AppConfig, ChatState, SessionInput, IdentifyInput, RegisterDeviceInput } from './app.mjs';
 
 /**
- * `@signalbird/sdk/angular` — Angular servisi ve sağlayıcısı.
+ * `signalbird/angular` — Angular servisi ve sağlayıcısı.
  *
  * Dekoratör KULLANMAZ: `@Injectable()` yazsaydık paketin derlenmesi Angular
  * sürümüne bağlanırdı ve her büyük sürümde yeniden yayın gerekirdi. Bunun

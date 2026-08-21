@@ -15,7 +15,7 @@ export interface SignalbirdConfig {
    * Sunucu anahtarı (`sbr_live_…`).
    *
    * Bu anahtar GİZLİDİR ve tarayıcıya gömülemez: sunucu `Origin` başlığı taşıyan
-   * istekleri reddeder. Tarayıcı için `@signalbird/sdk/browser` ve açık anahtar
+   * istekleri reddeder. Tarayıcı için `signalbird/browser` ve açık anahtar
    * (`sbr_pub_…`) kullanılır.
    */
   apiKey: string;

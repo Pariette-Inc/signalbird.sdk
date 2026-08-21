@@ -1,5 +1,5 @@
 /**
- * `@signalbird/sdk/react` — React ve Next.js için kancalar.
+ * `signalbird/react` — React ve Next.js için kancalar.
  *
  * Widget'ı gömmek yerine KENDİ sohbet arayüzünü yazan müşteri içindir. Durum
  * yönetimi `ChatSession`'dadır; buradaki kancalar yalnız React'in yeniden
