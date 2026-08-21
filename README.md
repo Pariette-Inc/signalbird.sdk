@@ -79,7 +79,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:1.2.0")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:1.4.1")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır — ayrı SDK reposu ya da

@@ -74,6 +74,27 @@ const TEXT_TARGETS = [
     pattern: /^(__version__ = ")([^"]+)(")$/m,
     label: 'python __version__',
   },
+
+  // Belgelerdeki Gradle satırı. Maven koordinatı sürümü metin olarak taşır ve
+  // hiçbir manifest onu güncellemez: v1.2.0'da yazıldı, v1.4.0'a kadar öyle
+  // kaldı. Elle bakılan her sayı er geç bayatlar, o yüzden kilide bağlandı.
+  //
+  // signalbird.web yolları çapraz depodur ama tek yönlüdür ve zaten var olan
+  // bir desen: `publish-web.mjs` de widget'ı oraya kopyalıyor. Depo yoksa
+  // aşağıdaki döngü sessizce atlar.
+  ...[
+    'README.md',
+    '../signalbird.web/public/docs/tr/sdk-kotlin.md',
+    '../signalbird.web/public/docs/tr/sdk-app.md',
+    '../signalbird.web/src/app/[locale]/(marketing)/sdk/examples.ts',
+    '../signalbird.web/src/app/[locale]/(marketing)/sdk/[slug]/page.tsx',
+  ].map((file) => ({
+    file,
+    pattern: /(io\.signalbird:signalbird-sdk:)(\d+\.\d+\.\d+)()/,
+    label: 'Gradle koordinatı',
+    // Belgede eksik olması yayını durdurmaz: dil bir belgede hiç anılmıyor olabilir.
+    optional: true,
+  })),
 ]
 
 let changed = 0
@@ -114,6 +135,11 @@ for (const target of TEXT_TARGETS) {
   const match = raw.match(target.pattern)
 
   if (!match) {
+    if (target.optional) {
+      console.log(`  · ${target.file}: ${target.label} geçmiyor, atlandı`)
+      continue
+    }
+
     // Sessizce geçmek, bir paketin eski sürümle yayınlanması demek olurdu.
     console.error(`  ✗ ${target.file}: sürüm satırı bulunamadı (${target.label})`)
     process.exitCode = 1

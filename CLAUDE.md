@@ -65,17 +65,27 @@ signalbird.sdk/
 │   ├── dotnet/Signalbird.Sdk/  # SignalbirdClient · MessagingClient · ManagementClient · PartnerClient · DI
 │   ├── swift/Sources/Signalbird/   # SignalbirdApp (sohbet/push) · SignalbirdClient · Storage
 │   └── kotlin/src/main/kotlin/io/signalbird/sdk/   # SignalbirdApp · SignalbirdClient · Storage
+├── .gitattributes          # export-ignore → Packagist'in indirdiği zipball'ı BU belirler
 ├── config/                 # Laravel config (vendor:publish)
-├── tests/php/              # PHPUnit (vendor/bin/phpunit) — Messaging/ + Management/
+├── tests/php/              # PHPUnit — Messaging/ · Management/ · Partner/ · Mail/
 ├── dist/                   # tsup çıktısı: index, browser, app, react, vue, angular, react-native, signalbird.js
 └── .github/workflows/ci.yml
 ```
 
 Her manifest **diğer dillerin dosyalarını kendi paketinden dışlar**:
-`package.json` → `files`, `composer.json` → `archive.exclude`. Yeni dil eklerken
-bu dışlama listelerini güncellemeyi unutma, yoksa npm kullanıcısı PHP kaynağı
-indirir. Widget (`dist/signalbird.js`) npm tarball'ında durur ama müşteri onu
-CDN'den (`https://signalbird.io/sdk/v1/signalbird.js`) alır.
+`package.json` → `files`, `composer.json` → `archive.exclude` **ve**
+`.gitattributes` → `export-ignore`. Yeni dil eklerken üçünü de güncelle.
+
+> **Packagist için `archive.exclude` YETMEZ.** Genel Packagist, GitHub-tabanlı
+> bir paketin "dist" adresi olarak GitHub zipball'ını verir; onu `git archive`
+> üretir ve yalnız `.gitattributes` `export-ignore` kurallarını uygular.
+> `archive.exclude` sadece `composer archive` ve Satis içindir. v1.4.0
+> etiketinde bu ayrım gözden kaçtı ve tüketicinin indireceği arşiv 1340
+> dosyaya (43 MB Swift/Gradle derleme çıktısı) çıktı; gerçek PHP kaynağı 11
+> dosya. CI artık iki arşivi de ölçüyor.
+
+Widget (`dist/signalbird.js`) npm tarball'ında durur ama müşteri onu CDN'den
+(`https://signalbird.io/sdk/v1/signalbird.js`) alır.
 
 ## Değişmez Kurallar
 
@@ -153,6 +163,14 @@ docs/CONTRACT.md güncelle
 - Batch/kuyruk/arka plan thread'i OLMAYACAK (widget'ın polling'i hariç — o
   sunucuya değil ziyaretçiye hizmet eder)
 - Widget'a çerçeve/bağımlılık EKLENMEYECEK — düz DOM, Shadow DOM, tek IIFE
+- **Derleme çıktısı commit EDİLMEYECEK** (`.build/`, `.gradle/`, `bin/`,
+  `build/`, `obj/`). Bir kez girerse etiketlere yapışır ve geriye dönük
+  temizlenemez; CI girişte tutuyor
+- **`require` listesine bağımlılık EKLENMEYECEK.** `monolog`, `symfony/mailer`
+  ve `illuminate/support` `suggest`tir: Laravel dışı bir tüketici onları
+  indirmez. `SignalbirdLogHandler`, `Mail\SignalbirdTransport`,
+  `SignalbirdServiceProvider` ve `Facades\Signalbird` bu yüzden yalnız o
+  paketler varken yüklenir — CI onları `class_exists` ile zorlamaz
 
 ## Yeni dil ekleme
 

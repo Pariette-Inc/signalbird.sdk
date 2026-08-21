@@ -3,3 +3,18 @@ vendor/
 composer.lock
 .DS_Store
 .phpunit.result.cache
+
+# Derleme çıktıları — DEPOYA GİRMEZ.
+#
+# Bunlar bir kez commit'lendi (`.build` 1301 dosya / 43 MB) ve v1.4.0
+# etiketine kadar taşındı; Packagist paket arşivini şişiriyordu. Composer
+# `archive.exclude` de ikinci bir kalkan olarak aynı yolları dışlar — biri
+# unutulursa diğeri tutar.
+.build/
+.gradle/
+.kotlin/
+bin/
+build/
+obj/
+__pycache__/
+*.pyc

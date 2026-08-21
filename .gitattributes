@@ -1,0 +1,66 @@
+# Packagist'in tüketiciye indirdiği şeyi BU dosya belirler.
+#
+# Composer'ın `archive.exclude` ayarı yalnız `composer archive` ve Satis için
+# çalışır. Genel Packagist, GitHub-tabanlı bir paketin "dist" adresi olarak
+# GitHub'ın zipball'ını verir ve GitHub o arşivi `git archive` ile üretir —
+# yani burada yazan `export-ignore` kuralları geçerlidir, composer.json'daki
+# liste değil. İkisi de tutuluyor: biri unutulursa diğeri yakalar.
+#
+# Ölçüldü (v1.4.0): bu dosya yokken tüketicinin indirdiği arşiv 1340 dosyaydı
+# ve bunun 1323'ü Swift/Gradle derleme çıktısıydı. Gerçek PHP kaynağı 11 dosya.
+
+# ── Diğer dillerin kaynağı ────────────────────────────────────────────────
+/src/node            export-ignore
+/src/browser         export-ignore
+/src/app             export-ignore
+/src/react           export-ignore
+/src/vue             export-ignore
+/src/angular         export-ignore
+/src/react-native    export-ignore
+/src/widget          export-ignore
+/src/go              export-ignore
+/src/python          export-ignore
+/src/swift           export-ignore
+/src/kotlin          export-ignore
+/src/dotnet          export-ignore
+
+# ── Diğer dillerin manifestleri ───────────────────────────────────────────
+/package.json        export-ignore
+/package-lock.json   export-ignore
+/tsconfig.json       export-ignore
+/tsup.config.ts      export-ignore
+/pyproject.toml      export-ignore
+/go.mod              export-ignore
+/Package.swift       export-ignore
+/build.gradle.kts    export-ignore
+/settings.gradle.kts export-ignore
+/Signalbird.Sdk.csproj export-ignore
+
+# ── Derleme çıktıları ─────────────────────────────────────────────────────
+# `.gitignore` bunları bundan sonra tutuyor ama etiketlenmiş geçmişte
+# duruyorlar; export-ignore eski etiketlerden üretilen arşivleri de temizler.
+/dist                export-ignore
+/.build              export-ignore
+/.gradle             export-ignore
+/.kotlin             export-ignore
+/bin                 export-ignore
+/build               export-ignore
+/obj                 export-ignore
+
+# ── Geliştirme dosyaları ──────────────────────────────────────────────────
+/tests               export-ignore
+/scripts             export-ignore
+/.github             export-ignore
+/phpunit.xml.dist    export-ignore
+/.gitattributes      export-ignore
+/.gitignore          export-ignore
+/CLAUDE.md           export-ignore
+/DEVELOPMENT.md      export-ignore
+/DEVLOG.md           export-ignore
+/VERSION             export-ignore
+
+# ── Satır sonları ─────────────────────────────────────────────────────────
+# PHP kaynağı Windows'ta da LF kalsın: CRLF'e dönen bir dosya hem `php -l`
+# çıktısını hem imza doğrulamasını (ham gövde!) şaşırtabilir.
+*.php                text eol=lf
+*.md                 text eol=lf

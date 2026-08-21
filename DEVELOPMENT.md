@@ -2,6 +2,96 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## Packagist yayın hazırlığı — 2026-08-21
+
+npm `signalbird@1.4.0` yayınlandı. Packagist tarafına geçerken paketin
+**tüketiciye ne indirdiği** ölçüldü ve üç engel çıktı.
+
+### 1. Etiket yanlış paket adını taşıyor
+
+`v1.4.0` etiketi `b5134c7` commit'ine bakıyor; o commit'in `composer.json`
+adı hâlâ **`signalbird/sdk`**. Ad değişikliği (`pariette/signalbird`) bir
+sonraki commit'te (`df50a8f`) geldi.
+
+Packagist paket adını kayıttan değil **her etiketin kendi composer.json**'ından
+okur; ayrışırsa o sürümü sessizce yok sayar. `pariette/signalbird` kaydedilse
+paket **yalnız `dev-main`** olarak görünür, `^1.4` kısıtı hiçbir şey çözmezdi.
+
+CI'ya denetim eklendi: etiketli derlemede `composer.json` adı
+`pariette/signalbird` değilse durur.
+
+### 2. Tüketici 43 MB derleme çıktısı indirecekti
+
+`.build/` (Swift, **1301 dosya**), `.gradle/` (18) ve `bin/` (4) commit'lenmiş
+ve `v1.4.0` etiketine girmişti. Ölçüm:
+
+| | Dosya |
+|---|--:|
+| Etiketteki izlenen dosya | 1475 |
+| Tüketicinin indireceği (önce) | **1340** |
+| Bunun gerçek PHP kaynağı | 11 |
+| Tüketicinin indireceği (sonra) | **15** · 140 KB |
+
+**Kritik ayrım:** `composer.json` → `archive.exclude` bunu tek başına
+ÇÖZMEZ. Genel Packagist, GitHub-tabanlı bir paketin "dist" adresi olarak
+GitHub zipball'ını verir; onu `git archive` üretir ve yalnız `.gitattributes`
+`export-ignore` kurallarını uygular. `archive.exclude` sadece
+`composer archive` ve Satis içindir.
+
+Yapılanlar:
+
+- **`.gitattributes` eklendi** — diğer dillerin kaynağı, manifestleri, derleme
+  çıktıları, testler ve geliştirme dosyaları `export-ignore`. Ölçüldü:
+  zipball 2310 girdiden 24'e (15 dosya + 9 dizin) düştü.
+- `.gitignore` += `.build/`, `.gradle/`, `.kotlin/`, `bin/`, `build/`, `obj/`,
+  `__pycache__/`.
+- `archive.exclude` += aynı yollar — ikinci kalkan; biri unutulursa diğeri tutar.
+- CI'ya iki adım: her iki arşivi de ölçen sızıntı/boyut denetimi (500 KB tavan)
+  ve "derleme çıktısı depoya girmiş mi" bekçisi.
+
+Artefaktların index'ten çıkarılması **commit'lenmedi** — komut aşağıda.
+
+### 3. Yeni PHP sınıfları denetlenmiyordu
+
+`Partner\PartnerClient` ve `Mail\SignalbirdTransport` CI'nın autoload
+listesinde yoktu.
+
+Eklerken çıktı: `SignalbirdLogHandler`, `Mail\SignalbirdTransport`,
+`SignalbirdServiceProvider` ve `Facades\Signalbird` ata sınıflarını
+`suggest` paketlerden alır (monolog, symfony/mailer, illuminate/support).
+`class_exists` çağırmak bunları zorla yükler ve Laravel dışı bir ortamda
+**fatal error** verir — CI'yı ortamın kurulumuna bağlardı. Liste ikiye ayrıldı:
+bağımlılıksız çekirdek `class_exists` ile, ata sınıfı dışarıda olanlar dosya +
+sınıf adı denetimiyle (sözdizimi `php -l` zaten bakıyor).
+
+- `symfony/mailer` **`require-dev`**'e eklendi (tüketiciyi etkilemez): taşıyıcı
+  artık CI'da gerçekten yükleniyor ve test edilebiliyor.
+- **`SignalbirdTransportTest` yazıldı** (9 test) — taşıyıcının hiç testi yoktu,
+  oysa `MAIL_MAILER=signalbird` diyen müşterinin HER postası oradan geçiyor.
+  Sınananlar: alıcı başına ayrı istek (To/Cc/Bcc), HTML→metin gövde seçimi,
+  `from_name`/`reply_to` taşınması, hukuki sınıfın config'ten gelmesi, ek
+  varsa açık hata, `ok:false` durumunda `TransportException` (yutulmaz).
+
+Bir gözlem: taşıyıcının kendi "alıcı yok" koruması normal yoldan
+**erişilemez** — Symfony Mime katmanı To/Cc/Bcc'siz iletiyi taşıyıcıya hiç
+ulaştırmaz. Koruma yine de duruyor (taşıyıcı Symfony dışından da çağrılabilir)
+ve test bu davranışı sabitliyor ki kimse "ölü kod" diye silmesin.
+
+### Yayın öncesi kalan adımlar
+
+```
+git rm -r --cached .build .gradle bin
+git add -A && git commit -m "Packagist hazırlığı: export-ignore, artefakt temizliği, taşıyıcı testleri"
+# sürüm kararı (aşağı bak) → etiket → push --tags
+# packagist.org/packages/submit → https://github.com/Pariette-Inc/signalbird.sdk
+# GitHub → Settings → Webhooks → Packagist (otomatik güncelleme)
+```
+
+**Sürüm kararı:** `v1.4.0` etiketi yanlış paket adını taşıdığı için olduğu gibi
+yayınlanamaz. İki yol var: etiketi HEAD'e taşımak (npm 1.4.0 ile aynı numara
+korunur ama yayımlanmış bir etiket yeniden yazılır) ya da `1.4.1` kesip npm'e
+de aynı numarayı yayınlamak (sürüm kilidi kuralı bozulmaz).
+
 ## Yayın adları — 2026-08-21
 
 | Kayıt defteri | Ad | Durum |

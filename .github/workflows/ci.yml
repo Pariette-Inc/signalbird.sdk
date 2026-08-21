@@ -47,25 +47,116 @@ jobs:
         run: find src/php config tests -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: PHPUnit
         run: vendor/bin/phpunit
+
+      # Packagist paketin İÇİNE ne koyduğunu göstermez; tüketici `composer
+      # require` çalıştırana kadar fark edilmez. v1.4.0 etiketinde `.build/`
+      # (1301 dosya, 43 MB) arşive giriyordu.
+      #
+      # İKİ arşiv de denetlenir çünkü ikisini FARKLI dosyalar yönetir:
+      #   • `git archive`     ← .gitattributes export-ignore
+      #     Packagist'in GitHub-tabanlı pakette tüketiciye verdiği "dist" budur.
+      #   • `composer archive` ← composer.json archive.exclude
+      #     Satis / özel Packagist ve `composer archive` bunu kullanır.
+      # Yalnız birini düzeltmek, diğerinden 43 MB'ın sessizce gitmesi demekti.
+      - name: Paket arşivleri temiz ve küçük mü
+        run: |
+          set -e
+
+          check() {
+            local label="$1" tarball="$2"
+
+            echo "── $label ──"
+            tar -tf "$tarball" | grep -v '/$' | sort
+
+            local files bytes leak
+            files=$(tar -tf "$tarball" | grep -vc '/$' || true)
+            bytes=$(wc -c < "$tarball")
+            echo "$label: $files dosya, $((bytes / 1024)) KB"
+
+            leak=$(tar -tf "$tarball" | grep -E '(^|/)(\.build|\.gradle|\.kotlin|bin|dist|node_modules|tests|scripts|src/(node|browser|app|react|vue|angular|react-native|widget|go|python|swift|kotlin|dotnet))/' || true)
+            if [ -n "$leak" ]; then
+              echo "::error::$label — girmemesi gereken yollar sızmış:"
+              echo "$leak" | head -20
+              exit 1
+            fi
+
+            # 500 KB üstü bir PHP istemcisi için makul değil
+            if [ "$bytes" -gt 512000 ]; then
+              echo "::error::$label $((bytes / 1024)) KB — 500 KB sınırının üstünde."
+              exit 1
+            fi
+          }
+
+          # Packagist'in gerçekten servis ettiği arşiv
+          git archive --format=tar HEAD > /tmp/zipball.tar
+          check "GitHub zipball (.gitattributes)" /tmp/zipball.tar
+
+          composer archive --format=tar --dir=/tmp --file=sbpkg
+          check "Composer arşivi (archive.exclude)" /tmp/sbpkg.tar
+
+          echo "Her iki arşiv de temiz."
+
+      # Derleme çıktısı bir kez commit'lenirse etiketlere yapışır ve geriye
+      # dönük temizlenemez. Girişte tut.
+      - name: Derleme çıktısı depoya girmiş mi
+        run: |
+          tracked=$(git ls-files | grep -E '^(\.build|\.gradle|\.kotlin|bin|build|obj)/' | head -20 || true)
+          if [ -n "$tracked" ]; then
+            echo "::error::Derleme çıktısı depoya commit'lenmiş — 'git rm -r --cached' ile çıkarın:"
+            echo "$tracked"
+            exit 1
+          fi
+          echo "Depoda derleme çıktısı yok."
       - name: Sınıflar autoload'dan çözülüyor mu
         run: |
           php -r '
             require "vendor/autoload.php";
-            $classes = [
+
+            // Bağımlılıksız çekirdek: her tüketicide, her ortamda yüklenmeli.
+            $core = [
               "Signalbird\\Sdk\\Signalbird",
               "Signalbird\\Sdk\\SignalbirdClient",
               "Signalbird\\Sdk\\SignalbirdException",
               "Signalbird\\Sdk\\Messaging\\MessagingClient",
               "Signalbird\\Sdk\\Messaging\\Webhook",
               "Signalbird\\Sdk\\Management\\ManagementClient",
+              "Signalbird\\Sdk\\Partner\\PartnerClient",
             ];
-            foreach ($classes as $c) {
+
+            foreach ($core as $c) {
               if (!class_exists($c)) { fwrite(STDERR, "Çözülemedi: $c\n"); exit(1); }
             }
+
+            // Bunların ATA sınıfı dışarıdadır (monolog, symfony/mailer,
+            // illuminate/support) ve üçü de `require` DEĞİL, `suggest`. Laravel dışı bir tüketicide
+            // yüklenmezler ve yüklenmemeleri doğrudur; burada class_exists
+            // çağırmak denetimi ortamın kurulumuna bağlardı. Sözdizimi `php -l`
+            // ile zaten denetlendi; burada yalnız dosya ve ad uzayı sabitlenir.
+            $optional = [
+              "src/php/SignalbirdLogHandler.php"        => "SignalbirdLogHandler",
+              "src/php/Mail/SignalbirdTransport.php"    => "SignalbirdTransport",
+              "src/php/SignalbirdServiceProvider.php"   => "SignalbirdServiceProvider",
+              "src/php/Facades/Signalbird.php"          => "Signalbird",
+            ];
+
+            foreach ($optional as $file => $class) {
+              if (!file_exists($file)) { fwrite(STDERR, "Dosya yok: $file\n"); exit(1); }
+              if (!preg_match("/class\s+" . preg_quote($class, "/") . "\b/", file_get_contents($file))) {
+                fwrite(STDERR, "$file içinde $class sınıfı yok\n"); exit(1);
+              }
+            }
+
+            // symfony/mailer require-dev listesindedir: CI ortamında taşıyıcı gerçekten yüklenir
+            if (class_exists("Symfony\\Component\\Mailer\\Transport\\AbstractTransport")
+                && !class_exists("Signalbird\\Sdk\\Mail\\SignalbirdTransport")) {
+              fwrite(STDERR, "symfony/mailer var ama taşıyıcı yüklenmedi\n"); exit(1);
+            }
+
             // ServiceProvider config yolunu src/php/../../config üzerinden çözer
             if (!file_exists(__DIR__ . "/src/php/../../config/signalbird.php")) {
               fwrite(STDERR, "config/signalbird.php ServiceProvider yolundan görünmüyor\n"); exit(1);
             }
+
             echo "PHP paketi tamam\n";
           '
 
@@ -157,10 +248,23 @@ jobs:
             exit 1
           fi
 
-      # Etiketten sürüm alanlar (Packagist, ileride Go/SPM) için etiket kontrolü
+      # Etiketten sürüm alanlar (Packagist, Go, SPM) için etiket kontrolü
       - name: Sürüm etiketi VERSION ile eşleşiyor mu
         if: startsWith(github.ref, 'refs/tags/v')
         run: node scripts/sync-version.mjs --check-tag "${GITHUB_REF#refs/tags/}"
+
+      # Packagist paket adını KAYITLI addan değil, ETİKETİN composer.json'ından
+      # okur. Ad ayrışırsa o sürümü sessizce yok sayar ve paket "yalnız
+      # dev-main" olarak kalır — v1.4.0'da tam olarak bu oldu.
+      - name: Packagist paket adı beklenen mi
+        run: |
+          name=$(php -r 'echo json_decode(file_get_contents("composer.json"), true)["name"];' 2>/dev/null \
+                 || node -p "require('./composer.json').name")
+          if [ "$name" != "pariette/signalbird" ]; then
+            echo "::error::composer.json adı '$name' — Packagist kaydı 'pariette/signalbird'. Bu etiket yayınlanmaz."
+            exit 1
+          fi
+          echo "Packagist adı doğru: $name"
 
       # Sözleşme: dört yüzeyin metot kümesi her dilde birebir aynı olmalı
       - name: Metot paritesi
