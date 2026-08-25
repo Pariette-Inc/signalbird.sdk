@@ -495,7 +495,7 @@ birebir aynıdır.
 Anahtar **tarayıcıya İNMEZ**. Gömme jetonunu partner'ın kendi sunucusu üretir;
 tarayıcı yalnız o kısa ömürlü jetonu görür (§12.5).
 
-### 12.3 Metot kümesi — 20 metot
+### 12.3 Metot kümesi — 23 metot
 
 | Alan | Metot |
 |---|---|
@@ -504,9 +504,14 @@ tarayıcı yalnız o kısa ömürlü jetonu görür (§12.5).
 | izleme | `domainUptime(ext, range?)` · `companyUptime(companyExt, range?)` |
 | modül | `listModules(companyExt)` · `grantModule(companyExt, input)` · `revokeModule(companyExt, module)` |
 | kullanıcı | `createUser(companyExt, input)` · `listUsers(companyExt)` · `removeUser(companyExt, userExt)` |
+| mesaj | `listMessages(companyExt, query?)` · `getMessage(companyExt, messageId)` · `messageSummary(companyExt, range?)` |
 | gömme | `createEmbedToken(companyExt, input)` |
 
-`range`: `24h` \| `7d` \| `30d` (varsayılan `24h`).
+`range`: `24h` \| `7d` \| `30d` (uptime'da varsayılan `24h`, mesaj özetinde `7d`).
+
+Mesaj uçları **salt okurdur** ve partner yüzeyinin tek okuma kümesidir
+(signalbird.api/docs/MESSAGING_UNIFICATION_2026-08-25.md §5.1). Alıcı MASKELİ
+döner, gövde hiç dönmez — gövde zaten saklanmıyor (`template_hash` + `vars`).
 
 ### 12.4 Idempotens
 

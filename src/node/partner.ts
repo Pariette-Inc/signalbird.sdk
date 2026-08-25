@@ -148,6 +148,38 @@ export class SignalbirdPartner {
     );
   }
 
+  // ── Mesaj günlüğü ─────────────────────────────────────────────────────
+  //
+  // Salt okur; alıcı maskeli, gövde yok (MESSAGING_UNIFICATION §5.1).
+
+  listMessages(
+    companyExternalId: string,
+    query: Record<string, string | number | undefined> = {}
+  ): Promise<SbResult<unknown>> {
+    return this.http.request(
+      'GET',
+      `/v1/partner/companies/${seg(companyExternalId)}/messages`,
+      undefined,
+      query
+    );
+  }
+
+  getMessage(companyExternalId: string, messageId: string): Promise<SbResult<unknown>> {
+    return this.http.request(
+      'GET',
+      `/v1/partner/companies/${seg(companyExternalId)}/messages/${seg(messageId)}`
+    );
+  }
+
+  messageSummary(companyExternalId: string, range = '7d'): Promise<SbResult<unknown>> {
+    return this.http.request(
+      'GET',
+      `/v1/partner/companies/${seg(companyExternalId)}/message-summary`,
+      undefined,
+      { range }
+    );
+  }
+
   // ── Modül yetkisi ─────────────────────────────────────────────────────
 
   listModules(companyExternalId: string): Promise<SbResult<{ data: ModuleEntitlement[] }>> {

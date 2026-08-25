@@ -102,6 +102,24 @@ class SignalbirdPartner:
             "GET", f"/v1/partner/companies/{seg(company_external_id)}/uptime", None, {"range": range}
         )
 
+    # ── Mesaj günlüğü ────────────────────────────────────────────────────
+    # Salt okur; alıcı maskeli, gövde yok (MESSAGING_UNIFICATION §5.1).
+
+    def list_messages(self, company_external_id: str, query: dict | None = None) -> Result:
+        return self._http.request(
+            "GET", f"/v1/partner/companies/{seg(company_external_id)}/messages", None, query or {}
+        )
+
+    def get_message(self, company_external_id: str, message_id: str) -> Result:
+        return self._http.request(
+            "GET", f"/v1/partner/companies/{seg(company_external_id)}/messages/{seg(message_id)}"
+        )
+
+    def message_summary(self, company_external_id: str, range: str = "7d") -> Result:
+        return self._http.request(
+            "GET", f"/v1/partner/companies/{seg(company_external_id)}/message-summary", None, {"range": range}
+        )
+
     # ── Modül yetkisi ────────────────────────────────────────────────────
 
     def list_modules(self, company_external_id: str) -> Result:

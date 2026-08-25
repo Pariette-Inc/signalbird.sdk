@@ -151,6 +151,43 @@ class PartnerClient
         );
     }
 
+    // ── Mesaj günlüğü ─────────────────────────────────────────────────────
+    //
+    // Salt okur. Partner kendi panelinde "gönderdiğimiz her şeyin durumu"
+    // ekranını çizsin diye (MESSAGING_UNIFICATION_2026-08-25.md §5.1).
+    // Alıcı MASKELİ döner, gövde hiç dönmez — gövde zaten saklanmıyor.
+
+    /** @param array<string,mixed> $query channel, status, class, external_ref, q, from, to, per_page */
+    public function listMessages(string $companyExternalId, array $query = []): array
+    {
+        return $this->request(
+            'GET',
+            '/v1/partner/companies/' . rawurlencode($companyExternalId) . '/messages',
+            null,
+            $query,
+        );
+    }
+
+    /** Tek mesaj + olay zaman çizelgesi (kuyruk → gitti → açıldı → tıklandı). */
+    public function getMessage(string $companyExternalId, string $messageId): array
+    {
+        return $this->request(
+            'GET',
+            '/v1/partner/companies/' . rawurlencode($companyExternalId) . '/messages/' . rawurlencode($messageId),
+        );
+    }
+
+    /** Kanal bazlı özet: gönderilen / teslim / açılan / tıklanan. */
+    public function messageSummary(string $companyExternalId, string $range = '7d'): array
+    {
+        return $this->request(
+            'GET',
+            '/v1/partner/companies/' . rawurlencode($companyExternalId) . '/message-summary',
+            null,
+            ['range' => $range],
+        );
+    }
+
     // ── Modül yetkisi ─────────────────────────────────────────────────────
 
     public function listModules(string $companyExternalId): array
