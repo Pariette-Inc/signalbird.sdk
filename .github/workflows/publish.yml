@@ -1,0 +1,120 @@
+name: publish
+
+# Etiketle tetiklenir: git tag v1.5.0 && git push --tags
+#
+# Sürüm KİLİTLİDİR: `scripts/sync-version.mjs` VERSION dosyasını tüm
+# manifestlere yazar ve CI ayrışmayı kırar. Bu iş akışı da etiketi VERSION ile
+# karşılaştırır — yanlış etiketle yayınlanan bir paket geri alınamaz.
+#
+# Kayıt defterleri ve nasıl yayınlandıkları:
+#
+#   npm        → bu iş akışı (NPM_TOKEN)
+#   PyPI       → bu iş akışı (PYPI_TOKEN)
+#   NuGet      → bu iş akışı (NUGET_API_KEY)
+#   Packagist  → GitHub webhook'u ile KENDİLİĞİNDEN (iş akışı gerekmez)
+#   Go modülü  → yayın yoktur; `go get` etiketi doğrudan GitHub'dan okur
+#   SPM        → yayın yoktur; Swift Package Manager etiketi okur
+#   Maven      → Kotlin paketi henüz yayınlanmıyor (kaynak olarak kullanılır)
+#
+# Bir kayıt defterinin jetonu tanımlı değilse O ADIM ATLANIR, iş akışı
+# kırılmaz: npm jetonu olan ama PyPI hesabı henüz açılmamış bir kurulumda
+# yayının tamamının durması, en kötü sıralamadır.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  guard:
+    name: Sürüm ve sözleşme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+
+      - name: Etiket VERSION ile eşleşiyor mu
+        run: node scripts/sync-version.mjs --check-tag "${GITHUB_REF#refs/tags/}"
+
+      - name: Metot paritesi
+        run: node scripts/check-parity.mjs
+
+  npm:
+    name: npm
+    needs: guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Yayınla
+        if: env.NODE_AUTH_TOKEN != ''
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance
+
+  pypi:
+    name: PyPI
+    needs: guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      - run: pip install --quiet build twine
+      - run: python -m build --outdir dist_py
+
+      - name: Yayınla
+        if: env.TWINE_PASSWORD != ''
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: twine upload dist_py/*
+
+  nuget:
+    name: NuGet
+    needs: guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "8.0.x" }
+
+      - run: dotnet pack Signalbird.Sdk.csproj -c Release -o dist_nuget
+
+      - name: Yayınla
+        if: env.NUGET_KEY != ''
+        env:
+          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push "dist_nuget/*.nupkg" --api-key "$NUGET_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  # Packagist ve Go/SPM için yayın adımı YOKTUR; ikisi de etiketi doğrudan
+  # okur. Bu iş yalnız etiketin gerçekten ulaştığını doğrular ve özet basar.
+  summary:
+    name: Özet
+    needs: [npm, pypi, nuget]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Yayın özeti
+        run: |
+          {
+            echo "### Yayın: ${GITHUB_REF#refs/tags/}"
+            echo ""
+            echo "| Kayıt defteri | Durum |"
+            echo "|---|---|"
+            echo "| npm | ${{ needs.npm.result }} |"
+            echo "| PyPI | ${{ needs.pypi.result }} |"
+            echo "| NuGet | ${{ needs.nuget.result }} |"
+            echo "| Packagist | webhook ile kendiliğinden |"
+            echo "| Go / SPM | etiketten okunur, yayın gerekmez |"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -79,7 +79,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:1.4.1")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:1.5.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır — ayrı SDK reposu ya da
@@ -439,12 +439,65 @@ const embed = await partner.createEmbedToken('sc_9911', {
   user_external_id: 'u_88', module: 'chat', theme: 'dark',
 })
 // → <iframe src={embed.data.url} />
+
+// Gönderilen her şeyin durumu — kendi panelinizde çizmek için (salt okur)
+const log = await partner.listMessages('sc_9911', { channel: 'email', status: 'delivered' })
+const one = await partner.getMessage('sc_9911', 'm_01J…')       // olay zaman çizelgesi
+const sum = await partner.messageSummary('sc_9911', '7d')       // kanal bazlı özet
+
+// "Bu siparişe ait iletiler" kısayolu
+await partner.listMessages('sc_9911', { external_ref: 'order_9911' })
 ```
 
 PHP'de `Signalbird::partner()->createCompany([...])`.
 
 İki kural: **anahtar tarayıcıya inmez** ve **TXT'siz domain kampanya
 gönderemez** (izleme, sohbet ve push açıktır). Ayrıntı: `docs/CONTRACT.md § 12`.
+
+Mesaj uçları **salt okurdur**: alıcı maskeli döner, gövde hiç dönmez — gövde
+zaten saklanmıyor.
+
+## Gönderim — müşterinin kendi sisteminden
+
+Bir platformun (SubmitCMS, veribenim…) müşterisiyseniz kendi sunucunuzdan da
+gönderim yapabilirsiniz. Gereken tek şey **kendi takım anahtarınızdır**
+(`sb_…`); panelinizdeki entegrasyon kartında durur.
+
+```ts
+import { SignalbirdMessaging } from 'signalbird'
+
+const sb = new SignalbirdMessaging({ apiKey: process.env.SIGNALBIRD_KEY! })
+
+// İşlemsel: sipariş bildirimi, şifre sıfırlama. İYS'ye tabi DEĞİLDİR.
+await sb.sendEmail({
+  to: 'musteri@ornek.com',
+  class: 'transactional',
+  subject: 'Siparişiniz hazırlanıyor',
+  body: '<p>Merhaba {{ad}}, siparişiniz yola çıktı.</p>',
+  vars: { ad: 'Ayşe' },
+})
+
+// Ticari: duyuru, kampanya. İzin ŞARTTIR ve İYS kapısından geçer.
+await sb.sendEmail({ to: '…', class: 'commercial', subject: '…', body: '…' })
+```
+
+```php
+// Laravel: tek satır konfigürasyonla UYGULAMANIN TAMAMI buradan çıkar
+// config/mail.php → 'signalbird' => ['transport' => 'signalbird', 'class' => 'transactional']
+// .env           → MAIL_MAILER=signalbird, SIGNALBIRD_KEY=sb_…
+Mail::to($user)->send(new SiparisBildirimi($order));  // hiçbir Mailable değişmez
+```
+
+Üç şey bilinmeli:
+
+1. **Sınıfı siz seçmezsiniz, sistem belirler.** Kampanya arayüzünden çıkan her
+   şey zorunlu `commercial`tır. Ticari iletiyi `transactional` işaretleyip
+   İYS'yi atlamak, sistemin izin verebileceği en pahalı hatadır.
+2. **Gönderen kimliği panelde kurulur.** Hazır adresiniz
+   (`bildirim@<takım>.sendsignalbird.com`) hesapla birlikte gelir; kendi alan
+   adınızı bağlamak için DKIM/SPF/MX kayıtlarını yayınlamanız gerekir.
+3. **Anahtar sunucuda kalır.** Tarayıcıya ya da mobil uygulamaya konmaz;
+   oralar için açık uygulama anahtarı (`sbw_pub_…`) vardır.
 
 ## Uygulama (App) — kendi sohbet arayüzünüz
 
