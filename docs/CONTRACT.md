@@ -414,7 +414,7 @@ sayılır**: uygulama anahtarı döndürüldüğünde eski sırla yapılan her �
 alırdı ve sohbet sessizce ölürdü. Sunucu `VISITOR_INVALID` (401) dönerse yerel
 kimlik silinir ve bir sonraki çağrı yeni oturum açar.
 
-### 11.2 Metot kümesi — 17 metot
+### 11.2 Metot kümesi — 18 metot
 
 | Metot | HTTP |
 |---|---|
@@ -426,6 +426,7 @@ kimlik silinir ve bir sonraki çağrı yeni oturum açar.
 | `setTyping(id, bool)` · `markRead(id, lastId?)` | `POST …/{id}/typing` · `…/{id}/read` |
 | `closeConversation(id)` · `rateConversation(id, rating, comment?)` | `POST …/{id}/close` · `…/{id}/rate` |
 | `registerDevice(input)` · `unregisterDevice(token)` | `POST /v1/sdk/devices` · `DELETE …/{token}` |
+| `reportPushOpened(messageId)` | `POST /v1/sdk/push/opened` — bildirime dokunuldu; push'ta açılmayı YALNIZCA uygulama bilir (FCM/APNs "teslim ettim" der, "dokunuldu" demez). Bildirim yükündeki `data.sb_message_id` geri gönderilir |
 
 `uploadAttachment` **sözleşmede yoktur**: dosya her platformda farklı bir tip
 ister (`Blob` / `Data` / `Uri`) ve tek imzada birleşmiyor. Desteklendiği dilde

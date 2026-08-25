@@ -234,4 +234,13 @@ public final class SignalbirdApp: @unchecked Sendable {
         try await http.request("DELETE", "/v1/sdk/devices/\(Transport.seg(token))")
     }
 
+    /// Bildirime dokunuldu — açılma damgası.
+    ///
+    /// Push'ta açılmayı yalnızca uygulama bilir: APNs "teslim ettim" der,
+    /// "kullanıcı dokundu" demez. Bildirim yükündeki `sb_message_id`
+    /// değerini buraya geri gönderin (`userNotificationCenter(_:didReceive:)`).
+    public func reportPushOpened(messageID: String) async throws -> SbResult {
+        try await http.request("POST", "/v1/sdk/push/opened", body: ["message_id": messageID])
+    }
+
 }
