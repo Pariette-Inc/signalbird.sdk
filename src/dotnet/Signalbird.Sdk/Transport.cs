@@ -133,7 +133,15 @@ internal sealed class Transport
 
         using (response)
         {
+            // `ReadAsStringAsync(CancellationToken)` aşırı yüklemesi .NET 5 ile
+            // geldi; `netstandard2.1` hedefinde yalnız parametresiz sürüm var.
+            // Gövde okuması zaten istek zaman aşımının içindedir, iptal
+            // edilebilirlik burada kaybolmuyor.
+#if NET5_0_OR_GREATER
             var text = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+#else
+            var text = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+#endif
             JsonElement? data = null;
 
             if (!string.IsNullOrWhiteSpace(text))
