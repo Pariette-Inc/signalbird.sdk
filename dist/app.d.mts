@@ -254,6 +254,23 @@ declare class SignalbirdApp {
     registerDevice(input: RegisterDeviceInput): Promise<SbResult<unknown>>;
     /** Çıkışta çağrılır: kayıt silinmez, kapatılır (geçmiş korunur). */
     unregisterDevice(token: string): Promise<SbResult<unknown>>;
+    /**
+     * Bildirime dokunuldu — açılma damgası.
+     *
+     * Push'ta açılmayı YALNIZCA uygulama bilir: FCM/APNs "teslim ettim" der,
+     * "kullanıcı dokundu" demez. Bildirim yükündeki `data.sb_message_id`
+     * değerini buraya geri gönderin.
+     *
+     * ```ts
+     * // React Native / Expo — bildirime dokunma işleyicisinde
+     * const id = response.notification.request.content.data?.sb_message_id
+     * if (id) await sb.reportPushOpened(String(id))
+     * ```
+     *
+     * Bilinmeyen kimlikte de başarılı döner: uygulamanın yeniden denemesi
+     * gereksiz olsun.
+     */
+    reportPushOpened(messageId: string): Promise<SbResult<unknown>>;
     private request;
     private loadVisitor;
     private storeVisitor;

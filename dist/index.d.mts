@@ -343,6 +343,25 @@ declare class SignalbirdMessaging {
     constructor(config: MessagingConfig);
     sendEmail(input: SendEmailInput): Promise<SbResult$1<SendResult>>;
     sendSms(input: SendSmsInput): Promise<SbResult$1<SendResult>>;
+    /**
+     * Otomasyon olayı — kendi sisteminizdeki bir olayı bildirir ve eşleşen
+     * akışı tetikler (§11). Signalbird olayın anlamını bilmez; adı sizindir.
+     */
+    track(input: {
+        event: string;
+        contact: {
+            email?: string;
+            phone?: string;
+            external_id?: string;
+            first_name?: string;
+            last_name?: string;
+        };
+        data?: Record<string, unknown>;
+    }): Promise<SbResult$1<{
+        enrolled: number;
+        canceled: number;
+        contact_id: number;
+    }>>;
     /** SMS parça/karakter hesabı — kota harcamaz. */
     previewSms(body: string): Promise<SbResult$1<SmsPreview>>;
     sendPush(input: SendPushInput): Promise<SbResult$1<SendResult>>;
@@ -1092,6 +1111,9 @@ declare class SignalbirdPartner {
         range: string;
         data: UptimeReport[];
     }>>;
+    listMessages(companyExternalId: string, query?: Record<string, string | number | undefined>): Promise<SbResult<unknown>>;
+    getMessage(companyExternalId: string, messageId: string): Promise<SbResult<unknown>>;
+    messageSummary(companyExternalId: string, range?: string): Promise<SbResult<unknown>>;
     listModules(companyExternalId: string): Promise<SbResult<{
         data: ModuleEntitlement[];
     }>>;

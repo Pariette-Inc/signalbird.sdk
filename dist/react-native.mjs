@@ -181,6 +181,25 @@ var SignalbirdApp = class {
   unregisterDevice(token) {
     return this.request("DELETE", `/v1/sdk/devices/${enc(token)}`);
   }
+  /**
+   * Bildirime dokunuldu — açılma damgası.
+   *
+   * Push'ta açılmayı YALNIZCA uygulama bilir: FCM/APNs "teslim ettim" der,
+   * "kullanıcı dokundu" demez. Bildirim yükündeki `data.sb_message_id`
+   * değerini buraya geri gönderin.
+   *
+   * ```ts
+   * // React Native / Expo — bildirime dokunma işleyicisinde
+   * const id = response.notification.request.content.data?.sb_message_id
+   * if (id) await sb.reportPushOpened(String(id))
+   * ```
+   *
+   * Bilinmeyen kimlikte de başarılı döner: uygulamanın yeniden denemesi
+   * gereksiz olsun.
+   */
+  reportPushOpened(messageId) {
+    return this.request("POST", "/v1/sdk/push/opened", { message_id: messageId });
+  }
   // ── HTTP ──────────────────────────────────────────────────────────────
   async request(method, path, body, query) {
     const stored = await this.loadVisitor();

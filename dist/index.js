@@ -202,6 +202,13 @@ var SignalbirdMessaging = class {
   sendSms(input) {
     return this.request("POST", "/v1/sms/send", input);
   }
+  /**
+   * Otomasyon olayı — kendi sisteminizdeki bir olayı bildirir ve eşleşen
+   * akışı tetikler (§11). Signalbird olayın anlamını bilmez; adı sizindir.
+   */
+  track(input) {
+    return this.request("POST", "/v1/events", input);
+  }
   /** SMS parça/karakter hesabı — kota harcamaz. */
   previewSms(body) {
     return this.request("POST", "/v1/sms/preview", { body });
@@ -745,6 +752,31 @@ var SignalbirdPartner = class {
     return this.http.request(
       "GET",
       `/v1/partner/companies/${seg(companyExternalId)}/uptime`,
+      void 0,
+      { range }
+    );
+  }
+  // ── Mesaj günlüğü ─────────────────────────────────────────────────────
+  //
+  // Salt okur; alıcı maskeli, gövde yok (MESSAGING_UNIFICATION §5.1).
+  listMessages(companyExternalId, query = {}) {
+    return this.http.request(
+      "GET",
+      `/v1/partner/companies/${seg(companyExternalId)}/messages`,
+      void 0,
+      query
+    );
+  }
+  getMessage(companyExternalId, messageId) {
+    return this.http.request(
+      "GET",
+      `/v1/partner/companies/${seg(companyExternalId)}/messages/${seg(messageId)}`
+    );
+  }
+  messageSummary(companyExternalId, range = "7d") {
+    return this.http.request(
+      "GET",
+      `/v1/partner/companies/${seg(companyExternalId)}/message-summary`,
       void 0,
       { range }
     );
