@@ -65,6 +65,12 @@ func (m *Messaging) SendSms(ctx context.Context, input map[string]any) (Result, 
 	return m.http.request(ctx, "POST", "/v1/sms/send", input, nil)
 }
 
+// Track, kendi sistemindeki bir olayı bildirir ve eşleşen otomasyon akışını
+// tetikler (§11). Signalbird olayın anlamını bilmez; adı çağıranındır.
+func (m *Messaging) Track(ctx context.Context, input any) (Result, error) {
+	return m.http.request(ctx, "POST", "/v1/events", input, nil)
+}
+
 // PreviewSms — parça/karakter hesabı; kota harcamaz.
 func (m *Messaging) PreviewSms(ctx context.Context, body string) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/sms/preview", map[string]any{"body": body}, nil)

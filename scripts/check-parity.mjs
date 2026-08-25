@@ -7,7 +7,7 @@
  *
  * Beş yüzey, beş küme:
  *   - Telsiz    (docs/CONTRACT.md § 4)   — 7 metot   · sunucu dilleri
- *   - Gönderim  (docs/CONTRACT.md § 8.3) — 20 metot  · sunucu dilleri
+ *   - Gönderim  (docs/CONTRACT.md § 8.3) — 21 metot  · sunucu dilleri
  *   - Yönetim   (docs/CONTRACT.md § 10)  — 45 metot  · sunucu dilleri
  *   - Uygulama  (docs/CONTRACT.md § 11)  — 18 metot  · istemci dilleri
  *                                                     (TS, Swift, Kotlin)
@@ -94,6 +94,8 @@ const SURFACES = [
     ref: 'docs/CONTRACT.md § 8.3',
     contract: [
       'sendEmail', 'sendSms', 'previewSms', 'sendPush',
+      // Otomasyon olayı: müşterinin sistemindeki olay akışı tetikler (§11).
+      'track',
       'listContacts', 'createContact', 'updateContact', 'deleteContact', 'bulkContacts',
       'listContactLists', 'createContactList', 'deleteContactList',
       'listCampaigns', 'createCampaign', 'getCampaign', 'cancelCampaign',

@@ -142,6 +142,7 @@ denetler. Alan adları API ile aynıdır (snake_case) — SDK yeniden adlandırm
 | e-posta | `sendEmail({to, class, subject, body?, template_hash?, vars?, sending_domain_id?, contact_id?})` | `POST /v1/email/send` |
 | SMS | `sendSms({to, class, body, brand_id?, contact_id?})` · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
 | push | `sendPush({to, class, subject, body, vars?, contact_id?})` — `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
+| olay | `track({event, contact:{email?|phone?|external_id?}, data?})` — kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
 | kişiler | `listContacts(q)` · `createContact(c)` · `updateContact(id, c)` · `deleteContact(id)` · `bulkContacts({contacts[], list_id?, consent_source?, consent_text?})` | `/v1/contacts…` |
 | listeler | `listContactLists()` · `createContactList({name, description?})` · `deleteContactList(id)` | `/v1/contact-lists…` |
 | kampanyalar | `listCampaigns(q)` · `createCampaign({name, channel, domain_id, list_id?|segment_id?, subject?, body, template_hash?, sending_domain_id?, brand_id?, scheduled_at?, from_name?, reply_to?, metadata?, external_ref?})` — `domain_id` TXT ile doğrulanmış müşteri domaini (zorunlu); hedef liste VEYA segment · `getCampaign(id)` · `cancelCampaign(id)` · `listCampaignMessages(id, q)` · `iterateCampaignMessages(id, q)` (yardımcı, sayfa sayfa gezer) | `/v1/campaigns…` |
