@@ -142,6 +142,7 @@ denetler. Alan adları API ile aynıdır (snake_case) — SDK yeniden adlandırm
 | e-posta | `sendEmail({to, class, subject, body?, template_hash?, vars?, sending_domain_id?, contact_id?})` | `POST /v1/email/send` |
 | SMS | `sendSms({to, class, body, brand_id?, contact_id?})` · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
 | push | `sendPush({to, class, subject, body, vars?, contact_id?})` — `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
+| olay | `track({event, contact:{email?|phone?|external_id?}, data?})` — kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
 | kişiler | `listContacts(q)` · `createContact(c)` · `updateContact(id, c)` · `deleteContact(id)` · `bulkContacts({contacts[], list_id?, consent_source?, consent_text?})` | `/v1/contacts…` |
 | listeler | `listContactLists()` · `createContactList({name, description?})` · `deleteContactList(id)` | `/v1/contact-lists…` |
 | kampanyalar | `listCampaigns(q)` · `createCampaign({name, channel, domain_id, list_id?|segment_id?, subject?, body, template_hash?, sending_domain_id?, brand_id?, scheduled_at?, from_name?, reply_to?, metadata?, external_ref?})` — `domain_id` TXT ile doğrulanmış müşteri domaini (zorunlu); hedef liste VEYA segment · `getCampaign(id)` · `cancelCampaign(id)` · `listCampaignMessages(id, q)` · `iterateCampaignMessages(id, q)` (yardımcı, sayfa sayfa gezer) | `/v1/campaigns…` |
@@ -414,7 +415,7 @@ sayılır**: uygulama anahtarı döndürüldüğünde eski sırla yapılan her �
 alırdı ve sohbet sessizce ölürdü. Sunucu `VISITOR_INVALID` (401) dönerse yerel
 kimlik silinir ve bir sonraki çağrı yeni oturum açar.
 
-### 11.2 Metot kümesi — 17 metot
+### 11.2 Metot kümesi — 18 metot
 
 | Metot | HTTP |
 |---|---|
@@ -426,6 +427,7 @@ kimlik silinir ve bir sonraki çağrı yeni oturum açar.
 | `setTyping(id, bool)` · `markRead(id, lastId?)` | `POST …/{id}/typing` · `…/{id}/read` |
 | `closeConversation(id)` · `rateConversation(id, rating, comment?)` | `POST …/{id}/close` · `…/{id}/rate` |
 | `registerDevice(input)` · `unregisterDevice(token)` | `POST /v1/sdk/devices` · `DELETE …/{token}` |
+| `reportPushOpened(messageId)` | `POST /v1/sdk/push/opened` — bildirime dokunuldu; push'ta açılmayı YALNIZCA uygulama bilir (FCM/APNs "teslim ettim" der, "dokunuldu" demez). Bildirim yükündeki `data.sb_message_id` geri gönderilir |
 
 `uploadAttachment` **sözleşmede yoktur**: dosya her platformda farklı bir tip
 ister (`Blob` / `Data` / `Uri`) ve tek imzada birleşmiyor. Desteklendiği dilde
@@ -495,7 +497,7 @@ birebir aynıdır.
 Anahtar **tarayıcıya İNMEZ**. Gömme jetonunu partner'ın kendi sunucusu üretir;
 tarayıcı yalnız o kısa ömürlü jetonu görür (§12.5).
 
-### 12.3 Metot kümesi — 20 metot
+### 12.3 Metot kümesi — 23 metot
 
 | Alan | Metot |
 |---|---|
@@ -504,9 +506,14 @@ tarayıcı yalnız o kısa ömürlü jetonu görür (§12.5).
 | izleme | `domainUptime(ext, range?)` · `companyUptime(companyExt, range?)` |
 | modül | `listModules(companyExt)` · `grantModule(companyExt, input)` · `revokeModule(companyExt, module)` |
 | kullanıcı | `createUser(companyExt, input)` · `listUsers(companyExt)` · `removeUser(companyExt, userExt)` |
+| mesaj | `listMessages(companyExt, query?)` · `getMessage(companyExt, messageId)` · `messageSummary(companyExt, range?)` |
 | gömme | `createEmbedToken(companyExt, input)` |
 
-`range`: `24h` \| `7d` \| `30d` (varsayılan `24h`).
+`range`: `24h` \| `7d` \| `30d` (uptime'da varsayılan `24h`, mesaj özetinde `7d`).
+
+Mesaj uçları **salt okurdur** ve partner yüzeyinin tek okuma kümesidir
+(signalbird.api/docs/MESSAGING_UNIFICATION_2026-08-25.md §5.1). Alıcı MASKELİ
+döner, gövde hiç dönmez — gövde zaten saklanmıyor (`template_hash` + `vars`).
 
 ### 12.4 Idempotens
 

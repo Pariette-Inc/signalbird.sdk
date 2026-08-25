@@ -184,4 +184,14 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
     /** Çıkışta çağrılır: kayıt silinmez, kapatılır (geçmiş korunur). */
     suspend fun unregisterDevice(token: String): SbResult =
         http.request("DELETE", "/v1/sdk/devices/${Transport.seg(token)}")
+
+    /**
+     * Bildirime dokunuldu — açılma damgası.
+     *
+     * Push'ta açılmayı yalnızca uygulama bilir: FCM "teslim ettim" der,
+     * "kullanıcı dokundu" demez. Bildirim yükündeki `sb_message_id` değerini
+     * buraya geri gönderin (`onMessageReceived` ya da açılış Intent'inde).
+     */
+    suspend fun reportPushOpened(messageId: String): SbResult =
+        http.request("POST", "/v1/sdk/push/opened", mapOf("message_id" to messageId))
 }

@@ -51,6 +51,10 @@ public sealed class MessagingClient
         => _http.RequestAsync(HttpMethod.Post, "/v1/sms/send", input, null, ct);
 
     /// <summary>Parça/karakter hesabı — kota harcamaz.</summary>
+    /// <summary>Otomasyon olayı: kendi sistemindeki olayı bildirir, akışı tetikler (§11).</summary>
+    public Task<SbResult> TrackAsync(object input, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Post, "/v1/events", input, null, ct);
+
     public Task<SbResult> PreviewSmsAsync(string body, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Post, "/v1/sms/preview", new { body }, null, ct);
 

@@ -374,7 +374,7 @@ final class MessagingClientTest extends TestCase
     public function testPublicSurfaceMatchesNode(): void
     {
         $expected = [
-            'sendEmail', 'sendSms', 'previewSms', 'sendPush',
+            'sendEmail', 'sendSms', 'previewSms', 'sendPush', 'track',
             'listContacts', 'createContact', 'updateContact', 'deleteContact', 'bulkContacts',
             'listContactLists', 'createContactList', 'deleteContactList',
             'listCampaigns', 'createCampaign', 'getCampaign', 'cancelCampaign',

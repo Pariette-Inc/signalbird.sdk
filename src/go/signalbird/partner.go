@@ -130,6 +130,31 @@ func uptimeQuery(rng string) Query {
 	return Query{"range": rng}
 }
 
+// ── Mesaj günlüğü ──────────────────────────────────────────────────────
+//
+// Salt okur; alıcı maskeli, gövde yok (MESSAGING_UNIFICATION §5.1).
+
+// ListMessages, müşterinin mesaj günlüğünü döner.
+func (p *Partner) ListMessages(ctx context.Context, companyExternalID string, query Query) (Result, error) {
+	return p.http.request(ctx, "GET", "/v1/partner/companies/"+seg(companyExternalID)+"/messages", nil, query)
+}
+
+// GetMessage, tek mesajı ve olay zaman çizelgesini döner.
+func (p *Partner) GetMessage(ctx context.Context, companyExternalID, messageID string) (Result, error) {
+	return p.http.request(ctx, "GET",
+		"/v1/partner/companies/"+seg(companyExternalID)+"/messages/"+seg(messageID), nil, nil)
+}
+
+// MessageSummary, kanal bazlı gönderim özetini döner.
+func (p *Partner) MessageSummary(ctx context.Context, companyExternalID, rng string) (Result, error) {
+	if rng == "" {
+		rng = "7d"
+	}
+
+	return p.http.request(ctx, "GET",
+		"/v1/partner/companies/"+seg(companyExternalID)+"/message-summary", nil, Query{"range": rng})
+}
+
 // ── Modül yetkisi ──────────────────────────────────────────────────────
 
 func (p *Partner) ListModules(ctx context.Context, companyExternalID string) (Result, error) {

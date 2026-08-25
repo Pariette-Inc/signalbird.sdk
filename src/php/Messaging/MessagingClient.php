@@ -71,6 +71,21 @@ class MessagingClient
         return $this->request('POST', '/v1/sms/send', $input);
     }
 
+    /**
+     * Otomasyon olayı — kendi sisteminizdeki bir olayı Signalbird'e bildirir
+     * ve eşleşen akışı tetikler (docs/MESSAGING_UNIFICATION §11).
+     *
+     * Signalbird olayın ne anlama geldiğini BİLMEZ: `cart_abandoned`,
+     * `signup`, `page_abandoned` — adı sizin verdiğinizdir. Kişi kaydı yoksa
+     * açılır; `data` şablon değişkeni olur.
+     *
+     * @param  array<string,mixed>  $input  event, contact{email|phone|external_id}, data
+     */
+    public function track(array $input): array
+    {
+        return $this->request('POST', '/v1/events', $input);
+    }
+
     /** SMS parça/karakter hesabı — kota harcamaz. */
     public function previewSms(string $body): array
     {

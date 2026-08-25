@@ -51,6 +51,10 @@ class SignalbirdMessaging:
     def send_sms(self, input: Mapping[str, Any]) -> Result:
         return self._http.request("POST", "/v1/sms/send", input)
 
+    def track(self, input: dict) -> Result:
+        """Otomasyon olayı: kendi sistemindeki olayı bildirir, akışı tetikler (§11)."""
+        return self._http.request("POST", "/v1/events", input)
+
     def preview_sms(self, body: str) -> Result:
         """SMS parça/karakter hesabı — kota harcamaz."""
         return self._http.request("POST", "/v1/sms/preview", {"body": body})

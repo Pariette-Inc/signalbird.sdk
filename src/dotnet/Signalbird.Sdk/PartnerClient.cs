@@ -124,6 +124,21 @@ public sealed class PartnerClient
         => _http.RequestAsync(HttpMethod.Get, $"/v1/partner/companies/{Transport.Seg(companyExternalId)}/uptime", null,
             new Dictionary<string, object?> { ["range"] = range }, ct);
 
+    // ── Mesaj günlüğü ─────────────────────────────────────────────────────
+    // Salt okur; alıcı maskeli, gövde yok (MESSAGING_UNIFICATION §5.1).
+
+    public Task<SbResult> ListMessagesAsync(object companyExternalId, IDictionary<string, object?>? query = null, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Get, $"/v1/partner/companies/{Transport.Seg(companyExternalId)}/messages", null, query, ct);
+
+    public Task<SbResult> GetMessageAsync(object companyExternalId, object messageId, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Get,
+            $"/v1/partner/companies/{Transport.Seg(companyExternalId)}/messages/{Transport.Seg(messageId)}", null, null, ct);
+
+    /// <summary>Kanal bazlı özet: gönderilen / teslim / açılan / tıklanan.</summary>
+    public Task<SbResult> MessageSummaryAsync(object companyExternalId, string range = "7d", CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Get, $"/v1/partner/companies/{Transport.Seg(companyExternalId)}/message-summary", null,
+            new Dictionary<string, object?> { ["range"] = range }, ct);
+
     // ── Modül yetkisi ─────────────────────────────────────────────────────
 
     public Task<SbResult> ListModulesAsync(object companyExternalId, CancellationToken ct = default)

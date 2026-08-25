@@ -7,11 +7,11 @@
  *
  * Beş yüzey, beş küme:
  *   - Telsiz    (docs/CONTRACT.md § 4)   — 7 metot   · sunucu dilleri
- *   - Gönderim  (docs/CONTRACT.md § 8.3) — 20 metot  · sunucu dilleri
+ *   - Gönderim  (docs/CONTRACT.md § 8.3) — 21 metot  · sunucu dilleri
  *   - Yönetim   (docs/CONTRACT.md § 10)  — 45 metot  · sunucu dilleri
- *   - Uygulama  (docs/CONTRACT.md § 11)  — 17 metot  · istemci dilleri
+ *   - Uygulama  (docs/CONTRACT.md § 11)  — 18 metot  · istemci dilleri
  *                                                     (TS, Swift, Kotlin)
- *   - Partner   (docs/CONTRACT.md § 12)  — 20 metot  · sunucu dilleri
+ *   - Partner   (docs/CONTRACT.md § 12)  — 23 metot  · sunucu dilleri
  *       Mobil dile ya da tarayıcıya İNMEZ: partner anahtarı sunucuda kalır.
  * Adlar camelCase ve diller arasında birebirdir; her dil kendi yazım
  * geleneğini korur (`send_email` / `SendEmail` / `sendEmail` aynı metottur).
@@ -94,6 +94,8 @@ const SURFACES = [
     ref: 'docs/CONTRACT.md § 8.3',
     contract: [
       'sendEmail', 'sendSms', 'previewSms', 'sendPush',
+      // Otomasyon olayı: müşterinin sistemindeki olay akışı tetikler (§11).
+      'track',
       'listContacts', 'createContact', 'updateContact', 'deleteContact', 'bulkContacts',
       'listContactLists', 'createContactList', 'deleteContactList',
       'listCampaigns', 'createCampaign', 'getCampaign', 'cancelCampaign',
@@ -151,6 +153,8 @@ const SURFACES = [
       'editMessage', 'deleteMessage', 'reactToMessage', 'setTyping', 'markRead',
       'closeConversation', 'rateConversation',
       'registerDevice', 'unregisterDevice',
+      // Bildirime dokunuldu sinyali: push'ta açılmayı yalnız uygulama bilir.
+      'reportPushOpened',
     ],
     aliases: noProto({}),
     // `uploadAttachment` ve `currentVisitor` yalnız TS'te var: dosya yükleme
@@ -175,6 +179,8 @@ const SURFACES = [
       'domainUptime', 'companyUptime',
       'listModules', 'grantModule', 'revokeModule',
       'createUser', 'listUsers', 'removeUser',
+      // Salt okur mesaj günlüğü (MESSAGING_UNIFICATION_2026-08-25.md §5.1).
+      'listMessages', 'getMessage', 'messageSummary',
       'createEmbedToken',
     ],
     aliases: noProto({}),

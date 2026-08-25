@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -36,11 +37,31 @@ public static class Webhook
         }
 
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        var expected = Convert.ToHexString(hmac.ComputeHash(rawBody)).ToLowerInvariant();
-        var received = signatureHeader[Prefix.Length..];
+        var expected = ToHex(hmac.ComputeHash(rawBody));
+        var received = signatureHeader.Substring(Prefix.Length);
 
         return CryptographicOperations.FixedTimeEquals(
             Encoding.UTF8.GetBytes(expected),
             Encoding.UTF8.GetBytes(received));
+    }
+
+    /// <summary>
+    /// Bayt dizisini küçük harf onaltılığa çevirir.
+    /// </summary>
+    /// <remarks>
+    /// <c>Convert.ToHexString</c> .NET 5 ile geldi; `netstandard2.1` hedefinde
+    /// yoktur. Elle yazmak, hedefi net8.0'a daraltmaktan ucuz: kütüphaneyi
+    /// .NET Framework ve Xamarin tüketicileri de kullanabilsin.
+    /// </remarks>
+    private static string ToHex(byte[] bytes)
+    {
+        var builder = new StringBuilder(bytes.Length * 2);
+
+        foreach (var b in bytes)
+        {
+            builder.Append(b.ToString("x2", CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
     }
 }

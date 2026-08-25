@@ -82,6 +82,18 @@ export class SignalbirdMessaging {
     return this.request('POST', '/v1/sms/send', input);
   }
 
+  /**
+   * Otomasyon olayı — kendi sisteminizdeki bir olayı bildirir ve eşleşen
+   * akışı tetikler (§11). Signalbird olayın anlamını bilmez; adı sizindir.
+   */
+  track(input: {
+    event: string;
+    contact: { email?: string; phone?: string; external_id?: string; first_name?: string; last_name?: string };
+    data?: Record<string, unknown>;
+  }): Promise<SbResult<{ enrolled: number; canceled: number; contact_id: number }>> {
+    return this.request('POST', '/v1/events', input);
+  }
+
   /** SMS parça/karakter hesabı — kota harcamaz. */
   previewSms(body: string): Promise<SbResult<SmsPreview>> {
     return this.request('POST', '/v1/sms/preview', { body });
