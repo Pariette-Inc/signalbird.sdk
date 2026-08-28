@@ -116,6 +116,17 @@ export class SignalbirdApp {
   }
 
   /**
+   * Canlı bağlantı kanalı için imza.
+   *
+   * Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine SUNUCU karar
+   * verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket servisi
+   * kimseyi tanımaz, yalnız imzayı doğrular.
+   */
+  socketAuth(socketId: string, channel: string): Promise<SbResult<{ auth: string; at: number }>> {
+    return this.request('POST', '/v1/sdk/chat/socket/auth', { socket_id: socketId, channel });
+  }
+
+  /**
    * Ziyaretçi oturumu açar ya da mevcut olanı günceller.
    *
    * Sır saklanır; ikinci çağrı aynı ziyaretçiyi tazeler. Sunucu `VISITOR_INVALID`

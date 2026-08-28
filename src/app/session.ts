@@ -7,13 +7,29 @@
  * uyarlamaları bu sınıfa abone olur — üçünde de aynı mantığı yeniden yazmak,
  * üç ayrı hata takımı üretmek demekti.
  *
+ * ── CANLI BAĞLANTI + YOKLAMA ──────────────────────────────────────────────
+ *
+ * 29 Ağu 2026'ya kadar burada yalnız yoklama vardı ve mobil, widget canlıya
+ * geçtikten sonra da saniyede istek atmaya devam etti. Artık aynı soket
+ * istemcisi (`../shared/socket`) burada da çalışıyor.
+ *
+ * YAYIN HABER TAŞIR, VERİ TAŞIMAZ: soketten gelen olay yalnız "yeni bir şey
+ * var" der; mesajın kendisi HER ZAMAN kendi yetkimizle yeniden çekilir. Aksi
+ * hâlde yayın kanalına düşen bir hata, okuma yetkisi olmayan birine mesaj
+ * gövdesi göstermeye dönüşürdü.
+ *
+ * YOKLAMA KALDIRILMAZ, YAVAŞLAR. Bağlantı kurulduğunda panel açıkken 3 s
+ * yerine 45 s, kapalıyken merdivenin son basamağı kullanılır: soket düşerse
+ * ya da bir olay kaybolursa konuşma yine ilerler. Emniyet ağını sırf gereksiz
+ * göründüğü için sökmek, düştüğünüz gün onu aramak demektir.
+ *
  * Yoklama merdiveni (penyu deseni): panel açıkken 3 s, kapalıyken 20 s ×3 →
- * 60 s ×2 → 180 s. Yeni veri merdiveni sıfırlar; sekme/uygulama arka plandayken
- * tur atlanır. WebSocket yoktur: imleçli yoklama, bağlantı kopmasında kendi
- * kendini toparlar ve mobil ağda pil yakmaz.
+ * 60 s ×2 → 180 s. Yeni veri merdiveni sıfırlar; uygulama arka plandayken tur
+ * atlanır.
  */
 import { clientId, SignalbirdApp } from './client';
-import type { Conversation, Message, SbResult, SessionInput, StartConversationInput, TopicOption } from './types';
+import { Socket } from '../shared/socket';
+import type { BootstrapResult, Conversation, Message, SbResult, SessionInput, StartConversationInput, TopicOption } from './types';
 
 export interface ChatState {
   /** Sohbet bu uygulamada açık mı (`bootstrap` cevabı). */
@@ -33,6 +49,13 @@ export interface ChatState {
   topic: string | null;
   /** Son hatanın kodu — arayüz isterse gösterir, göstermezse yutar. */
   errorCode?: string;
+  /**
+   * Uygulamanın sohbet ayarları (renk, logo, tema, puanlama bağlantısı…).
+   *
+   * Ekran bunları PANELDEN alır, kendi içine gömmez: müşteri rengini ya da
+   * puanlama adresini değiştirdiğinde yeni sürüm yayınlamak gerekmesin.
+   */
+  settings: BootstrapResult['app']['chat'] | null;
 }
 
 export type ChatListener = (state: ChatState) => void;
@@ -50,6 +73,9 @@ export interface ChatSessionOptions {
 const IDLE_LADDER = [20_000, 20_000, 20_000, 60_000, 60_000, 180_000];
 const ACTIVE_INTERVAL = 3_000;
 
+/** Soket bağlıyken açık paneldeki yoklama — emniyet ağı, ana kanal değil. */
+const ACTIVE_LIVE_INTERVAL = 45_000;
+
 export class ChatSession {
   private state: ChatState = {
     enabled: false,
@@ -61,6 +87,7 @@ export class ChatSession {
     unread: 0,
     agentTyping: false,
     withinHours: true,
+    settings: null,
   };
 
   private listeners = new Set<ChatListener>();
@@ -69,6 +96,8 @@ export class ChatSession {
   private active: boolean;
   private stopped = false;
   private polling = false;
+  private socket: Socket | null = null;
+  private live = false;
 
   constructor(
     private readonly app: SignalbirdApp,
@@ -109,7 +138,10 @@ export class ChatSession {
       enabled: true,
       withinHours: app.within_hours ?? true,
       topics: boot.data?.topics ?? [],
+      settings: app.chat ?? null,
     });
+
+    this.openSocket(boot.data?.realtime);
 
     // Ziyaretçi yoksa oturum AÇILMAZ: ilk mesaja kadar bekleriz. Her sayfa
     // görüntülemesinde ziyaretçi kaydı açmak, hiç konuşmayacak binlerce boş
@@ -129,9 +161,26 @@ export class ChatSession {
     this.active = active;
     this.step = 0;
 
-    if (active) void this.refresh();
+    if (active) {
+      // Kapanmış sohbet geri açılmaz: ekran yeniden görünür olduğunda
+      // sıfırdan başlar (bkz. `refresh` ve widget'taki aynı kural).
+      if (this.state.conversation?.status === 'closed') this.reset();
+
+      void this.refresh();
+    }
 
     this.schedule();
+  }
+
+  /**
+   * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar.
+   *
+   * Ekranın "yeni sohbet" düğmesi de bunu çağırır. Sunucuda hiçbir şey
+   * silinmez — yalnız bu oturumun neye baktığı değişir.
+   */
+  reset(): void {
+    this.patch({ conversation: null, messages: [], unread: 0, agentTyping: false, errorCode: undefined });
+    this.step = 0;
   }
 
   stop(): void {
@@ -140,6 +189,15 @@ export class ChatSession {
     if (this.timer) clearTimeout(this.timer);
 
     this.timer = null;
+
+    this.socket?.close();
+    this.socket = null;
+    this.live = false;
+  }
+
+  /** Canlı bağlantı kurulu mu — arayüz isterse gösterir (zorunlu değil). */
+  get isLive(): boolean {
+    return this.live;
   }
 
   // ── Eylemler ──────────────────────────────────────────────────────────
@@ -148,7 +206,11 @@ export class ChatSession {
   async openSession(input: SessionInput): Promise<SbResult<unknown>> {
     const result = await this.app.startSession(input);
 
-    if (result.ok) await this.refresh();
+    if (result.ok) {
+      // Kanal adı ziyaretçi kimliğini içerir; kimlik ancak ŞİMDİ doğdu.
+      void this.joinVisitorChannel();
+      await this.refresh();
+    }
 
     return result;
   }
@@ -183,6 +245,8 @@ export class ChatSession {
       const session = await this.app.startSession(this.options.visitor ?? {});
 
       if (!session.ok) return this.markFailed(cid, session);
+
+      void this.joinVisitorChannel();
     }
 
     const conversation = this.state.conversation;
@@ -253,7 +317,19 @@ export class ChatSession {
 
     if (!current) {
       const list = await this.app.listConversations();
-      const first = list.data?.data?.[0];
+
+      /*
+       * YALNIZ AÇIK KONUŞMA BENİMSENİR (29 Ağu 2026).
+       *
+       * Eskiden listenin ilk kaydı alınıyordu ve o kayıt kapanmış olabilirdi:
+       * ziyaretçi sohbeti bitirip ekranı yeniden açtığında, okunabilen ama
+       * yazılamayan eski yazışma geri geliyordu. `closed` sunucuda da
+       * ziyaretçi için finaldir; açık konuşma yoksa doğru cevap "konuşma
+       * yok"tur ve ekran sıfırdan başlar.
+       *
+       * `resolved` bunun DIŞINDA: onu ajan işaretler, ziyaretçi hâlâ yazar.
+       */
+      const first = (list.data?.data ?? []).find((c) => c.status !== 'closed');
 
       if (!first) {
         this.patch({ errorCode: list.ok ? undefined : list.code });
@@ -324,13 +400,62 @@ export class ChatSession {
     return result;
   }
 
+  // ── Canlı bağlantı ────────────────────────────────────────────────────
+
+  /**
+   * Ziyaretçinin kendi kanalına bağlanır (`visitor.<id>`).
+   *
+   * Kanal ziyaretçi kimliği kurulduktan SONRA bilinir; ilk mesajla kimlik
+   * doğduğunda `refresh()` üzerinden yeniden denenir. Bağlantı kurulamazsa
+   * hiçbir şey olmaz: yoklama zaten çalışıyor.
+   */
+  private openSocket(realtime?: { enabled: boolean; url?: string }): void {
+    if (!realtime?.enabled || !realtime.url || this.socket) return;
+
+    this.socket = new Socket(
+      realtime,
+      async (socketId, channel) => {
+        const result = await this.app.socketAuth(socketId, channel);
+
+        return result.ok && result.data ? result.data : null;
+      },
+      () => {
+        // OLAYIN İÇİNDEKİ VERİ KULLANILMAZ, yalnız "bir şey oldu" bilgisi:
+        // mesajı kendi yetkimizle çekeriz.
+        this.step = 0;
+        void this.refresh();
+      },
+      (connected) => {
+        this.live = connected;
+        this.schedule();
+      },
+    );
+
+    this.socket.connect();
+    void this.joinVisitorChannel();
+  }
+
+  /** Ziyaretçi kimliği varsa kendi kanalına katılır; yoksa sessizce döner. */
+  private async joinVisitorChannel(): Promise<void> {
+    const visitor = await this.app.currentVisitor();
+
+    if (visitor?.id) this.socket?.subscribe(`visitor.${visitor.id}`);
+  }
+
   private schedule(): void {
     if (this.timer) clearTimeout(this.timer);
     if (this.stopped) return;
 
+    /*
+     * Soket bağlıysa yoklama YAVAŞLAR, DURMAZ. Açık panelde 3 s yerine 45 s;
+     * kapalı panelde merdivenin son basamağı — bir olay kaybolsa bile
+     * konuşma en geç bu kadar gecikir.
+     */
     const delay = this.active
-      ? ACTIVE_INTERVAL
-      : IDLE_LADDER[Math.min(this.step, IDLE_LADDER.length - 1)];
+      ? (this.live ? ACTIVE_LIVE_INTERVAL : ACTIVE_INTERVAL)
+      : this.live
+        ? IDLE_LADDER[IDLE_LADDER.length - 1]
+        : IDLE_LADDER[Math.min(this.step, IDLE_LADDER.length - 1)];
 
     this.timer = setTimeout(() => void this.tick(), delay);
   }

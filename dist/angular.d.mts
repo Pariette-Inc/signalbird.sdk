@@ -34,6 +34,12 @@ declare class SignalbirdService {
     markRead(): Promise<void>;
     closeConversation(rating?: number, comment?: string): Promise<void>;
     openSession(input: SessionInput): Promise<unknown>;
+    /**
+     * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar (29 Ağu 2026).
+     * Kapanmış sohbet geri açılmadığı için arayüzün "yeni sohbet" düğmesine
+     * bağlanacak bir eyleme ihtiyacı var.
+     */
+    resetConversation(): void;
     identify(input: IdentifyInput): Promise<unknown>;
     registerDevice(input: RegisterDeviceInput): Promise<unknown>;
     /** Uygulama kapanırken ya da testte: yoklamayı durdurur. */

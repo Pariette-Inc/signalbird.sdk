@@ -70,6 +70,15 @@ export class SignalbirdService {
     return this.session.openSession(input);
   }
 
+  /**
+   * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar (29 Ağu 2026).
+   * Kapanmış sohbet geri açılmadığı için arayüzün "yeni sohbet" düğmesine
+   * bağlanacak bir eyleme ihtiyacı var.
+   */
+  resetConversation(): void {
+    this.session.reset();
+  }
+
   identify(input: IdentifyInput): Promise<unknown> {
     return this.client.identify(input);
   }

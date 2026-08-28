@@ -9,7 +9,7 @@
  *   - Telsiz    (docs/CONTRACT.md § 4)   — 7 metot   · sunucu dilleri
  *   - Gönderim  (docs/CONTRACT.md § 8.3) — 21 metot  · sunucu dilleri
  *   - Yönetim   (docs/CONTRACT.md § 10)  — 46 metot  · sunucu dilleri
- *   - Uygulama  (docs/CONTRACT.md § 11)  — 18 metot  · istemci dilleri
+ *   - Uygulama  (docs/CONTRACT.md § 11)  — 19 metot  · istemci dilleri
  *                                                     (TS, Swift, Kotlin)
  *   - Partner   (docs/CONTRACT.md § 12)  — 23 metot  · sunucu dilleri
  *       Mobil dile ya da tarayıcıya İNMEZ: partner anahtarı sunucuda kalır.
@@ -157,6 +157,10 @@ const SURFACES = [
       'registerDevice', 'unregisterDevice',
       // Bildirime dokunuldu sinyali: push'ta açılmayı yalnız uygulama bilir.
       'reportPushOpened',
+      // Canlı bağlantı kanal imzası. Soket İSTEMCİSİ sözleşmede değil (TS'te
+      // var, mobilde uygulamanın kendi WebSocket katmanı kullanılır) ama
+      // imzayı veren uç her dilde çağrılabilmeli.
+      'socketAuth',
     ],
     aliases: noProto({}),
     // `uploadAttachment` ve `currentVisitor` yalnız TS'te var: dosya yükleme

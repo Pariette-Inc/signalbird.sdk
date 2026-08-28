@@ -36,6 +36,8 @@ interface UseChatResult {
     close(rating?: number, comment?: string): Promise<void>;
     openSession(input: SessionInput): Promise<unknown>;
     refresh(): Promise<void>;
+    /** Konuşmayı bırakır; sonraki mesaj yeni bir konuşma açar. */
+    reset(): void;
 }
 declare function useChat(options?: UseChatOptions): UseChatResult;
 /** Kullanıcı giriş yaptığında ziyaretçiyi kişi kaydına bağlar. */

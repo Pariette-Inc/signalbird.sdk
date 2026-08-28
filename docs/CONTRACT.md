@@ -546,6 +546,7 @@ kimlik silinir ve bir sonraki çağrı yeni oturum açar.
 | `setTyping(id, bool)` · `markRead(id, lastId?)` | `POST …/{id}/typing` · `…/{id}/read` |
 | `closeConversation(id)` · `rateConversation(id, rating, comment?)` | `POST …/{id}/close` · `…/{id}/rate` |
 | `registerDevice(input)` · `unregisterDevice(token)` | `POST /v1/sdk/devices` · `DELETE …/{token}` |
+| `socketAuth(socketId, channel)` | `POST /v1/sdk/chat/socket/auth` — canlı bağlantı kanal imzası. Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine SUNUCU karar verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket servisi kimseyi tanımaz, imzayı doğrular. Bağlantı başına bir kez çağrılır |
 | `reportPushOpened(messageId)` | `POST /v1/sdk/push/opened` — bildirime dokunuldu; push'ta açılmayı YALNIZCA uygulama bilir (FCM/APNs "teslim ettim" der, "dokunuldu" demez). Bildirim yükündeki `data.sb_message_id` geri gönderilir |
 
 `uploadAttachment` **sözleşmede yoktur**: dosya her platformda farklı bir tip

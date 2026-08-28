@@ -2,6 +2,25 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-29 (3. tur) — Canlı bağlantı `app` yüzeyine de geldi
+
+Soket istemcisi `src/widget/socket.ts`ten `src/shared/socket.ts`e taşındı ve
+artık `ChatSession` de kullanıyor. Mobil (penyu, React Native) canlıya geçti;
+widget canlıya geçtiğinde mobil geride kalmıştı ve saniyede istek atmaya devam
+ediyordu.
+
+Yayın haber taşır, veri taşımaz: soketten gelen olay yalnız "yeni bir şey var"
+der, mesaj her zaman kendi yetkimizle yeniden çekilir. Yoklama kaldırılmadı,
+yavaşladı — bağlıyken açık panelde 45 s, kapalıyken merdivenin son basamağı.
+
+`socketAuth(socketId, channel)` sözleşmeye (§11) girdi; TS, Swift ve Kotlin'de
+var. Soket İSTEMCİSİ sözleşmede değil: mobil diller kendi WebSocket katmanını
+kullanır, imzayı veren uç ise her dilde çağrılabilmeli.
+
+`ChatSession`'a `reset()` ve `state.settings` eklendi; React/Vue/Angular/RN
+uyarlamaları da açıyor. Kapanmış konuşma artık `refresh()`te benimsenmiyor ve
+ekran yeniden görünür olduğunda sıfırlanıyor — widget'takiyle aynı kural.
+
 ## 2026-08-29 (2. tur) — Widget yeniden tasarım, marka yönetimi, çeviri düzeltmesi
 
 **Çeviri yanlış tarafa gösteriliyordu (canlı hata).** `message.translation`

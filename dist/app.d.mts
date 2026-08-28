@@ -74,10 +74,39 @@ interface BootstrapResult {
                 name?: boolean;
                 email?: boolean;
             };
+            /**
+             * Sohbet sonu puanlama bağlantısı (Trustpilot, Google İşletme…).
+             *
+             * `review_min_rating` bir nezaket kuralı değil TİCARİ bir kuraldır:
+             * eşiğin altında puan veren müşteriye bağlantı HİÇ gösterilmez.
+             * Memnun olmamış müşteriyi halka açık bir puanlama sitesine yollamak
+             * kendi ayağımıza sıkmaktır.
+             */
+            review_url?: string | null;
+            review_label?: string | null;
+            review_min_rating?: number;
+            /** Marka: logo, tema, balon ikonu (29 Ağu 2026). */
+            logo_url?: string | null;
+            theme?: 'light' | 'dark' | 'auto';
+            launcher_icon?: 'bird' | 'chat' | 'logo';
         };
     };
     /** Boşsa konu adımı hiç gösterilmez. */
     topics?: TopicOption[];
+    /** Mevcut açık konuşma (varsa) — ChatSession ilk listelemeyi atlar. */
+    conversation?: Conversation | null;
+    /**
+     * Canlı bağlantı — YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan taraf
+     * hiçbir şey göremez, odaya girmek imza ister ve imzayı
+     * `POST /v1/sdk/chat/socket/auth` verir.
+     *
+     * `enabled:false` ise yoklamayla çalışılır; canlı bağlantı bir
+     * İYİLEŞTİRMEDİR, onsuz da sistem tamdır.
+     */
+    realtime?: {
+        enabled: boolean;
+        url?: string;
+    };
 }
 interface Visitor {
     id: string;
@@ -222,6 +251,17 @@ declare class SignalbirdApp {
     /** Uygulama ayarları: sohbet açık mı, renk, çalışma saati, ön-form. */
     bootstrap(): Promise<SbResult<BootstrapResult>>;
     /**
+     * Canlı bağlantı kanalı için imza.
+     *
+     * Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine SUNUCU karar
+     * verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket servisi
+     * kimseyi tanımaz, yalnız imzayı doğrular.
+     */
+    socketAuth(socketId: string, channel: string): Promise<SbResult<{
+        auth: string;
+        at: number;
+    }>>;
+    /**
      * Ziyaretçi oturumu açar ya da mevcut olanı günceller.
      *
      * Sır saklanır; ikinci çağrı aynı ziyaretçiyi tazeler. Sunucu `VISITOR_INVALID`
@@ -321,10 +361,25 @@ declare class SignalbirdApp {
  * uyarlamaları bu sınıfa abone olur — üçünde de aynı mantığı yeniden yazmak,
  * üç ayrı hata takımı üretmek demekti.
  *
+ * ── CANLI BAĞLANTI + YOKLAMA ──────────────────────────────────────────────
+ *
+ * 29 Ağu 2026'ya kadar burada yalnız yoklama vardı ve mobil, widget canlıya
+ * geçtikten sonra da saniyede istek atmaya devam etti. Artık aynı soket
+ * istemcisi (`../shared/socket`) burada da çalışıyor.
+ *
+ * YAYIN HABER TAŞIR, VERİ TAŞIMAZ: soketten gelen olay yalnız "yeni bir şey
+ * var" der; mesajın kendisi HER ZAMAN kendi yetkimizle yeniden çekilir. Aksi
+ * hâlde yayın kanalına düşen bir hata, okuma yetkisi olmayan birine mesaj
+ * gövdesi göstermeye dönüşürdü.
+ *
+ * YOKLAMA KALDIRILMAZ, YAVAŞLAR. Bağlantı kurulduğunda panel açıkken 3 s
+ * yerine 45 s, kapalıyken merdivenin son basamağı kullanılır: soket düşerse
+ * ya da bir olay kaybolursa konuşma yine ilerler. Emniyet ağını sırf gereksiz
+ * göründüğü için sökmek, düştüğünüz gün onu aramak demektir.
+ *
  * Yoklama merdiveni (penyu deseni): panel açıkken 3 s, kapalıyken 20 s ×3 →
- * 60 s ×2 → 180 s. Yeni veri merdiveni sıfırlar; sekme/uygulama arka plandayken
- * tur atlanır. WebSocket yoktur: imleçli yoklama, bağlantı kopmasında kendi
- * kendini toparlar ve mobil ağda pil yakmaz.
+ * 60 s ×2 → 180 s. Yeni veri merdiveni sıfırlar; uygulama arka plandayken tur
+ * atlanır.
  */
 
 interface ChatState {
@@ -345,6 +400,13 @@ interface ChatState {
     topic: string | null;
     /** Son hatanın kodu — arayüz isterse gösterir, göstermezse yutar. */
     errorCode?: string;
+    /**
+     * Uygulamanın sohbet ayarları (renk, logo, tema, puanlama bağlantısı…).
+     *
+     * Ekran bunları PANELDEN alır, kendi içine gömmez: müşteri rengini ya da
+     * puanlama adresini değiştirdiğinde yeni sürüm yayınlamak gerekmesin.
+     */
+    settings: BootstrapResult['app']['chat'] | null;
 }
 type ChatListener = (state: ChatState) => void;
 interface ChatSessionOptions {
@@ -365,6 +427,8 @@ declare class ChatSession {
     private active;
     private stopped;
     private polling;
+    private socket;
+    private live;
     constructor(app: SignalbirdApp, options?: ChatSessionOptions);
     subscribe(listener: ChatListener): () => void;
     snapshot(): ChatState;
@@ -372,7 +436,16 @@ declare class ChatSession {
     start(): Promise<void>;
     /** Panel açıldı/kapandı — yoklama hızı buna göre değişir. */
     setActive(active: boolean): void;
+    /**
+     * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar.
+     *
+     * Ekranın "yeni sohbet" düğmesi de bunu çağırır. Sunucuda hiçbir şey
+     * silinmez — yalnız bu oturumun neye baktığı değişir.
+     */
+    reset(): void;
     stop(): void;
+    /** Canlı bağlantı kurulu mu — arayüz isterse gösterir (zorunlu değil). */
+    get isLive(): boolean;
     /** Ön-form gönderildiğinde ya da uygulama kullanıcıyı tanıdığında. */
     openSession(input: SessionInput): Promise<SbResult<unknown>>;
     /**
@@ -400,6 +473,16 @@ declare class ChatSession {
     /** İyimser kayıtlar sunucu kimliği taşımaz; imleç yalnız gerçek kimliktir. */
     private lastServerMessageId;
     private markFailed;
+    /**
+     * Ziyaretçinin kendi kanalına bağlanır (`visitor.<id>`).
+     *
+     * Kanal ziyaretçi kimliği kurulduktan SONRA bilinir; ilk mesajla kimlik
+     * doğduğunda `refresh()` üzerinden yeniden denenir. Bağlantı kurulamazsa
+     * hiçbir şey olmaz: yoklama zaten çalışıyor.
+     */
+    private openSocket;
+    /** Ziyaretçi kimliği varsa kendi kanalına katılır; yoksa sessizce döner. */
+    private joinVisitorChannel;
     private schedule;
     private tick;
     private visible;

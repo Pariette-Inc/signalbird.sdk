@@ -58,6 +58,16 @@ var SignalbirdApp = class {
     return this.request("POST", "/v1/sdk/bootstrap", { locale: this.config.locale });
   }
   /**
+   * Canlı bağlantı kanalı için imza.
+   *
+   * Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine SUNUCU karar
+   * verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket servisi
+   * kimseyi tanımaz, yalnız imzayı doğrular.
+   */
+  socketAuth(socketId, channel) {
+    return this.request("POST", "/v1/sdk/chat/socket/auth", { socket_id: socketId, channel });
+  }
+  /**
    * Ziyaretçi oturumu açar ya da mevcut olanı günceller.
    *
    * Sır saklanır; ikinci çağrı aynı ziyaretçiyi tazeler. Sunucu `VISITOR_INVALID`
@@ -298,9 +308,163 @@ function buildQuery(query) {
   return encoded ? `?${encoded}` : "";
 }
 
+// src/shared/socket.ts
+var BACKOFF = [1e3, 2e3, 5e3, 1e4, 3e4];
+var Socket = class {
+  constructor(config, auth, onEvent, onState, log = () => {
+  }) {
+    this.config = config;
+    this.auth = auth;
+    this.onEvent = onEvent;
+    this.onState = onState;
+    this.log = log;
+    this.ws = null;
+    this.sid = null;
+    this.attempt = 0;
+    this.closed = false;
+    this.timer = null;
+    this.pending = /* @__PURE__ */ new Set();
+    this.joined = /* @__PURE__ */ new Set();
+  }
+  get connected() {
+    return this.ws?.readyState === WebSocket.OPEN && this.sid !== null;
+  }
+  connect() {
+    if (!this.config.enabled || !this.config.url) return;
+    if (typeof WebSocket === "undefined") return;
+    if (this.ws) return;
+    this.closed = false;
+    const base = this.config.url.replace(/^http/, "ws").replace(/\/$/, "");
+    const url = `${base}/socket.io/?EIO=4&transport=websocket`;
+    try {
+      this.ws = new WebSocket(url);
+    } catch (e) {
+      this.log("socket open failed", e);
+      this.retry();
+      return;
+    }
+    this.ws.onmessage = (ev) => this.handle(String(ev.data));
+    this.ws.onclose = () => this.retry();
+    this.ws.onerror = () => {
+      this.log("socket error");
+    };
+  }
+  /** Kanala abone ol. Bağlantı yoksa kuyruğa alınır, kurulunca gönderilir. */
+  subscribe(channel) {
+    if (this.joined.has(channel) || this.pending.has(channel)) return;
+    this.pending.add(channel);
+    if (this.connected) void this.flush();
+  }
+  close() {
+    this.closed = true;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = null;
+    this.joined.clear();
+    try {
+      this.ws?.close();
+    } catch {
+    }
+    this.ws = null;
+    this.sid = null;
+  }
+  // ── Protokol ─────────────────────────────────────────────────────────
+  handle(frame) {
+    const type = frame[0];
+    if (type === "0") {
+      this.send("40");
+      return;
+    }
+    if (type === "2") {
+      this.send("3");
+      return;
+    }
+    if (type !== "4") return;
+    const sub = frame[1];
+    const body = frame.slice(2);
+    if (sub === "0") {
+      try {
+        this.sid = String(JSON.parse(body || "{}").sid || "");
+      } catch {
+        this.sid = "";
+      }
+      this.attempt = 0;
+      this.onState(true);
+      void this.flush();
+      return;
+    }
+    if (sub === "2") {
+      let parsed;
+      try {
+        parsed = JSON.parse(body);
+      } catch {
+        return;
+      }
+      if (!Array.isArray(parsed)) return;
+      const [name, data] = parsed;
+      if (typeof name === "string" && name.startsWith("chat.")) {
+        this.onEvent({ name, data: data ?? {} });
+      }
+    }
+  }
+  /**
+   * Bekleyen kanallar için imza al ve `subscribe` yolla.
+   *
+   * İmza her BAĞLANTIDA yeniden alınır: `socket_id`e bağlı ve zaman damgalı.
+   * Saklamak, ikinci bağlantıda sessizce reddedilmek demekti.
+   */
+  async flush() {
+    const sid = this.sid;
+    if (!sid) return;
+    for (const channel of Array.from(this.pending)) {
+      try {
+        const signed = await this.auth(sid, channel);
+        if (!signed) {
+          this.pending.delete(channel);
+          continue;
+        }
+        this.emit("subscribe", { channel, auth: signed.auth, at: signed.at });
+        this.pending.delete(channel);
+        this.joined.add(channel);
+      } catch (e) {
+        this.log("subscribe failed", channel, e);
+      }
+    }
+  }
+  /**
+   * Olay yolla — ACK İSTEMEDEN.
+   *
+   * `subscribe`in sonucunu beklemek bir tur daha protokol yönetmek demekti;
+   * oysa sonucu zaten davranıştan görüyoruz: imza tutmadıysa yayın gelmez ve
+   * polling merdiveni işini yapmaya devam eder.
+   */
+  emit(event, payload) {
+    this.send(`42${JSON.stringify([event, payload])}`);
+  }
+  send(frame) {
+    if (this.ws?.readyState !== WebSocket.OPEN) return;
+    try {
+      this.ws.send(frame);
+    } catch {
+    }
+  }
+  retry() {
+    this.ws = null;
+    this.sid = null;
+    this.joined.forEach((c) => this.pending.add(c));
+    this.joined.clear();
+    this.onState(false);
+    if (this.closed) return;
+    const delay = BACKOFF[Math.min(this.attempt, BACKOFF.length - 1)];
+    this.attempt++;
+    if (this.timer) clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.connect(), delay);
+  }
+};
+
 // src/app/session.ts
 var IDLE_LADDER = [2e4, 2e4, 2e4, 6e4, 6e4, 18e4];
 var ACTIVE_INTERVAL = 3e3;
+var ACTIVE_LIVE_INTERVAL = 45e3;
 var ChatSession = class {
   constructor(app, options = {}) {
     this.app = app;
@@ -314,13 +478,16 @@ var ChatSession = class {
       messages: [],
       unread: 0,
       agentTyping: false,
-      withinHours: true
+      withinHours: true,
+      settings: null
     };
     this.listeners = /* @__PURE__ */ new Set();
     this.timer = null;
     this.step = 0;
     this.stopped = false;
     this.polling = false;
+    this.socket = null;
+    this.live = false;
     this.active = options.active ?? false;
   }
   // ── Abonelik ──────────────────────────────────────────────────────────
@@ -345,8 +512,10 @@ var ChatSession = class {
     this.patch({
       enabled: true,
       withinHours: app.within_hours ?? true,
-      topics: boot.data?.topics ?? []
+      topics: boot.data?.topics ?? [],
+      settings: app.chat ?? null
     });
+    this.openSocket(boot.data?.realtime);
     if (await this.app.currentVisitor()) {
       await this.refresh();
     }
@@ -358,19 +527,42 @@ var ChatSession = class {
     if (this.active === active) return;
     this.active = active;
     this.step = 0;
-    if (active) void this.refresh();
+    if (active) {
+      if (this.state.conversation?.status === "closed") this.reset();
+      void this.refresh();
+    }
     this.schedule();
+  }
+  /**
+   * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar.
+   *
+   * Ekranın "yeni sohbet" düğmesi de bunu çağırır. Sunucuda hiçbir şey
+   * silinmez — yalnız bu oturumun neye baktığı değişir.
+   */
+  reset() {
+    this.patch({ conversation: null, messages: [], unread: 0, agentTyping: false, errorCode: void 0 });
+    this.step = 0;
   }
   stop() {
     this.stopped = true;
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
+    this.socket?.close();
+    this.socket = null;
+    this.live = false;
+  }
+  /** Canlı bağlantı kurulu mu — arayüz isterse gösterir (zorunlu değil). */
+  get isLive() {
+    return this.live;
   }
   // ── Eylemler ──────────────────────────────────────────────────────────
   /** Ön-form gönderildiğinde ya da uygulama kullanıcıyı tanıdığında. */
   async openSession(input) {
     const result = await this.app.startSession(input);
-    if (result.ok) await this.refresh();
+    if (result.ok) {
+      void this.joinVisitorChannel();
+      await this.refresh();
+    }
     return result;
   }
   /**
@@ -397,6 +589,7 @@ var ChatSession = class {
     if (!await this.app.currentVisitor()) {
       const session = await this.app.startSession(this.options.visitor ?? {});
       if (!session.ok) return this.markFailed(cid, session);
+      void this.joinVisitorChannel();
     }
     const conversation = this.state.conversation;
     const result = conversation ? await this.app.sendMessage(conversation.id, { body: trimmed, client_id: cid, attachments }) : await this.app.startConversation({
@@ -447,7 +640,7 @@ var ChatSession = class {
     const current = this.state.conversation;
     if (!current) {
       const list = await this.app.listConversations();
-      const first = list.data?.data?.[0];
+      const first = (list.data?.data ?? []).find((c) => c.status !== "closed");
       if (!first) {
         this.patch({ errorCode: list.ok ? void 0 : list.code });
         return;
@@ -497,10 +690,43 @@ var ChatSession = class {
     });
     return result;
   }
+  // ── Canlı bağlantı ────────────────────────────────────────────────────
+  /**
+   * Ziyaretçinin kendi kanalına bağlanır (`visitor.<id>`).
+   *
+   * Kanal ziyaretçi kimliği kurulduktan SONRA bilinir; ilk mesajla kimlik
+   * doğduğunda `refresh()` üzerinden yeniden denenir. Bağlantı kurulamazsa
+   * hiçbir şey olmaz: yoklama zaten çalışıyor.
+   */
+  openSocket(realtime) {
+    if (!realtime?.enabled || !realtime.url || this.socket) return;
+    this.socket = new Socket(
+      realtime,
+      async (socketId, channel) => {
+        const result = await this.app.socketAuth(socketId, channel);
+        return result.ok && result.data ? result.data : null;
+      },
+      () => {
+        this.step = 0;
+        void this.refresh();
+      },
+      (connected) => {
+        this.live = connected;
+        this.schedule();
+      }
+    );
+    this.socket.connect();
+    void this.joinVisitorChannel();
+  }
+  /** Ziyaretçi kimliği varsa kendi kanalına katılır; yoksa sessizce döner. */
+  async joinVisitorChannel() {
+    const visitor = await this.app.currentVisitor();
+    if (visitor?.id) this.socket?.subscribe(`visitor.${visitor.id}`);
+  }
   schedule() {
     if (this.timer) clearTimeout(this.timer);
     if (this.stopped) return;
-    const delay = this.active ? ACTIVE_INTERVAL : IDLE_LADDER[Math.min(this.step, IDLE_LADDER.length - 1)];
+    const delay = this.active ? this.live ? ACTIVE_LIVE_INTERVAL : ACTIVE_INTERVAL : this.live ? IDLE_LADDER[IDLE_LADDER.length - 1] : IDLE_LADDER[Math.min(this.step, IDLE_LADDER.length - 1)];
     this.timer = setTimeout(() => void this.tick(), delay);
   }
   async tick() {
@@ -594,7 +820,13 @@ function useNativeChat(client, options = {}) {
     markRead: () => session.markRead(),
     close: (rating, comment) => session.close(rating, comment),
     openSession: (input) => session.openSession(input),
-    refresh: () => session.refresh()
+    refresh: () => session.refresh(),
+    /*
+     * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar (29 Ağu 2026).
+     * Kapanmış sohbet geri açılmadığı için arayüzün "yeni sohbet" düğmesine
+     * bağlanacak bir eyleme ihtiyacı var.
+     */
+    reset: () => session.reset()
   };
 }
 function useNativePush(client, input) {

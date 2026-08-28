@@ -243,4 +243,20 @@ public final class SignalbirdApp: @unchecked Sendable {
         try await http.request("POST", "/v1/sdk/push/opened", body: ["message_id": messageID])
     }
 
+    /// Canlı bağlantı kanalı için imza.
+    ///
+    /// Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine **sunucu**
+    /// karar verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket
+    /// servisi kimseyi tanımaz, yalnız imzayı doğrular — bu yüzden imza
+    /// `socket_id`e bağlıdır ve dar bir zaman penceresinde geçerlidir.
+    ///
+    /// Bağlantı başına bir kez çağrılır. Soket istemcisinin kendisi bu
+    /// pakette yoktur; uygulama kendi WebSocket katmanını kullanır.
+    public func socketAuth(socketID: String, channel: String) async throws -> SbResult {
+        try await http.request("POST", "/v1/sdk/chat/socket/auth", body: [
+            "socket_id": socketID,
+            "channel": channel,
+        ])
+    }
+
 }

@@ -194,4 +194,22 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
      */
     suspend fun reportPushOpened(messageId: String): SbResult =
         http.request("POST", "/v1/sdk/push/opened", mapOf("message_id" to messageId))
+
+    /**
+     * Canlı bağlantı kanalı için imza.
+     *
+     * Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine **sunucu**
+     * karar verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket
+     * servisi kimseyi tanımaz, yalnız imzayı doğrular — bu yüzden imza
+     * `socket_id`e bağlıdır ve dar bir zaman penceresinde geçerlidir.
+     *
+     * Bağlantı başına bir kez çağrılır. Soket istemcisinin kendisi bu pakette
+     * yoktur; uygulama kendi WebSocket katmanını kullanır.
+     */
+    suspend fun socketAuth(socketId: String, channel: String): SbResult =
+        http.request(
+            "POST",
+            "/v1/sdk/chat/socket/auth",
+            mapOf("socket_id" to socketId, "channel" to channel),
+        )
 }

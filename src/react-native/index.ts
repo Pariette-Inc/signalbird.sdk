@@ -52,6 +52,8 @@ export interface NativeChatResult extends ChatState {
   close(rating?: number, comment?: string): Promise<void>;
   openSession(input: SessionInput): Promise<unknown>;
   refresh(): Promise<void>;
+  /** Konuşmayı bırakır; sonraki mesaj yeni bir konuşma açar. */
+  reset(): void;
 }
 
 /** İstemciyi kurar. Depoyu vermeyi UNUTMAYIN — bellekte kalırsa oturum uçar. */
@@ -97,6 +99,12 @@ export function useNativeChat(client: SignalbirdApp, options: NativeChatOptions 
     close: (rating, comment) => session.close(rating, comment),
     openSession: (input) => session.openSession(input),
     refresh: () => session.refresh(),
+    /*
+     * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar (29 Ağu 2026).
+     * Kapanmış sohbet geri açılmadığı için arayüzün "yeni sohbet" düğmesine
+     * bağlanacak bir eyleme ihtiyacı var.
+     */
+    reset: () => session.reset(),
   };
 }
 

@@ -26,6 +26,16 @@
  *
  * `transports: ['websocket']` sunucuda zorunlu tutuluyor, yani uzun yoklamaya
  * (polling) düşme ihtimali yok — zaten kaçtığımız şey o.
+ *
+ * ── NİYE `src/shared/` ────────────────────────────────────────────────────
+ *
+ * Widget ve `app` yüzeyi (ChatSession → penyu, React Native) AYNI istemciyi
+ * kullanır. İkinci bir nüsha yazmak, yeniden bağlanma merdiveni gibi ince bir
+ * mantığı iki ayrı yerde doğru tutmayı gerektirirdi; ilk ayrışmada mobil
+ * bağlantı web'de olmayan bir şekilde kopar ve kimse sebebini bulamaz.
+ *
+ * Sınıfın DOM bağımlılığı yoktur — yalnız `WebSocket` global'i gerekir ve o
+ * React Native'de de vardır.
  */
 
 export interface SocketConfig {

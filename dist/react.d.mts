@@ -25,6 +25,8 @@ interface UseChatResult extends ChatState {
     close(rating?: number, comment?: string): Promise<void>;
     openSession(input: SessionInput): Promise<unknown>;
     refresh(): Promise<void>;
+    /** Konuşmayı bırakır; sonraki mesaj yeni bir konuşma açar. */
+    reset(): void;
 }
 /**
  * Sohbet durumu + eylemleri.

@@ -9,7 +9,7 @@
 import { Api } from './api';
 import { Store } from './store';
 import { Poller } from './poller';
-import { Socket } from './socket';
+import { Socket } from '../shared/socket';
 import { UI } from './ui';
 import { uuid } from './ui/dom';
 import { TitleBlinker } from './title';

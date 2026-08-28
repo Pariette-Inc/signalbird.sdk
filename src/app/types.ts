@@ -76,10 +76,38 @@ export interface BootstrapResult {
       sound?: boolean;
       locale?: string;
       prechat?: { name?: boolean; email?: boolean };
+
+      /**
+       * Sohbet sonu puanlama bağlantısı (Trustpilot, Google İşletme…).
+       *
+       * `review_min_rating` bir nezaket kuralı değil TİCARİ bir kuraldır:
+       * eşiğin altında puan veren müşteriye bağlantı HİÇ gösterilmez.
+       * Memnun olmamış müşteriyi halka açık bir puanlama sitesine yollamak
+       * kendi ayağımıza sıkmaktır.
+       */
+      review_url?: string | null;
+      review_label?: string | null;
+      review_min_rating?: number;
+
+      /** Marka: logo, tema, balon ikonu (29 Ağu 2026). */
+      logo_url?: string | null;
+      theme?: 'light' | 'dark' | 'auto';
+      launcher_icon?: 'bird' | 'chat' | 'logo';
     };
   };
   /** Boşsa konu adımı hiç gösterilmez. */
   topics?: TopicOption[];
+  /** Mevcut açık konuşma (varsa) — ChatSession ilk listelemeyi atlar. */
+  conversation?: Conversation | null;
+  /**
+   * Canlı bağlantı — YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan taraf
+   * hiçbir şey göremez, odaya girmek imza ister ve imzayı
+   * `POST /v1/sdk/chat/socket/auth` verir.
+   *
+   * `enabled:false` ise yoklamayla çalışılır; canlı bağlantı bir
+   * İYİLEŞTİRMEDİR, onsuz da sistem tamdır.
+   */
+  realtime?: { enabled: boolean; url?: string };
 }
 
 export interface Visitor {

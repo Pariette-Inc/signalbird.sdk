@@ -30,6 +30,8 @@ interface NativeChatResult extends ChatState {
     close(rating?: number, comment?: string): Promise<void>;
     openSession(input: SessionInput): Promise<unknown>;
     refresh(): Promise<void>;
+    /** Konuşmayı bırakır; sonraki mesaj yeni bir konuşma açar. */
+    reset(): void;
 }
 /** İstemciyi kurar. Depoyu vermeyi UNUTMAYIN — bellekte kalırsa oturum uçar. */
 declare function createSignalbirdApp(config: AppConfig): SignalbirdApp;
