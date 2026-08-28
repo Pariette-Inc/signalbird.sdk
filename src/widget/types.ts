@@ -129,6 +129,14 @@ export interface Message {
   sender_name?: string | null;
   type: 'text' | 'image' | 'file' | 'system';
   body: string | null;
+  /**
+   * Anlık çeviri — ziyaretçinin diline (28 Ağu 2026).
+   *
+   * Ziyaretçi ÇEVİRİYİ okur; orijinal gövde de gelir ama widget onu
+   * göstermez. Ajanın Türkçe yazdığını bilmek ziyaretçinin işine yaramaz,
+   * bilmesi gereken tek şey kendi dilindeki cevaptır.
+   */
+  translation?: { lang: string; body: string; source?: string | null } | null;
   attachments: Attachment[] | null;
   reply_to_id?: string | null;
   client_id?: string | null;

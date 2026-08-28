@@ -123,6 +123,11 @@ export interface Message {
   read_at?: string | null;
   edited_at?: string | null;
   created_at?: string;
+  /**
+   * Anlık çeviri — ziyaretçinin diline. Arayüz varsa bunu gösterir; orijinal
+   * `body`'de durmaya devam eder.
+   */
+  translation?: { lang: string; body: string; source?: string | null } | null;
   /** İyimser gönderimde yerel kopyayı sunucudakiyle eşleştirir. */
   client_id?: string | null;
   /**

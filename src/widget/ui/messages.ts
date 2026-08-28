@@ -120,7 +120,16 @@ function renderRow(m: Message, ctx: RenderCtx, prev: Message | null): HTMLElemen
   }
   for (const a of others) bubble.appendChild(fileRow(a, ctx));
 
-  if (m.body) bubble.appendChild(document.createTextNode(m.body));
+  /*
+   * Çeviri varsa ziyaretçi ONU görür; orijinal gösterilmez.
+   *
+   * Panelde tersi geçerli (ajan orijinale dönebilir) çünkü ajan yazışmanın
+   * sorumlusudur. Ziyaretçiye iki metin göstermek, ona anlamadığı bir dili
+   * okutmaktan başka bir işe yaramaz.
+   */
+  const shown = m.translation?.body || m.body;
+
+  if (shown) bubble.appendChild(document.createTextNode(shown));
 
   if (m._failed) {
     bubble.appendChild(h('div', { style: 'font-size:11px;margin-top:4px' }, ctx.t.failed));
@@ -231,7 +240,9 @@ function fileRow(a: Attachment, ctx: RenderCtx): HTMLElement {
 
 export function snippet(m: Message, t: Strings): string {
   if (m.deleted_at) return t.deleted;
-  if (m.body) return m.body.length > 90 ? m.body.slice(0, 90) + '…' : m.body;
+  const preview = m.translation?.body || m.body;
+
+  if (preview) return preview.length > 90 ? preview.slice(0, 90) + '…' : preview;
   const a = m.attachments?.[0];
   return a ? `📎 ${a.name}` : '…';
 }
