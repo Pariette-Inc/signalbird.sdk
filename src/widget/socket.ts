@@ -1,56 +1,58 @@
 /**
- * Canlı bağlantı — bağımlılıksız Pusher/Reverb istemcisi.
+ * Canlı bağlantı — bağımlılıksız socket.io istemcisi.
  *
  * KARAR 2026-08-29 (Ahmet): "Chat sistemi hiç durmadan sürekli request atıyor.
  * Bu böyle olmaz, köylü işi bu. WebSocket kurmamız lazım."
  *
- * ── NİYE `pusher-js` DEĞİL ────────────────────────────────────────────────
+ * ── NİYE `socket.io-client` DEĞİL ─────────────────────────────────────────
  *
- * Widget'a paket eklenmez (CLAUDE.md kuralı): 19 KB gzip'lik balona 30 KB'lık
- * bir kütüphane koymak, sohbeti açmak için sayfayı yavaşlatmaktır. Reverb'ün
- * konuştuğu Pusher sözleşmesinin bize gereken kısmı çok küçük: bağlan, özel
- * kanala abone ol, olayları dinle, ping'e cevap ver. Aşağısı o kadar.
+ * Widget'a paket eklenmez (CLAUDE.md kuralı): 20 KB gzip'lik balona 40 KB'lık
+ * bir kütüphane koymak, sohbeti açmak için sayfayı yavaşlatmaktır. Sunucu
+ * tarafında socket.io var (odalar, yeniden bağlanma, bakım kolaylığı) ama
+ * tarayıcı tarafında bize gereken protokol parçası küçük.
  *
- * ── SOKET VERİYİ GETİRMEZ, HABERİ GETİRİR ─────────────────────────────────
+ * ── PROTOKOL (Engine.IO v4 + Socket.IO v5) ────────────────────────────────
  *
- * Sunucu yayınında mesaj gövdesi YOK (bkz. api/app/Events/Chat). Soket
- * "konuşmada hareket var" der, widget bir kez çeker. Bu yüzden polling
- * silinmedi: soket bağlıyken merdiven çok yavaşlar, koptuğunda kendiliğinden
- * eski hâline döner. Tek yolun soket olduğu bir sohbet, ilk vekil sunucu
- * WebSocket'i kesince ölürdü.
+ * Ham WebSocket üzerinden, metin çerçeveleri:
+ *
+ *   ← `0{"sid":…,"pingInterval":…}`   Engine.IO açılış
+ *   → `40`                            ana ad alanına bağlan
+ *   ← `40{"sid":…}`                   bağlandı — BU `sid` socket.id'dir
+ *   → `42["subscribe",{…}]`           olay
+ *   ← `42["chat.message",{…}]`        sunucu olayı
+ *   ← `2` / → `3`                     ping / pong (ping'i SUNUCU atar; biz
+ *                                      yalnız cevaplarız — sessiz bağlantıyı
+ *                                      canlı tutmak onun işi)
+ *
+ * `transports: ['websocket']` sunucuda zorunlu tutuluyor, yani uzun yoklamaya
+ * (polling) düşme ihtimali yok — zaten kaçtığımız şey o.
  */
 
 export interface SocketConfig {
   enabled: boolean;
-  key?: string;
-  host?: string;
-  port?: number;
-  scheme?: string;
+  /** `https://ws.signalbird.io` — bootstrap yanıtından gelir. */
+  url?: string;
 }
 
-/** Sunucudan gelen olay: `chat.message` | `chat.conversation` | `chat.typing` */
 export interface SocketEvent {
   name: string;
   data: Record<string, unknown>;
 }
 
-type AuthFn = (socketId: string, channel: string) => Promise<string | null>;
-
-const PROTOCOL = 7;
-const CLIENT = 'signalbird-widget';
+/** Kanal imzasını API'den alan işlev. */
+type AuthFn = (socketId: string, channel: string) => Promise<{ auth: string; at: number } | null>;
 
 /** Yeniden bağlanma merdiveni (ms). Sonuncusu tekrarlanır. */
 const BACKOFF = [1000, 2000, 5000, 10000, 30000];
 
 export class Socket {
   private ws: WebSocket | null = null;
-  private socketId: string | null = null;
+  private sid: string | null = null;
   private attempt = 0;
   private closed = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
-  private pingTimer: ReturnType<typeof setInterval> | null = null;
   private pending = new Set<string>();
-  private subscribed = new Set<string>();
+  private joined = new Set<string>();
 
   constructor(
     private readonly config: SocketConfig,
@@ -61,19 +63,19 @@ export class Socket {
   ) {}
 
   get connected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN && this.socketId !== null;
+    return this.ws?.readyState === WebSocket.OPEN && this.sid !== null;
   }
 
   connect(): void {
-    if (!this.config.enabled || !this.config.key || !this.config.host) return;
+    if (!this.config.enabled || !this.config.url) return;
     if (typeof WebSocket === 'undefined') return;
     if (this.ws) return;
 
     this.closed = false;
 
-    const scheme = this.config.scheme === 'http' ? 'ws' : 'wss';
-    const port = this.config.port && this.config.port !== 443 && this.config.port !== 80 ? `:${this.config.port}` : '';
-    const url = `${scheme}://${this.config.host}${port}/app/${this.config.key}?protocol=${PROTOCOL}&client=${CLIENT}&version=1`;
+    // `https://…` → `wss://…/socket.io/?EIO=4&transport=websocket`
+    const base = this.config.url.replace(/^http/, 'ws').replace(/\/$/, '');
+    const url = `${base}/socket.io/?EIO=4&transport=websocket`;
 
     try {
       this.ws = new WebSocket(url);
@@ -83,18 +85,18 @@ export class Socket {
       return;
     }
 
-    this.ws.onmessage = (ev) => this.handle(ev);
+    this.ws.onmessage = (ev) => this.handle(String(ev.data));
     this.ws.onclose = () => this.retry();
     this.ws.onerror = () => {
-      // `onerror`dan sonra `onclose` da gelir; yeniden bağlanmayı orada
-      // yönetiyoruz ki iki kez zincir kurulmasın.
+      // `onerror`dan sonra `onclose` da gelir; yeniden bağlanma orada yönetilir
+      // ki iki zincir birden kurulmasın.
       this.log('socket error');
     };
   }
 
-  /** Kanala abone ol. Bağlantı yoksa kuyruğa alınır; kurulunca gönderilir. */
+  /** Kanala abone ol. Bağlantı yoksa kuyruğa alınır, kurulunca gönderilir. */
   subscribe(channel: string): void {
-    if (this.subscribed.has(channel) || this.pending.has(channel)) return;
+    if (this.joined.has(channel) || this.pending.has(channel)) return;
 
     this.pending.add(channel);
 
@@ -103,11 +105,11 @@ export class Socket {
 
   close(): void {
     this.closed = true;
+
     if (this.timer) clearTimeout(this.timer);
-    if (this.pingTimer) clearInterval(this.pingTimer);
+
     this.timer = null;
-    this.pingTimer = null;
-    this.subscribed.clear();
+    this.joined.clear();
 
     try {
       this.ws?.close();
@@ -116,124 +118,125 @@ export class Socket {
     }
 
     this.ws = null;
-    this.socketId = null;
+    this.sid = null;
   }
 
-  // ── İç işleyiş ───────────────────────────────────────────────────────
+  // ── Protokol ─────────────────────────────────────────────────────────
 
-  private handle(ev: MessageEvent): void {
-    let frame: { event?: string; data?: unknown; channel?: string };
+  private handle(frame: string): void {
+    // Engine.IO paket türü ilk karakterdir.
+    const type = frame[0];
 
-    try {
-      frame = JSON.parse(String(ev.data));
-    } catch {
+    if (type === '0') {
+      // Açılış — asıl kimlik Socket.IO `40` yanıtında gelir.
+      this.send('40');
       return;
     }
 
-    // Pusher `data`yı bazen dize olarak yollar, bazen nesne.
-    const data =
-      typeof frame.data === 'string'
-        ? (() => {
-            try {
-              return JSON.parse(frame.data as string);
-            } catch {
-              return {};
-            }
-          })()
-        : ((frame.data ?? {}) as Record<string, unknown>);
+    if (type === '2') {
+      this.send('3'); // ping → pong
+      return;
+    }
 
-    switch (frame.event) {
-      case 'pusher:connection_established':
-        this.socketId = String((data as { socket_id?: string }).socket_id ?? '');
-        this.attempt = 0;
-        this.onState(true);
-        this.startPing();
-        void this.flush();
+    if (type !== '4') return; // yalnız MESSAGE paketleri ilgilendiriyor
+
+    const sub = frame[1];
+    const body = frame.slice(2);
+
+    // `40{…}` — ad alanına bağlandık.
+    if (sub === '0') {
+      try {
+        this.sid = String(JSON.parse(body || '{}').sid || '');
+      } catch {
+        this.sid = '';
+      }
+
+      this.attempt = 0;
+      this.onState(true);
+      void this.flush();
+      return;
+    }
+
+    // `42[…]` — sunucu olayı. `43N[…]` (ack) bizi ilgilendirmiyor: abonelik
+    // sonucunu zaten bir sonraki yayında görürüz.
+    if (sub === '2') {
+      let parsed: unknown;
+
+      try {
+        parsed = JSON.parse(body);
+      } catch {
         return;
+      }
 
-      case 'pusher:ping':
-        this.send({ event: 'pusher:pong', data: {} });
-        return;
+      if (!Array.isArray(parsed)) return;
 
-      case 'pusher:error':
-        this.log('socket rejected', data);
-        return;
+      const [name, data] = parsed as [string, Record<string, unknown>];
 
-      case 'pusher_internal:subscription_succeeded':
-        if (frame.channel) {
-          this.pending.delete(frame.channel);
-          this.subscribed.add(frame.channel);
-        }
-        return;
-
-      default:
-        // Sunucu olayları `chat.*` adıyla gelir (broadcastAs).
-        if (frame.event && frame.event.startsWith('chat.')) {
-          this.onEvent({ name: frame.event, data });
-        }
+      if (typeof name === 'string' && name.startsWith('chat.')) {
+        this.onEvent({ name, data: data ?? {} });
+      }
     }
   }
 
   /**
-   * Bekleyen kanallar için imza al ve abone ol.
+   * Bekleyen kanallar için imza al ve `subscribe` yolla.
    *
-   * İmza her BAĞLANTIDA yeniden alınır: Pusher imzası `socket_id`e bağlıdır
-   * ve yeniden bağlanınca o kimlik değişir. Saklamak, ikinci bağlantıda
-   * sessizce reddedilmek demekti.
+   * İmza her BAĞLANTIDA yeniden alınır: `socket_id`e bağlı ve zaman damgalı.
+   * Saklamak, ikinci bağlantıda sessizce reddedilmek demekti.
    */
   private async flush(): Promise<void> {
-    const socketId = this.socketId;
+    const sid = this.sid;
 
-    if (!socketId) return;
+    if (!sid) return;
 
     for (const channel of Array.from(this.pending)) {
       try {
-        const auth = await this.auth(socketId, channel);
+        const signed = await this.auth(sid, channel);
 
-        if (!auth) {
-          // Yetki yoksa bir daha denemeyiz: sunucu "hayır" dediyse tekrar
-          // sormak yalnız istek üretir.
+        if (!signed) {
+          // Sunucu "hayır" dediyse tekrar sormak yalnız istek üretir.
           this.pending.delete(channel);
           continue;
         }
 
-        this.send({ event: 'pusher:subscribe', data: { channel, auth } });
+        this.emit('subscribe', { channel, auth: signed.auth, at: signed.at });
+        this.pending.delete(channel);
+        this.joined.add(channel);
       } catch (e) {
         this.log('subscribe failed', channel, e);
       }
     }
   }
 
-  private send(frame: unknown): void {
+  /**
+   * Olay yolla — ACK İSTEMEDEN.
+   *
+   * `subscribe`in sonucunu beklemek bir tur daha protokol yönetmek demekti;
+   * oysa sonucu zaten davranıştan görüyoruz: imza tutmadıysa yayın gelmez ve
+   * polling merdiveni işini yapmaya devam eder.
+   */
+  private emit(event: string, payload: unknown): void {
+    this.send(`42${JSON.stringify([event, payload])}`);
+  }
+
+  private send(frame: string): void {
     if (this.ws?.readyState !== WebSocket.OPEN) return;
 
     try {
-      this.ws.send(JSON.stringify(frame));
+      this.ws.send(frame);
     } catch {
       /* yut */
     }
   }
 
-  /**
-   * Sessiz bağlantıyı canlı tutar.
-   *
-   * Vekil sunucular ve mobil ağlar 30–120 saniye sessiz kalan bir soketi
-   * kapatır. Sunucu da ping atar ama önce bizim sessizliğimiz cezalandırılır;
-   * 30 saniyede bir ping, bağlantıyı ucuza ayakta tutar.
-   */
-  private startPing(): void {
-    if (this.pingTimer) clearInterval(this.pingTimer);
-
-    this.pingTimer = setInterval(() => this.send({ event: 'pusher:ping', data: {} }), 30000);
-  }
-
   private retry(): void {
-    if (this.pingTimer) clearInterval(this.pingTimer);
-    this.pingTimer = null;
     this.ws = null;
-    this.socketId = null;
-    this.subscribed.forEach((c) => this.pending.add(c));
-    this.subscribed.clear();
+    this.sid = null;
+
+    // Kopan bağlantıdaki abonelikler yeni bağlantıda yeniden kurulmalı:
+    // imza socket_id'ye bağlı, eskisi geçersiz.
+    this.joined.forEach((c) => this.pending.add(c));
+    this.joined.clear();
     this.onState(false);
 
     if (this.closed) return;

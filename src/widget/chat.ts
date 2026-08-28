@@ -508,17 +508,22 @@ export class ChatController {
   private subscribeVisitor(): void {
     const id = this.store.visitor?.id;
 
-    if (this.socket && id) this.socket.subscribe(`private-sb-visitor.${id}`);
+    if (this.socket && id) this.socket.subscribe(`visitor.${id}`);
   }
 
-  /** Özel kanal imzası — ziyaretçi sırrıyla, SDK'nın kendi kapısından. */
-  private async authorizeChannel(socketId: string, channel: string): Promise<string | null> {
-    const r = await this.api.post<{ auth: string }>('/v1/sdk/chat/socket/auth', {
+  /**
+   * Kanal imzası — ziyaretçi sırrıyla, SDK'nın kendi kapısından.
+   *
+   * Soket servisi kimseyi tanımaz; kim hangi kanalı dinleyebilir sorusunu
+   * API cevaplar ve imzayı o üretir.
+   */
+  private async authorizeChannel(socketId: string, channel: string) {
+    const r = await this.api.post<{ auth: string; at: number }>('/v1/sdk/chat/socket/auth', {
       socket_id: socketId,
-      channel_name: channel,
+      channel,
     });
 
-    return r.ok && r.data?.auth ? r.data.auth : null;
+    return r.ok && r.data?.auth ? { auth: r.data.auth, at: r.data.at } : null;
   }
 
   /**

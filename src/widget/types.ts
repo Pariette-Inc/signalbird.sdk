@@ -82,7 +82,8 @@ export interface TopicOption {
 }
 
 /**
- * Canlı bağlantı bilgisi — adres ve AÇIK anahtar sunucudan gelir.
+ * Canlı bağlantı bilgisi — YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan
+ * taraf hiçbir şey göremez, odaya girmek imza ister ve imzayı API verir.
  *
  * Gömme etiketine yazılmaz: adres değişirse müşterinin sitesindeki tek satır
  * yeniden düzenlenmek zorunda kalmasın. `enabled:false` ise widget polling ile
@@ -90,10 +91,8 @@ export interface TopicOption {
  */
 export interface RealtimeInfo {
   enabled: boolean;
-  key?: string;
-  host?: string;
-  port?: number;
-  scheme?: string;
+  /** `https://ws.signalbird.io` — soket servisinin public adresi. */
+  url?: string;
 }
 
 export interface Bootstrap {
