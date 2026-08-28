@@ -45,6 +45,16 @@ export interface ChatSettings {
   push_visitor_on_reply: boolean;
   sound: boolean;
   locale: 'auto' | 'tr' | 'en' | string;
+  /**
+   * Sohbet sonunda gösterilecek puanlama/yorum bağlantısı (Trustpilot, Google
+   * İşletme…). Site sahibi panelden girer.
+   *
+   * `review_min_rating` bir nezaket kuralı değil ticari bir kuraldır: eşiğin
+   * altında puan veren müşteriye bağlantı HİÇ gösterilmez.
+   */
+  review_url?: string | null;
+  review_label?: string | null;
+  review_min_rating?: number;
   max_attachment_mb?: number;
   [key: string]: unknown;
 }

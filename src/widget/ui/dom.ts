@@ -53,6 +53,46 @@ export function icon(name: keyof typeof ICONS, size = 18): SVGSVGElement {
   return svg;
 }
 
+/**
+ * Marka işareti — sinyal hattına tünemiş origami kuş.
+ *
+ * KARAR 2026-08-29 (Ahmet): "Chatbot ikonunda Signalbird logosu (kuş) olsun.
+ * Neden olmasın ki?"
+ *
+ * Panel logosunun (signalbird.web `SignalbirdLogo`) SADELEŞTİRİLMİŞ hâlidir ve
+ * bu bilinçli: balon 26 pikseldir; ayaklar, katlama çizgileri ve sinyal hattı
+ * o boyutta birbirine girip lekeye döner. Kalan siluet — gövde, kafa, gaga,
+ * göz — kuşu tanıtmaya yeter.
+ *
+ * `currentColor` ile boyanır: balonun rengini müşteri seçiyor, işaret onun
+ * üstünde okunaklı kalmalı. Kontür ayrı bir renk kullansaydı, koyu temada
+ * kaybolur ya da açık temada kirli görünürdü.
+ */
+export function brandIcon(size = 26): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '10 2 28 38');
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(size));
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML =
+    // gövde ve kafa yüzeyleri (dolgu, düşük opaklık)
+    '<path d="M16 16 L30 16 L33 18 L24 33 L15 18 Z" fill="currentColor" fill-opacity=".18" stroke="none"/>' +
+    '<path d="M23 4 L31 9 L23 14 L16 9 Z" fill="currentColor" fill-opacity=".28" stroke="none"/>' +
+    // gövde konturu — kanat ucu dahil
+    '<path d="M30 16 L33 18 L36 27 L34 34 L41 32 L44 38 L31 37 L24 37 L17 35 L13 27 L15 18 L16 16"/>' +
+    // kafa konturu
+    '<path d="M16 16 L16 9 L23 4 L31 9 L30 16"/>' +
+    // gaga
+    '<path d="M21.4 12.4 L23.2 18.6 L25 12.4 Z" fill="currentColor" fill-opacity=".35"/>' +
+    // göz
+    '<circle cx="28.4" cy="11.4" r="1.6" fill="currentColor" stroke="none"/>';
+  return svg;
+}
+
 const ICONS = {
   chat: '<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/>',
   close: '<path d="M18 6 6 18M6 6l12 12"/>',

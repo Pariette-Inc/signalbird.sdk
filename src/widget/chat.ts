@@ -54,6 +54,14 @@ export class ChatController {
   private destroyed = false;
   private pendingSends = new Map<string, Pending>();
   private ratingMode: 'end' | 'resolved' | null = null;
+  /**
+   * Sayfanın bize verdiği kimlik (`init({user})` ya da `identify()`).
+   *
+   * KARAR 2026-08-29 (Ahmet): "Yeni sohbete bastığımda ismimi sormamalı;
+   * oturum açtıysam mevcut web sitesi ismimi ve mailimi Signalbird'e iletsin."
+   * Ön-form ancak burası boşken çizilir.
+   */
+  private identity: IdentifyInput | null = null;
   private lastTypingSent = 0;
   private pollCount = 0;
   private baseUrl: string;
@@ -63,6 +71,7 @@ export class ChatController {
     this.store = new Store(opts.appKey);
     this.api = new Api(this.baseUrl, opts.appKey, () => this.store.secret, (...a) => this.log(...a));
     this.poller = new Poller(() => this.tick());
+    this.identity = opts.user && (opts.user.name || opts.user.email || opts.user.external_id) ? opts.user : null;
     this.locale = resolveLocale(null, opts.locale);
     this.t = strings(this.locale);
     this.ready = this.start().catch((e) => this.log('start failed', e));
@@ -124,6 +133,7 @@ export class ChatController {
           this.enterChat();
         },
         rate: (stars, comment) => void this.rate(stars, comment),
+        dismiss: () => this.dismiss(),
         endChat: () => this.endChat(),
         newChat: () => this.newChat(),
         saveEdit: (m, body) => void this.saveEdit(m, body),
@@ -142,6 +152,7 @@ export class ChatController {
     document.addEventListener('visibilitychange', this.onVisibility);
 
     this.ui.mount();
+    this.ui.setDismissed(this.store.dismissed);
     this.ui.setHeader(this.store.agent, this.store.online);
     this.applyBanner();
     this.store.setUnread(visitor?.unread || conversation?.visitor_unread || 0);
@@ -174,7 +185,33 @@ export class ChatController {
 
   // ── Dış API ──────────────────────────────────────────────────────────
 
+  /**
+   * Ziyaretçi balonu tamamen kapattı.
+   *
+   * KARAR 2026-08-29 (Ahmet): "Ziyaretçi isterse x ile balonu tamamen
+   * kapatabilsin, header'dan zaten erişilebiliyor."
+   *
+   * WIDGET SÖKÜLMEZ, GİZLENİR: sayfadaki "destek" düğmesi
+   * `Signalbird.chat.open()` diyor ve o an yeniden kurulum yapmak (bootstrap,
+   * oturum, geçmiş) sohbetin açılmasını saniyelerce geciktirirdi.
+   *
+   * Karar TARAYICIDA saklanır (`sb_dismissed`), sunucuda değil: bu bir hesap
+   * ayarı değil, bu cihazdaki bu kişinin tercihi.
+   */
+  dismiss(): void {
+    this.store.setDismissed(true);
+    this.close();
+    this.ui?.setDismissed(true);
+  }
+
   open(): void {
+    // Gizlenmiş balon açılırken geri gelir: kullanıcı "kapat" derken sohbeti
+    // değil balonu kapatmıştı; artık kendisi istiyor.
+    if (this.store.dismissed) {
+      this.store.setDismissed(false);
+      this.ui?.setDismissed(false);
+    }
+
     if (!this.ui || this.store.isOpen) return;
     this.store.isOpen = true;
     this.ui.setOpen(true);
@@ -231,6 +268,13 @@ export class ChatController {
   async identify(input: IdentifyInput): Promise<void> {
     await this.ready;
     if (this.destroyed) return;
+
+    this.identity = { ...(this.identity || {}), ...input };
+
+    // Ön-form çizilmişse ve artık kimliği biliyorsak formu bekletmeyelim:
+    // oturum açan kullanıcıya adını ikinci kez sormak, sohbeti geciktiren
+    // gereksiz bir adımdır.
+    if (this.ui?.currentView === 'prechat') this.enterChat();
     const [first_name, ...rest] = (input.name || '').trim().split(/\s+/);
     const body = {
       external_id: input.external_id,
@@ -269,7 +313,12 @@ export class ChatController {
   private decideView(): void {
     if (!this.ui || !this.settings) return;
     const p = this.settings.prechat;
-    const needsPrechat = !this.store.visitor && p && (p.name || p.email);
+
+    // Sayfanın verdiği kimlik ön-formun cevabıdır: adı ve e-postası zaten
+    // bizde olan birine formu göstermek, bildiğimiz şeyi sormaktır.
+    const known = !!(this.identity?.name || this.identity?.email);
+    const needsPrechat = !this.store.visitor && !known && p && (p.name || p.email);
+
     if (needsPrechat) this.ui.showPrechat({});
     else this.enterChat();
   }
@@ -345,7 +394,7 @@ export class ChatController {
       if (this.store.conversation?.id === c.id) {
         this.store.setConversation({ ...c, status: 'closed' });
       }
-      this.ui.showThanks();
+      this.ui.showThanks(this.reviewFor(stars));
       return;
     }
 
@@ -355,10 +404,36 @@ export class ChatController {
     this.close();
   }
 
+  /**
+   * Bitiş ekranında yorum bağlantısı gösterilsin mi?
+   *
+   * Eşik ve adres sunucudan gelir (`review_url`, `review_min_rating`); aynı
+   * kural döküm e-postasında da uygulanır (`ChatTranscriptMail::reviewUrlFor`).
+   * Kuralın kendisi TEK yerde tanımlıdır: burada yalnız uygulanır.
+   */
+  private reviewFor(stars: number): { url: string; label: string | null } | null {
+    const url = (this.settings?.review_url || '').trim();
+    const min = Number(this.settings?.review_min_rating ?? 3);
+
+    if (!url || !/^https?:\/\//i.test(url)) return null;
+
+    return stars > 0 && stars >= min ? { url, label: this.settings?.review_label || null } : null;
+  }
+
   // ── Oturum ve konuşma ────────────────────────────────────────────────
 
   private async session(identity: { name?: string; email?: string; external_id?: string } = {}): Promise<boolean> {
+    /*
+     * Bilinen kimlik oturuma KENDİLİĞİNDEN eklenir. Çağıranın ayrıca
+     * geçirmesini beklemek, ön-formu atladığımız yolda ziyaretçiyi anonim
+     * bırakırdı — ajan kiminle konuştuğunu bilmeden yardım edemez.
+     */
+    const known = this.identity
+      ? { name: this.identity.name, email: this.identity.email, external_id: this.identity.external_id }
+      : {};
+
     const r = await this.api.post<{ visitor: Visitor }>('/v1/sdk/chat/session', {
+      ...known,
       ...identity,
       locale: this.locale,
       page_url: location.href,

@@ -187,6 +187,30 @@ export class Store {
     this.emit('unread', value);
   }
 
+  /**
+   * Ziyaretçi balonu gizledi mi (bu tarayıcıda)?
+   *
+   * Anahtar uygulama başınadır: aynı tarayıcıda iki farklı Signalbird
+   * müşterisinin sitesi gezilebilir ve birinde balonu kapatmak diğerini
+   * susturmamalı.
+   */
+  get dismissed(): boolean {
+    return safeGet(this.dismissKey) === '1';
+  }
+
+  setDismissed(value: boolean): void {
+    try {
+      if (value) localStorage.setItem(this.dismissKey, '1');
+      else localStorage.removeItem(this.dismissKey);
+    } catch {
+      /* yok say — gizli sekmede localStorage yazılamaz, balon görünür kalır */
+    }
+  }
+
+  private get dismissKey(): string {
+    return `sb_dismissed_${this.appKey}`;
+  }
+
   wasRated(id: string): boolean {
     return this.rated.has(id) || safeGet(`sb_rated_${id}`) === '1';
   }

@@ -25,6 +25,21 @@ box-shadow:0 6px 24px rgba(0,0,0,.18);transition:transform .15s,box-shadow .15s}
 display:flex;align-items:center;justify-content:center;border:2px solid #fff}
 .sb.open .ln{display:none}
 
+/* Balonu kapatma düğmesi — balonun dışında, üst köşede.
+   Masaüstünde yalnız balona gelince görünür (sürekli duran bir çarpı,
+   sohbete davetten çok "beni kapat" davetidir); dokunmatikte hover
+   olmadığı için her zaman görünür. */
+.dm{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:11px;background:var(--sb-bg);color:var(--sb-m);
+box-shadow:0 2px 8px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;pointer-events:none}
+.sb:hover .dm{opacity:1;pointer-events:auto}
+.dm:hover{color:var(--sb-t)}
+.sb.open .dm,.sb.hidden .dm{display:none}
+@media (hover:none){.dm{opacity:1;pointer-events:auto}}
+
+/* Ziyaretçi balonu kapattı: widget tümden gizlenir. Kaldırılmaz —
+   sayfadaki "destek" düğmesi Signalbird.chat.open() ile onu geri getirir. */
+.sb.hidden .ln{display:none}
+
 /* Panel */
 .pn{position:absolute;bottom:0;width:380px;max-width:calc(100vw - 40px);height:min(640px,calc(100vh - 40px));background:var(--sb-bg);border-radius:var(--sb-r);
 box-shadow:0 12px 48px rgba(0,0,0,.22);display:none;flex-direction:column;overflow:hidden;
@@ -139,6 +154,7 @@ transform-origin:bottom right;animation:sbIn .18s ease-out}
 .stars button.on{color:#f59e0b}
 .stars button.on svg{fill:currentColor}
 .ok{text-align:center;padding:30px 20px;color:var(--sb-t)}
+.ok .rv{margin-top:18px;color:var(--sb-m)}
 .notice{margin:8px 16px;padding:8px 12px;font-size:12px;color:var(--sb-m);background:var(--sb-s);border-radius:10px;text-align:center}
 .notice button{color:var(--sb-c);font-weight:600;margin-left:6px}
 `;

@@ -4,7 +4,7 @@
  * arayüz çizer ve kullanıcı eylemlerini geri bildirir.
  */
 import { CSS } from './styles';
-import { h, icon, clear } from './dom';
+import { h, icon, brandIcon, clear } from './dom';
 import { renderMessages, scrollToBottom, snippet, type MessageActions, type RenderCtx } from './messages';
 import type { Message, ChatSettings, Agent, TopicOption } from '../types';
 import type { Strings } from '../i18n';
@@ -18,6 +18,8 @@ export interface UIActions extends MessageActions {
   submitPrechat(name: string, email: string, topic: string | null): void;
   skipPrechat(topic: string | null): void;
   rate(stars: number, comment: string): void;
+  /** Balonu tamamen gizle — ziyaretçinin "bir daha görünme" demesi. */
+  dismiss(): void;
   endChat(): void;
   newChat(): void;
   saveEdit(m: Message, body: string): void;
@@ -34,13 +36,20 @@ export interface UIOptions {
   actions: UIActions;
 }
 
-const ALLOWED = /^(image\/|application\/pdf|application\/msword|application\/vnd\.openxmlformats|application\/vnd\.ms-excel|text\/plain|application\/zip|application\/x-zip)/;
+/*
+ * Ziyaretçi YALNIZ FOTOĞRAF yükler (29 Ağu 2026, Ahmet). Sunucu da aynı kuralı
+ * uygular (`config/chat.php: visitor_attachment_mimes`); buradaki kontrol
+ * yalnız erken uyarı içindir — kullanıcı 8 MB'lık bir PDF'i yükleyip sonra
+ * reddedildiğini öğrenmesin.
+ */
+const ALLOWED = /^image\/(jpeg|png|gif|webp)$/;
 
 export class UI {
   readonly host: HTMLElement;
   private root: ShadowRoot;
   private wrap: HTMLElement;
   private launcher: HTMLButtonElement;
+  private dismissBtn: HTMLButtonElement;
   private badge: HTMLElement;
   private panel: HTMLElement;
   private headerName: HTMLElement;
@@ -80,7 +89,22 @@ export class UI {
       type: 'button',
       'aria-label': text || t.launcher,
       onclick: () => o.actions.open(),
-    }, icon('chat', 26), text ? h('span', { class: 'lt' }, text) : null, this.badge);
+    }, brandIcon(26), text ? h('span', { class: 'lt' }, text) : null, this.badge);
+
+    /*
+     * Balonu tamamen kapatma (29 Ağu 2026, Ahmet: "ziyaretçi isterse x ile
+     * balonu tamamen kapatabilsin, header'dan zaten erişilebiliyor").
+     *
+     * Ayrı bir düğmedir, balonun İÇİNDE değil: iç içe düğme HTML'de geçersiz
+     * ve dokunmatikte "kapatayım derken açtım" hatasını doğurur.
+     */
+    this.dismissBtn = h('button', {
+      class: 'dm',
+      type: 'button',
+      title: t.dismiss,
+      'aria-label': t.dismiss,
+      onclick: (e: Event) => { e.stopPropagation(); o.actions.dismiss(); },
+    }, icon('close', 12));
 
     // Panel başlığı
     this.headerAvatar = h('div', { class: 'av' }, initials(o.appName));
@@ -99,6 +123,7 @@ export class UI {
     this.panel = h('div', { class: 'pn', role: 'dialog', 'aria-label': t.title }, header, this.banner, this.body);
 
     this.wrap.appendChild(this.launcher);
+    this.wrap.appendChild(this.dismissBtn);
     this.wrap.appendChild(this.panel);
     this.root.appendChild(this.wrap);
 
@@ -124,6 +149,11 @@ export class UI {
   }
 
   // ── Genel durum ─────────────────────────────────────────────────────
+
+  /** Balon gizli mi — `dismiss` sonrası. Widget DOM'da kalır, görünmez olur. */
+  setDismissed(hidden: boolean): void {
+    this.wrap.classList.toggle('hidden', hidden);
+  }
 
   setOpen(open: boolean): void {
     this.wrap.classList.toggle('open', open);
@@ -303,12 +333,43 @@ export class UI {
     this.body.appendChild(form);
   }
 
-  showThanks(): void {
+  /**
+   * Bitiş ekranı. `review` verildiyse yorum çağrısı da çizilir.
+   *
+   * KARAR 2026-08-29 (Ahmet): sohbet sonunda Trustpilot/Google bağlantısı da
+   * olsun. Bağlantıyı ve eşiği SUNUCU seçer (`review_url`,
+   * `review_min_rating`): kötü puan veren müşteriye halka açık bir puanlama
+   * sitesini göstermek kendi ayağımıza sıkmaktır ve bu kural iki yerde
+   * yazılmamalı.
+   */
+  showThanks(review?: { url: string; label: string | null } | null): void {
     this.view = 'none';
     this.list = null;
     clear(this.body);
-    this.body.appendChild(h('div', { class: 'ok' }, h('p', null, this.o.t.rateThanks),
-      h('button', { class: 'btn', type: 'button', style: 'margin-top:12px', onclick: () => this.o.actions.newChat() }, this.o.t.newChat)));
+
+    const box = h('div', { class: 'ok' }, h('p', null, this.o.t.rateThanks));
+
+    if (review?.url) {
+      box.appendChild(h('p', { class: 'rv' }, this.o.t.reviewIntro));
+      box.appendChild(h('a', {
+        class: 'btn',
+        href: review.url,
+        target: '_blank',
+        // Yeni sekmede açılan bağlantı `opener` üzerinden bu sayfaya
+        // erişebilir; müşterinin sitesini üçüncü bir siteye açmayız.
+        rel: 'noopener noreferrer',
+        style: 'margin-top:10px;display:inline-flex;text-decoration:none',
+      }, review.label || this.o.t.reviewCta));
+    }
+
+    box.appendChild(h('button', {
+      class: 'btn gh',
+      type: 'button',
+      style: 'margin-top:10px',
+      onclick: () => this.o.actions.newChat(),
+    }, this.o.t.newChat));
+
+    this.body.appendChild(box);
   }
 
   get currentView(): string {
