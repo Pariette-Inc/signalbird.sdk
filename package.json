@@ -1,6 +1,6 @@
 {
   "name": "signalbird",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Signalbird SDK — Telsiz (Radio), Gönderim (Messaging), Yönetim (Management) ve son kullanıcı sohbet/push istemcisi: sunucu, tarayıcı, mobil",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -20,6 +20,11 @@
       "types": "./dist/app.d.ts",
       "import": "./dist/app.mjs",
       "require": "./dist/app.js"
+    },
+    "./embed": {
+      "types": "./dist/embed.d.ts",
+      "import": "./dist/embed.mjs",
+      "require": "./dist/embed.js"
     },
     "./react": {
       "types": "./dist/react.d.ts",

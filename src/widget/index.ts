@@ -14,9 +14,11 @@
  *   Signalbird.identify({external_id, email, name, phone, attributes})
  *   Signalbird.chat.open() / close() / toggle() / isOpen() / on('unread', fn) / off(…)
  *   Signalbird.push.register({token, platform, provider?})
+ *   Signalbird.embed({module, mint}).mount('#kap')   ← panel gömme (partner)
  *   Signalbird.destroy()
  */
 import { ChatController } from './chat';
+import { createEmbed } from '../embed/element';
 import type { ApiResult, ChatEvent, IdentifyInput, InitOptions, PushRegisterInput } from './types';
 
 declare const __SB_VERSION__: string;
@@ -139,6 +141,17 @@ export const push = {
     );
   },
 };
+
+/**
+ * Panel gömme — ziyaretçi sohbetiyle İLGİSİ YOKTUR, aynı betikte olmasının
+ * sebebi tek kurulumdur: partner paneline zaten bir `<script>` koyuyorsa
+ * ikincisini koymasın (KARAR 2026-08-27: "nereye çakarsak orda çalışsın").
+ *
+ *   Signalbird.embed({ module: 'chat', mint }).mount('#sb-chat')
+ *
+ * `init()` GEREKMEZ: gömme kimliği jetondan gelir, uygulama anahtarından değil.
+ */
+export const embed = createEmbed;
 
 /** Widget'ı kaldırır: polling durur, DOM silinir. Ziyaretçi sırrı localStorage'da kalır. */
 export function destroy(): void {

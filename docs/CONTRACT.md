@@ -548,3 +548,64 @@ Gerekçe: gönderim zarfı Signalbird havuzundan çıkar, yani itibar bizimdir.
 ### 12.7 Retry
 
 Yoktur — §8.7 ile aynı ilke.
+
+---
+
+## 13. Gömme (Embed) yüzeyi — `signalbird/embed`
+
+**Altıncı yüzey ve tek TARAYICI yüzeyi.** Partner, Signalbird panel ekranını
+KENDİ panelinin içinde çalıştırır; ekranı yeniden yazmaz.
+
+KARAR 2026-08-27 (Ahmet): *"submitcms paneline chat modülü yazmayalım, SDK
+içinde doğrudan chat modülünü render edecek bir yapı geliştirelim; nereye
+çakarsak orda çalışsın, Stripe sanal posu gibi."* Sonuç: ev sahibi bir `<div>`
+verir, SDK gerisini yapar.
+
+| Ortam | Erişim |
+|---|---|
+| npm | `import { createEmbed } from 'signalbird/embed'` |
+| `<script>` | `Signalbird.embed({...})` (widget betiği; `init()` gerekmez) |
+
+Diğer dillerde karşılığı **yoktur ve olmayacaktır**: bu yüzey DOM'a bağlıdır.
+Sunucu tarafının payı jeton üretmektir (§12.5, `createEmbedToken`).
+
+### 13.1 Sözleşme
+
+```ts
+const handle = createEmbed({
+  module: 'chat',            // chat | monitoring | campaigns | contacts | radio | messages
+  mint,                      // () => Promise<{url}>  — EV SAHİBİNİN SUNUCUSU
+  theme: 'auto',             // auto | light | dark   (auto: ev sahibi sayfayı izler)
+  locale: 'tr',
+  accent: '#4f46e5',
+  height: 'auto',            // 'auto' | number(px)
+  minHeight: 640,
+})
+
+await handle.mount('#sb-chat')
+```
+
+`handle`: `mount(target)` · `refresh()` · `setTheme(t)` · `destroy()` ·
+`on(event, fn)` / `off(...)` — olaylar `ready`, `error`, `height`.
+
+### 13.2 Jetonu SDK üretmez
+
+`mint` ev sahibinin kendi ucudur ve partner anahtarı orada kalır. SDK yalnız
+sonucu okur; `{url}`, `{data:{url}}` ve düz string kabul edilir (partner'ın API
+zarfını soyması gerekmesin diye).
+
+Jeton **tek kullanımlıktır**: her `mount()` / `refresh()` / `setTheme()` YENİ
+jeton alır. `url` seçeneği doğrudan verilirse yalnız ilk kurulum çalışır.
+
+### 13.3 Yükseklik ve köken
+
+Gömülü ekran `postMessage` ile `signalbird:ready` ve `signalbird:height`
+bildirir. SDK gönderen çerçeveyi `event.source` ile doğrular — sayfadaki başka
+bir iframe çerçeveyi büyütemez. `height:'auto'` bildirilen yüksekliği uygular,
+`minHeight`in altına inmez.
+
+### 13.4 Modül kapısı SDK'da DEĞİLDİR
+
+Müşterinin o modülü satın alıp almadığını ev sahibinin satış kaydı bilir;
+Signalbird de kendi yetki kaydını (`MODULE_DISABLED`, 403) uygular. SDK
+üçüncü bir kapı koymaz, `mint` hatasının mesajını gösterir.

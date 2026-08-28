@@ -607,6 +607,44 @@ Signalbird.destroy()
 çalışır, sayfanızın CSS'iyle çakışmaz; < 20 KB gzip. Ayrıntı:
 `docs/CONTRACT.md § 9` ve https://signalbird.io/sdk/widget.
 
+## Gömme (embed) — Signalbird ekranını kendi panelinizde çalıştırın
+
+Partner (veribenim, submitcms, yeni ortaklar) Signalbird modülünü kendi
+panelinin içinde gösterir. Ekran kopyalanmaz — **çalışan ekranın kendisi**
+gelir; Signalbird'de güncellenen her şey partner panelinde de anında günceldir.
+
+```html
+<div id="sb-chat"></div>
+<script async src="https://signalbird.io/sdk/v1/signalbird.js"></script>
+<script>
+  Signalbird.embed({
+    module: 'chat',                       // chat | monitoring | campaigns | contacts | radio | messages
+    // Jeton SİZİN sunucunuzdan gelir; partner anahtarı tarayıcıya inmez.
+    mint: () => fetch('/api/signalbird/embed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ module: 'chat' }),
+    }).then((r) => r.json()),
+    theme: 'auto',
+    height: 'auto',
+  }).mount('#sb-chat')
+</script>
+```
+
+npm ile:
+
+```ts
+import { createEmbed } from 'signalbird/embed'
+
+const chat = createEmbed({ module: 'chat', mint })
+await chat.mount('#sb-chat')
+chat.on('ready', () => console.log('geldi'))
+// tema değişince: chat.setTheme('dark') · ekrandan çıkarken: chat.destroy()
+```
+
+Sunucu tarafı tek çağrıdır (`Signalbird::partner()->createEmbedToken(...)`,
+§12.5): 120 saniyelik, tek kullanımlık jeton. Ayrıntı: `docs/CONTRACT.md § 13`.
+
 ## Hata kodları
 
 | Kod | Anlamı |

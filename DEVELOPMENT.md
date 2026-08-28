@@ -2,6 +2,23 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-27 — Gömme (embed) yüzeyi — v1.6.0
+
+Altıncı yüzey ve tek TARAYICI yüzeyi: partner, Signalbird panel ekranını kendi
+panelinin içinde çalıştırır. Ekran kopyalanmaz; çalışan ekranın kendisi gelir.
+
+| Giriş | Kullanım |
+|---|---|
+| `signalbird/embed` (npm) | `createEmbed({module, mint}).mount('#kap')` |
+| `signalbird.js` (script) | `Signalbird.embed({module, mint}).mount('#kap')` |
+
+`mount` · `refresh` · `setTheme` · `destroy` · `on('ready'|'error'|'height')`.
+Jetonu SDK üretmez: `mint` ev sahibinin ucudur, partner anahtarı sunucuda kalır.
+Yükseklik `postMessage` ile gelir ve gönderen `event.source` ile doğrulanır;
+iframe `sandbox` + `referrerpolicy` ile kurulur (top-navigation YOK).
+
+Sözleşme: `docs/CONTRACT.md § 13`. Diğer dillerde karşılığı yoktur (DOM yüzeyi).
+
 ## Packagist yayın hazırlığı — 2026-08-21
 
 npm `signalbird@1.4.0` yayınlandı. Packagist tarafına geçerken paketin

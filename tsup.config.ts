@@ -10,6 +10,8 @@ import { defineConfig } from 'tsup'
  *  - `browser`      → tarayıcı Telsiz istemcisi (açık anahtar, sendBeacon)
  *  - `app`          → son kullanıcı yüzeyi: sohbet + push cihaz kaydı
  *                     (`SignalbirdApp`, `ChatSession`) — çatısız
+ *  - `embed`        → panel gömme: partner kendi ekranında Signalbird modülünü
+ *                     çalıştırır (`createEmbed`) — çatısız, DOM'a bağımlı
  *  - `react` `vue` `angular` `react-native`
  *                   → `app`'in üstüne oturan ince uyarlamalar; motor tektir
  *  - `signalbird`   → hazır sohbet widget'ı: tek dosya IIFE, global `Signalbird`,
@@ -30,6 +32,7 @@ export default defineConfig([
       index: 'src/node/index.ts',
       browser: 'src/browser/index.ts',
       app: 'src/app/index.ts',
+      embed: 'src/embed/index.ts',
       react: 'src/react/index.ts',
       vue: 'src/vue/index.ts',
       angular: 'src/angular/index.ts',
