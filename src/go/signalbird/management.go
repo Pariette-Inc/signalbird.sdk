@@ -242,7 +242,7 @@ func (m *Management) RotateAppKey(ctx context.Context, id any) (Result, error) {
 
 // EmbedToken — Signalbird ekranını kendi panelinizde göstermek için jeton.
 // 120 saniye yaşar ve tek kullanımlıktır; anahtar `embed:issue` kapsamı ister.
-func (m *Management) EmbedToken(ctx context.Context, input Payload) (Result, error) {
+func (m *Management) EmbedToken(ctx context.Context, input map[string]any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/embed/tokens", input, nil)
 }
 
