@@ -56,6 +56,17 @@ export interface ChatSettings {
   review_label?: string | null;
   review_min_rating?: number;
   max_attachment_mb?: number;
+
+  /**
+   * Marka — panelden yönetilir (29 Ağu 2026).
+   *
+   * `logo_url` başlık avatarında ve (seçilmişse) balonda kullanılır;
+   * `theme` widget'ın KENDİ yüzeyi içindir, sayfanınkini değiştirmez;
+   * `launcher_icon` balondaki işareti seçer.
+   */
+  logo_url?: string | null;
+  theme?: 'light' | 'dark' | 'auto';
+  launcher_icon?: 'bird' | 'chat' | 'logo';
   [key: string]: unknown;
 }
 

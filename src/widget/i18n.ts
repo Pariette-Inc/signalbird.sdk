@@ -56,6 +56,7 @@ const tr = {
   replyingTo: 'Yanıtlanıyor',
   attachment: 'Ek',
   poweredBy: 'Signalbird ile',
+  resize: 'Boyutlandır',
 };
 
 const en: typeof tr = {
@@ -112,6 +113,7 @@ const en: typeof tr = {
   replyingTo: 'Replying to',
   attachment: 'Attachment',
   poweredBy: 'Powered by Signalbird',
+  resize: 'Resize',
 };
 
 export type Strings = typeof tr;

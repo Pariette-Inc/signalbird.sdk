@@ -245,6 +245,24 @@ export class ChatController {
     }
 
     if (!this.ui || this.store.isOpen) return;
+
+    /*
+     * KAPANMIŞ SOHBET GERİ AÇILMAZ (29 Ağu 2026, Ahmet).
+     *
+     * Ziyaretçi sohbeti bitirip paneli yeniden açtığında eski yazışma
+     * "bu sohbet kapatıldı" bandıyla geri geliyordu: okunabilen ama
+     * yazılamayan bir ekran. Kapatmak bitirmektir; panel sıfırdan açılır.
+     * `closed` sunucuda da ziyaretçi için finaldir (ChatService), yani bu
+     * yalnız görüntüyü değil gerçeği yansıtır.
+     *
+     * `resolved` DIŞARIDA: onu ajan işaretler, ziyaretçi hâlâ yazabilir ve
+     * "çözüldü mü?" diye sorulacak puan ekranı ona bağlıdır.
+     */
+    if (this.store.conversation?.status === 'closed') {
+      this.store.setConversation(null);
+      this.ratingMode = null;
+    }
+
     this.store.isOpen = true;
     this.ui.setOpen(true);
     this.poller.setOpen(true);
@@ -605,7 +623,14 @@ export class ChatController {
     }
     const raw: any = r.data;
     const items: Conversation[] = Array.isArray(raw) ? raw : raw?.conversations || raw?.data || [];
-    const open = items.find((x) => x.status === 'open') || items[0] || null;
+    /*
+     * YALNIZ AÇIK KONUŞMA BENİMSENİR.
+     *
+     * Eskiden `|| items[0]` vardı ve liste kapanmış konuşmayla dönünce
+     * yoklama, ziyaretçinin az önce bitirdiği sohbeti geri getiriyordu.
+     * Açık konuşma yoksa doğru cevap "konuşma yok"tur.
+     */
+    const open = items.find((x) => x.status === 'open') || null;
     const unread = items.reduce((sum, x) => sum + (x.visitor_unread || 0), 0);
     const grew = unread > this.store.unread;
 

@@ -121,13 +121,20 @@ function renderRow(m: Message, ctx: RenderCtx, prev: Message | null): HTMLElemen
   for (const a of others) bubble.appendChild(fileRow(a, ctx));
 
   /*
-   * Çeviri varsa ziyaretçi ONU görür; orijinal gösterilmez.
+   * ÇEVİRİ YALNIZ KARŞI TARAFIN MESAJINDA GÖSTERİLİR.
    *
-   * Panelde tersi geçerli (ajan orijinale dönebilir) çünkü ajan yazışmanın
-   * sorumlusudur. Ziyaretçiye iki metin göstermek, ona anlamadığı bir dili
-   * okutmaktan başka bir işe yaramaz.
+   * `translation` alanı HEDEF dile çevrilmiş metindir ve hedef, mesajı
+   * OKUYACAK tarafın dilidir: ziyaretçinin mesajı ajanın diline, ajanınki
+   * ziyaretçinin diline çevrilir. Bu yüzden ziyaretçinin kendi mesajındaki
+   * çeviri ona değil, ajana aittir.
+   *
+   * 29 Ağu 2026'da canlıda görüldü: burada koşulsuz `m.translation?.body`
+   * yazıyordu ve ziyaretçi kendi yazdığı İngilizce cümleyi, sayfayı
+   * tazeledikten sonra Türkçeye çevrilmiş buluyordu ("bu ne saçmalık").
+   * Canlıda fark edilmiyordu çünkü soket mesajı çeviri bitmeden getirip
+   * orijinali basıyor; hata ancak geçmiş yeniden çekilince ortaya çıkıyordu.
    */
-  const shown = m.translation?.body || m.body;
+  const shown = (side === 'v' ? null : m.translation?.body) || m.body;
 
   if (shown) bubble.appendChild(document.createTextNode(shown));
 
@@ -240,7 +247,9 @@ function fileRow(a: Attachment, ctx: RenderCtx): HTMLElement {
 
 export function snippet(m: Message, t: Strings): string {
   if (m.deleted_at) return t.deleted;
-  const preview = m.translation?.body || m.body;
+  // Aynı kural özet/alıntı metninde de geçerli: ziyaretçinin kendi mesajının
+  // çevirisi ajan içindir, ona gösterilmez.
+  const preview = (m.sender_type === 'visitor' ? null : m.translation?.body) || m.body;
 
   if (preview) return preview.length > 90 ? preview.slice(0, 90) + '…' : preview;
   const a = m.attachments?.[0];

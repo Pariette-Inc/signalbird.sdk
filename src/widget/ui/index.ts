@@ -57,6 +57,7 @@ export class UI {
   private headerDot: HTMLElement;
   private headerAvatar: HTMLElement;
   private endBtn: HTMLButtonElement;
+  private grip: HTMLElement;
   private banner: HTMLElement;
   private body: HTMLElement;
   private list: HTMLElement | null = null;
@@ -79,7 +80,20 @@ export class UI {
     this.root.appendChild(h('style', null, CSS));
 
     const pos = o.settings.position === 'left' ? 'left' : 'right';
-    this.wrap = h('div', { class: `sb ${pos}`, style: `--sb-c:${safeColor(o.settings.color)}` });
+    this.wrap = h('div', {
+      class: `sb ${pos}${prefersDark(o.settings.theme) ? ' dark' : ''}`,
+      style: `--sb-c:${safeColor(o.settings.color)}`,
+    });
+
+    /*
+     * `auto` seçildiyse sayfanın tercihi CANLI izlenir: ziyaretçi işletim
+     * sistemini gece moduna aldığında panel de döner. Yalnız `auto` için
+     * dinlenir — 'light'/'dark' bir KARARDIR, sistem onu ezmemeli.
+     */
+    if (o.settings.theme === 'auto' && typeof matchMedia === 'function') {
+      const mq = matchMedia('(prefers-color-scheme: dark)');
+      mq.addEventListener?.('change', (e) => this.wrap.classList.toggle('dark', e.matches));
+    }
 
     // Balon
     this.badge = h('span', { class: 'badge', style: 'display:none' });
@@ -89,7 +103,7 @@ export class UI {
       type: 'button',
       'aria-label': text || t.launcher,
       onclick: () => o.actions.open(),
-    }, brandIcon(26), text ? h('span', { class: 'lt' }, text) : null, this.badge);
+    }, this.launcherMark(), text ? h('span', { class: 'lt' }, text) : null, this.badge);
 
     /*
      * Balonu tamamen kapatma (29 Ağu 2026, Ahmet: "ziyaretçi isterse x ile
@@ -107,7 +121,7 @@ export class UI {
     }, icon('close', 12));
 
     // Panel başlığı
-    this.headerAvatar = h('div', { class: 'av' }, initials(o.appName));
+    this.headerAvatar = h('div', { class: 'av' }, this.brandAvatar());
     this.headerName = h('div', { class: 'hn' }, o.appName || t.title);
     this.headerDot = h('span', { class: 'dot' });
     this.headerStatus = h('div', { class: 'hs' }, this.headerDot, h('span', null, t.offline));
@@ -120,7 +134,20 @@ export class UI {
 
     this.banner = h('div', { class: 'bn', style: 'display:none' });
     this.body = h('div', { class: 'bd' });
-    this.panel = h('div', { class: 'pn', role: 'dialog', 'aria-label': t.title }, header, this.banner, this.body);
+
+    /*
+     * Boyutlandırma tutamağı — panelin DIŞ köşesinde (sağdaysa sol üst).
+     * İç köşeye koymak, tam da mesaj listesinin kaydırma çubuğuna denk
+     * gelirdi.
+     */
+    this.grip = h('div', { class: 'gp', title: t.resize, 'aria-hidden': 'true' });
+
+    this.panel = h('div', { class: 'pn', role: 'dialog', 'aria-label': t.title },
+      h('div', { class: 'br' }), header, this.banner, this.body, this.grip);
+
+    this.restoreGeometry();
+    this.enableMove(header);
+    this.enableResize();
 
     this.wrap.appendChild(this.launcher);
     this.wrap.appendChild(this.dismissBtn);
@@ -175,8 +202,10 @@ export class UI {
     const name = agent?.name || this.o.appName || t.title;
     this.headerName.textContent = name;
     clear(this.headerAvatar);
+    // Sıra: ajanın fotoğrafı → müşterinin logosu → baş harfler. Ajan
+    // atandığında ONUN yüzü gelir; sohbet bir kurumla değil biriyle yapılır.
     if (agent?.avatar) this.headerAvatar.appendChild(h('img', { src: agent.avatar, alt: '' }));
-    else this.headerAvatar.textContent = initials(name);
+    else this.headerAvatar.appendChild(agent ? document.createTextNode(initials(name)) : this.brandAvatar());
     const isOnline = agent?.online ?? online;
     this.headerDot.classList.toggle('on', isOnline);
     (this.headerStatus.lastChild as HTMLElement).textContent = isOnline ? t.online : t.offline;
@@ -284,7 +313,10 @@ export class UI {
       type: 'file',
       multiple: true,
       style: 'display:none',
-      accept: 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip',
+      // Ziyaretçi YALNIZ fotoğraf yükler (bkz. ALLOWED ve sunucudaki
+      // `visitor_attachment_mimes`). Seçicide de aynı kural: reddedilecek bir
+      // dosyayı seçtirmek, kullanıcıya boşuna yol yürütmektir.
+      accept: 'image/jpeg,image/png,image/gif,image/webp',
       onchange: () => {
         this.addFiles(Array.from(fileInput.files || []));
         fileInput.value = '';
@@ -298,7 +330,23 @@ export class UI {
         this.textarea,
         h('button', { class: 'cb sd', type: 'button', title: t.send, 'aria-label': t.send, onclick: () => this.submit() }, icon('send', 17))),
       fileInput,
-      h('div', { class: 'pw' }, h('a', { href: 'https://signalbird.io', target: '_blank', rel: 'noopener' }, t.poweredBy)));
+      /*
+       * İMZA (29 Ağu 2026, Ahmet: "alttaki 'signalbird ile' yazısı da çok
+       * kötü. bunu da kaliteli bir imzaya çevir").
+       *
+       * Düz bir cümle yerine gerçek bir imza: kuş işareti + kelime işareti.
+       * "… ile" kalıbı KALDIRILDI — imza cümle kurmaz, isim söyler; üstelik
+       * o kalıp her dilde ayrı bir dilbilgisi sorunuydu ("Signalbird ile" /
+       * "Powered by Signalbird" aynı kutuya sığmıyordu). Tam cümle `title`
+       * içinde durur, ekran okuyucu ve fare üstünde görünür.
+       *
+       * Tıklanır ama bağırmaz: müşterinin kendi markasıyla yarışmaması
+       * bilinçli.
+       */
+      h('div', { class: 'pw' },
+        h('a', { href: 'https://signalbird.io', target: '_blank', rel: 'noopener', title: t.poweredBy },
+          h('span', { class: 'pk' }, brandIcon(13)),
+          h('span', { class: 'pn2' }, 'Signalbird'))));
 
     this.body.appendChild(this.list);
     this.body.appendChild(this.notice);
@@ -500,6 +548,128 @@ export class UI {
     });
   }
 
+  // ── Marka ───────────────────────────────────────────────────────────
+
+  /**
+   * Balondaki işaret: müşterinin logosu, Signalbird kuşu ya da klasik sohbet
+   * baloncuğu. Panelden seçilir (`chat.launcher_icon`).
+   *
+   * Logo seçilip URL girilmemişse kuşa düşülür — boş bir daire, marka
+   * yönetiminin yarım kaldığını ziyaretçiye ilan etmekten iyidir.
+   */
+  private launcherMark(): Node {
+    const s = this.o.settings;
+    const logo = safeUrl(s.logo_url);
+
+    if (s.launcher_icon === 'logo' && logo) return h('img', { class: 'lg', src: logo, alt: '' });
+    if (s.launcher_icon === 'chat') return icon('chat', 24);
+
+    return brandIcon(26);
+  }
+
+  /** Başlık avatarı: logo varsa logo, yoksa uygulama adının baş harfleri. */
+  private brandAvatar(): Node {
+    const logo = safeUrl(this.o.settings.logo_url);
+
+    return logo ? h('img', { src: logo, alt: '' }) : document.createTextNode(initials(this.o.appName));
+  }
+
+  // ── Geometri: ziyaretçi paneli taşır ve boyutlandırır ───────────────
+  //
+  // KARAR 2026-08-29 (Ahmet): "kullanıcı tarafından boyutlandırılabilmeli,
+  // pozisyonu değiştirilebilmeli."
+  //
+  // Seçim `localStorage`'da durur ve ziyaretçiye özeldir: müşterinin panelden
+  // verdiği `position` bir BAŞLANGIÇTIR, kural değil. Mobilde ikisi de kapalı
+  // (panel zaten tam ekran) — orada sürükleme, kaydırmayı çalardı.
+
+  private restoreGeometry(): void {
+    const g = readGeometry();
+    if (!g) return;
+    if (g.w) this.panel.style.width = `${g.w}px`;
+    if (g.h) this.panel.style.height = `${g.h}px`;
+    this.wrap.style.setProperty('--sb-dx', `${g.dx || 0}px`);
+    this.wrap.style.setProperty('--sb-dy', `${g.dy || 0}px`);
+  }
+
+  private saveGeometry(): void {
+    writeGeometry({
+      w: this.panel.offsetWidth,
+      h: this.panel.offsetHeight,
+      dx: parseFloat(this.wrap.style.getPropertyValue('--sb-dx')) || 0,
+      dy: parseFloat(this.wrap.style.getPropertyValue('--sb-dy')) || 0,
+    });
+  }
+
+  /** Başlığı sürükleyerek taşıma. Düğmeler hariç: kapatma tıklaması taşıma sayılmasın. */
+  private enableMove(header: HTMLElement): void {
+    header.addEventListener('pointerdown', (e: PointerEvent) => {
+      if (e.button !== 0 || isMobile() || (e.target as HTMLElement).closest('button')) return;
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const dx0 = parseFloat(this.wrap.style.getPropertyValue('--sb-dx')) || 0;
+      const dy0 = parseFloat(this.wrap.style.getPropertyValue('--sb-dy')) || 0;
+      const flip = this.wrap.classList.contains('left') ? -1 : 1;
+      let moved = false;
+
+      const move = (ev: PointerEvent) => {
+        const mx = ev.clientX - startX;
+        const my = ev.clientY - startY;
+        // Küçük titremeler sürükleme sayılmaz; yoksa her başlık tıklaması
+        // paneli birkaç piksel kaydırırdı.
+        if (!moved && Math.abs(mx) + Math.abs(my) < 4) return;
+        moved = true;
+        this.wrap.classList.add('moving');
+        // Panel her zaman ekranda kalır: taşıma miktarı görünür alanla sınırlı.
+        const maxX = Math.max(0, innerWidth - this.panel.offsetWidth - 24);
+        const maxY = Math.max(0, innerHeight - this.panel.offsetHeight - 24);
+        this.wrap.style.setProperty('--sb-dx', `${clamp(dx0 - mx * flip, 0, maxX)}px`);
+        this.wrap.style.setProperty('--sb-dy', `${clamp(dy0 - my, 0, maxY)}px`);
+      };
+
+      const up = () => {
+        removeEventListener('pointermove', move);
+        removeEventListener('pointerup', up);
+        this.wrap.classList.remove('moving');
+        if (moved) this.saveGeometry();
+      };
+
+      addEventListener('pointermove', move);
+      addEventListener('pointerup', up);
+    });
+  }
+
+  private enableResize(): void {
+    this.grip.addEventListener('pointerdown', (e: PointerEvent) => {
+      if (e.button !== 0 || isMobile()) return;
+      e.preventDefault();
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const w0 = this.panel.offsetWidth;
+      const h0 = this.panel.offsetHeight;
+      // Sağ yerleşimde tutamak SOL üstte: sola çekmek genişletir.
+      const flip = this.wrap.classList.contains('left') ? -1 : 1;
+      this.wrap.classList.add('sizing');
+
+      const move = (ev: PointerEvent) => {
+        this.panel.style.width = `${clamp(w0 + (startX - ev.clientX) * flip, 320, innerWidth - 40)}px`;
+        this.panel.style.height = `${clamp(h0 + (startY - ev.clientY), 380, innerHeight - 40)}px`;
+      };
+
+      const up = () => {
+        removeEventListener('pointermove', move);
+        removeEventListener('pointerup', up);
+        this.wrap.classList.remove('sizing');
+        this.saveGeometry();
+      };
+
+      addEventListener('pointermove', move);
+      addEventListener('pointerup', up);
+    });
+  }
+
   private flash(text: string): void {
     this.setBanner(text, true);
     setTimeout(() => this.setBanner(null), 3000);
@@ -538,6 +708,55 @@ function initials(name: string): string {
     .map((p) => p[0] || '')
     .join('')
     .toUpperCase();
+}
+
+const GEO_KEY = 'sb_geometry';
+
+interface Geometry { w: number; h: number; dx: number; dy: number }
+
+function readGeometry(): Geometry | null {
+  try {
+    const raw = localStorage.getItem(GEO_KEY);
+    if (!raw) return null;
+    const g = JSON.parse(raw) as Geometry;
+
+    // Ekran küçüldüyse (dizüstüne geçti, pencereyi böldü) eski ölçü paneli
+    // görünmez yapardı: sığmıyorsa hatırlanan geometri atılır.
+    if (!g || g.w > innerWidth || g.h > innerHeight) return null;
+
+    return g;
+  } catch {
+    return null;
+  }
+}
+
+function writeGeometry(g: Geometry): void {
+  try {
+    localStorage.setItem(GEO_KEY, JSON.stringify(g));
+  } catch {
+    /* özel sekmede yazılamaz — panel yine çalışır, hatırlamaz */
+  }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function isMobile(): boolean {
+  return innerWidth <= 640;
+}
+
+/** `dark` ya da sayfa koyu temadayken `auto`. */
+function prefersDark(theme: unknown): boolean {
+  if (theme === 'dark') return true;
+  if (theme !== 'auto' || typeof matchMedia !== 'function') return false;
+
+  return matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+/** Logo adresi: yalnız https/data — `javascript:` bir logo değildir. */
+function safeUrl(url: unknown): string | null {
+  return typeof url === 'string' && /^(https:\/\/|data:image\/)/i.test(url) ? url : null;
 }
 
 /** Yalnız #hex ya da rgb()/hsl() kabul edilir — stil enjeksiyonu olmasın. */

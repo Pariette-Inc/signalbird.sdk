@@ -2,6 +2,38 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-29 (2. tur) — Widget yeniden tasarım, marka yönetimi, çeviri düzeltmesi
+
+**Çeviri yanlış tarafa gösteriliyordu (canlı hata).** `message.translation`
+hedef dile çevrilmiş metindir ve hedef, mesajı OKUYACAK tarafın dilidir; hem
+widget hem panel bunu koşulsuz basıyordu. Sonuç: ziyaretçi kendi yazdığı
+İngilizce cümleyi, sayfayı tazeledikten sonra Türkçeye çevrilmiş buluyordu.
+Artık her arayüz yalnız KARŞI tarafın mesajında çeviriyi gösteriyor. Sunucuda
+ikinci kapı: sağlayıcı kaynak dili hedefle aynı bildirirse çeviri hiç
+saklanmıyor ve dil ziyaretçiye yazılıyor — ikisi de Türkçe konuşuyorsa sistem
+bir kez sorup susuyor.
+
+**Kapanmış konuşma geri açılmıyor.** Ziyaretçi sohbeti bitirip paneli yeniden
+açtığında "bu sohbet kapatıldı" bandıyla okunabilen ama yazılamayan bir ekran
+geliyordu. Artık sıfırdan başlıyor; yoklama da yalnız `open` konuşmayı
+benimsiyor (eski `|| items[0]` düşürüldü).
+
+**Widget yeniden tasarlandı.** Başlık artık renk bloğu değil: marka rengi
+üstteki hatta, avatar halkasında, gönder düğmesinde ve ziyaretçi balonunda.
+Soğuk eğimli nötrler, koyu tema, işletim sistemi arayüz yazı tipleri (dışarıdan
+font YÜKLENMEZ — müşterinin CSP'si ve sayfa hızı), yeni odak halkaları,
+"Signalbird ile" yerine kuş + kelime işaretinden oluşan imza.
+
+**Panel ölçüsü ve konumu ziyaretçinin.** Başlık sürüklenerek taşınır, dış üst
+köşedeki tutamakla boyutlandırılır; `localStorage['sb_geometry']`'de saklanır,
+ekran küçüldüyse atılır. Mobilde kapalı.
+
+**Marka panelden yönetiliyor:** `chat.logo_url`, `chat.theme`
+(`light|dark|auto`), `chat.launcher_icon` (`bird|chat|logo`). Gömme etiketine
+hiçbir şey yazılmaz.
+
+Widget 22.9 KB gzip (önce 20.3 KB).
+
 ## 2026-08-29 — Gömme jetonu takım anahtarıyla, şablonla mail, sohbet bitişi
 
 **Yönetim yüzeyine `embedToken`** (46. metot). Signalbird ekranını MÜŞTERİNİN

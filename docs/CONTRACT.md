@@ -264,13 +264,50 @@ olarak saklanır; `appKey` uyuşmazsa yok sayılır. Sunucu `VISITOR_INVALID`
 
 1. `POST /v1/sdk/bootstrap` → `app.chat_enabled` değilse **hiçbir şey çizilmez**.
 2. Balon çizilir (Shadow DOM, sayfa CSS'inden izole; `app.chat.color`,
-   `position`, `launcher_text`).
+   `position`, `launcher_text`, `logo_url`, `theme`, `launcher_icon`).
+
+   **Marka panelden gelir, gömme etiketinden değil** (29 Ağu 2026): müşteri
+   rengini ya da logosunu değiştirdiğinde sitesindeki tek satır aynı kalır.
+   `theme` yalnız widget'ın kendi yüzeyini boyar (`light` | `dark` | `auto`);
+   `auto` ziyaretçinin `prefers-color-scheme` tercihini CANLI izler.
+   `launcher_icon` = `bird` | `chat` | `logo`; `logo` seçilip adres boşsa
+   kuşa düşülür.
+
+2b. **Panelin ölçüsü ve konumu ZİYARETÇİNİNDİR.** Başlık sürüklenerek panel
+   taşınır, dış üst köşedeki tutamakla boyutlandırılır; ikisi de
+   `localStorage['sb_geometry']` içinde saklanır ve ekran küçüldüyse atılır.
+   `position` ayarı bir BAŞLANGIÇTIR, kural değil. Mobilde (≤640 px) ikisi de
+   kapalıdır — panel zaten tam ekrandır ve sürükleme kaydırmayı çalardı.
 3. İlk açılışta ziyaretçi yoksa ve `prechat.name|email` açıksa ön-form; sonra
    `POST /v1/sdk/chat/session`.
 4. Konuşma ilk mesajla açılır: `POST /v1/sdk/chat/conversations {body, client_id}`.
 5. Polling: panel açıkken 3 s (`?after=<son mesaj id>`; her 5. tur tam liste),
    kapalıyken 20 s ×3 → 60 s ×2 → 180 s; yeni veri merdiveni sıfırlar;
    sekme gizliyken tur atlanır, `visibilitychange`/`online` sıfırlar.
+
+### 9.2b Çeviri hangi tarafta gösterilir
+
+`message.translation` HEDEF dile çevrilmiş metindir ve hedef, mesajı
+**okuyacak** tarafın dilidir. Bu yüzden her arayüz yalnız **karşı tarafın**
+mesajında çeviriyi gösterir; kendi mesajında **orijinali** gösterir.
+
+Bu kural bir tercih değil doğruluk meselesidir: 29 Ağu 2026'da widget
+koşulsuz `translation.body` bastığı için ziyaretçi, kendi yazdığı İngilizce
+cümleyi sayfayı tazeledikten sonra Türkçeye çevrilmiş buluyordu. Canlıda fark
+edilmiyordu — soket mesajı çeviri bitmeden getirip orijinali basıyor, hata
+ancak geçmiş yeniden çekilince ortaya çıkıyordu.
+
+Sunucu tarafında ikinci bir kapı var: sağlayıcı kaynak dili hedefle **aynı**
+bildirirse çeviri hiç saklanmaz (`ChatTranslationService`). Ziyaretçi dilini
+seçmemişse ipucu boştur ve "aynı dil" ancak cevap geldikten sonra anlaşılır.
+
+### 9.2c Kapanmış konuşma geri açılmaz
+
+Ziyaretçi sohbeti bitirdikten sonra paneli yeniden açtığında **sıfırdan
+başlar**. Kapalı konuşma ne bootstrap'ten benimsenir ne de yoklama listesinden
+seçilir (`status === 'open'` şartı); eski yazışma "bu sohbet kapatıldı"
+bandıyla geri gelmez. `resolved` bunun DIŞINDADIR: onu ajan işaretler,
+ziyaretçi hâlâ yazabilir.
 
 ### 9.3 Genel API
 
