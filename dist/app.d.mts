@@ -118,6 +118,15 @@ interface Message {
     created_at?: string;
     /** İyimser gönderimde yerel kopyayı sunucudakiyle eşleştirir. */
     client_id?: string | null;
+    /**
+     * Gönderilemedi (`ChatSession` yazar, sunucu DÖNMEZ).
+     *
+     * Tip listede yoktu ama oturum bu alanı yazıyordu: arayüz "gitmedi" hâlini
+     * çizmek istediğinde tipi zorlamak (`as`) zorunda kalıyordu. Bekleyen mesaj
+     * ayrıca işaretlenmez — sunucu yanıtı gelene kadar `id` ile `client_id`
+     * aynıdır ve bu, "henüz yolda" demenin en ucuz yoludur.
+     */
+    failed?: boolean;
 }
 interface Attachment {
     id?: string;
