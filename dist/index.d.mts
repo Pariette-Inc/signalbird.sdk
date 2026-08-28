@@ -17,7 +17,7 @@ interface SignalbirdConfig {
      * (`sbr_pub_…`) kullanılır.
      */
     apiKey: string;
-    /** Varsayılan: https://signalbird.io/api */
+    /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
     /** Her olaya eklenen köken adı (sunucu adı, servis adı). */
     source?: string;
@@ -68,7 +68,7 @@ declare class SignalbirdError extends Error {
     /** Sunucunun ham yanıt gövdesi (varsa) — gönderim istemcisi doldurur. */
     body?: unknown | undefined);
 }
-declare const DEFAULT_BASE_URL = "https://signalbird.io/api";
+declare const DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 
 /**
  * Telsiz istemcisi (sunucu tarafı).
@@ -122,7 +122,7 @@ declare class SignalbirdClient {
 interface MessagingConfig {
     /** Takım API anahtarı (`sb_…`). GİZLİDİR, yalnız sunucuda kullanılır. */
     apiKey: string;
-    /** Varsayılan: https://signalbird.io/api */
+    /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
     /** İstek zaman aşımı (ms). Varsayılan 15000 — toplu kişi yükleme uzun sürebilir. */
     timeout?: number;
@@ -421,7 +421,7 @@ interface SbResult<T = unknown> {
 interface ManagementConfig {
     /** Takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
     apiKey: string;
-    /** Varsayılan: https://signalbird.io/api */
+    /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
     /** İstek zaman aşımı (ms). Varsayılan 15000. */
     timeout?: number;

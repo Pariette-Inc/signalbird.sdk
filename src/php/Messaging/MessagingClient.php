@@ -26,7 +26,7 @@ use Signalbird\Sdk\SignalbirdException;
  */
 class MessagingClient
 {
-    public const DEFAULT_BASE_URL = 'https://signalbird.io/api';
+    public const DEFAULT_BASE_URL = 'https://live.signalbird.io/api';
 
     /** Toplu kişi yüklemede tek istekteki üst sınır (API tarafı da bunu kabul eder). */
     public const BULK_CHUNK = 1000;

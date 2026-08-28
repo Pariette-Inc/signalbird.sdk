@@ -12,7 +12,7 @@ var SignalbirdError = class extends Error {
     this.name = "SignalbirdError";
   }
 };
-var DEFAULT_BASE_URL = "https://signalbird.io/api";
+var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 
 // src/node/client.ts
 var SignalbirdClient = class {

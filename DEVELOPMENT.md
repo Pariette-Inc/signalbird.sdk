@@ -2,6 +2,23 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-28 — Tek anahtar + üretim adresi pakete taşındı
+
+`.env` artık tek satır: `SIGNALBIRD_KEY=sb_…`. Gönderim ve yönetim istemcileri
+bu anahtara düşer (`SIGNALBIRD_MESSAGING_KEY` / `SIGNALBIRD_API_KEY` isteğe
+bağlı kaldı — yalnız bir sunucunun yetkisini daraltmak için). Telsiz istemcisi
+de aynı anahtarı taşır: kontrol düzlemi 28 Ağu'da takım anahtarıyla log
+yazımını açtı.
+
+**Varsayılan kök `https://live.signalbird.io/api` oldu** — 10 dilde birden
+(node, php, python, go, dotnet, swift, kotlin, tarayıcı, app, widget) ve Laravel
+config'inde. Eski varsayılan (`signalbird.io/api`) pazarlama sitesine bakıyordu;
+adresi yazmayan her kurulum sessizce 404 alıyordu. `SIGNALBIRD_URL` yalnız
+kendi kurulumu/sandbox için kaldı.
+
+README "İki anahtar, iki paket" bölümü "Tek anahtar" olarak yeniden yazıldı;
+`docs/CONTRACT.md § 2` takım anahtarını kimlik tablosuna aldı.
+
 ## 2026-08-27 — Gömme (embed) yüzeyi — v1.6.0
 
 Altıncı yüzey ve tek TARAYICI yüzeyi: partner, Signalbird panel ekranını kendi

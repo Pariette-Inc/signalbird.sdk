@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 from typing import Any, Mapping, Optional
 
-DEFAULT_BASE_URL = "https://signalbird.io/api"
+DEFAULT_BASE_URL = "https://live.signalbird.io/api"
 
 
 class SignalbirdError(Exception):

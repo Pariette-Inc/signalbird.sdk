@@ -37,7 +37,7 @@ class SignalbirdClient
             );
         }
 
-        $this->baseUrl = rtrim($baseUrl ?: 'https://signalbird.io/api', '/');
+        $this->baseUrl = rtrim($baseUrl ?: 'https://live.signalbird.io/api', '/');
     }
 
     /**

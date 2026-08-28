@@ -3,13 +3,29 @@
 return [
 
     /*
-    | Sunucu anahtarı (`sbr_live_…`). Telsiz panelinden proje açıldığında
-    | BİR KEZ gösterilir; kaybedilirse yenilenir, geri okunamaz.
+    |--------------------------------------------------------------------------
+    | TEK ANAHTAR — `SIGNALBIRD_KEY`
+    |--------------------------------------------------------------------------
+    | KARAR 2026-08-28 (Ahmet): "2-3 farklı kayıt eklemek istemiyorum, bir tane
+    | signalbird anahtarı yeterli olmalı."
+    |
+    | Takım anahtarı (`sb_…`) kurulumun tamamıdır: gönderim (e-posta/SMS/push),
+    | kişi ve kampanya, yönetim (sohbet, uygulama, domain) ve Telsiz log yazımı
+    | aynı anahtarla çalışır. Kapsamlar anahtarın kendisindedir; panelde
+    | üretilirken seçilir.
+    |
+    | Aşağıdaki yüzeye özel anahtarlar İSTEĞE BAĞLIDIR: yalnız bir yüzeyi dar
+    | kapsamlı ayrı bir anahtara bağlamak isteyen doldurur (ör. log yazan sunucu
+    | gönderim yapamasın). Boşsa hepsi bu anahtara düşer.
     */
     'key' => env('SIGNALBIRD_KEY', ''),
 
-    /* Kendi kurulumunuz varsa API kökü. */
-    'url' => env('SIGNALBIRD_URL', 'https://signalbird.io/api'),
+    /*
+    | API kökü. Üretim adresi paketin İÇİNDEDİR; uygulamanın `.env`'i onu
+    | tekrar etmez. Yalnız kendi kurulumu (self-hosted) ya da sandbox kullanan
+    | doldurur.
+    */
+    'url' => env('SIGNALBIRD_URL', 'https://live.signalbird.io/api'),
 
     /* Her kayda eklenen köken adı — hangi sunucudan geldiği. */
     'source' => env('SIGNALBIRD_SOURCE', env('APP_ENV')),
@@ -23,19 +39,18 @@ return [
     'throw_on_error' => env('SIGNALBIRD_THROW', false),
 
     /*
-    | Yönetim (Management) takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`,
-    | `apps:*` scope'larıyla. Boşsa `messaging_key` kullanılır; çoğu kurulumda
-    | tek takım anahtarı vardır ve iki yüzeyi de o taşır.
+    | Yönetim (Management) yüzeyi için AYRI anahtar — `radio:*`, `chat:*`,
+    | `apps:*` kapsamlarıyla. Boşsa `SIGNALBIRD_KEY` kullanılır.
     */
-    'api_key' => env('SIGNALBIRD_API_KEY', ''),
+    'api_key' => env('SIGNALBIRD_API_KEY') ?: env('SIGNALBIRD_MESSAGING_KEY') ?: env('SIGNALBIRD_KEY', ''),
 
     /*
-    | Gönderim (Messaging) takım API anahtarı (`sb_…`). E-posta/SMS/push,
-    | kişi ve kampanya uçları bu anahtarla çalışır; Telsiz anahtarından ayrıdır.
+    | Gönderim (Messaging) yüzeyi için AYRI anahtar. Boşsa `SIGNALBIRD_KEY`
+    | kullanılır — normal kurulumda bu satır hiç doldurulmaz.
     */
-    'messaging_key' => env('SIGNALBIRD_MESSAGING_KEY', ''),
+    'messaging_key' => env('SIGNALBIRD_MESSAGING_KEY') ?: env('SIGNALBIRD_KEY', ''),
 
-    /* Gönderim API kökü. Boşsa `url` kullanılır. */
+    /* Gönderim için ayrı kök (nadiren gerekir). Boşsa `url` kullanılır. */
     'messaging_url' => env('SIGNALBIRD_MESSAGING_URL'),
 
     /* Gönderim istek zaman aşımı (sn). Toplu kişi yükleme uzun sürebilir. */

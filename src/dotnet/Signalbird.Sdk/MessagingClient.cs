@@ -12,7 +12,7 @@ public sealed class SignalbirdKeyOptions
     /// <summary>Takım API anahtarı (<c>sb_…</c>). Telsiz anahtarı burada çalışmaz.</summary>
     public string ApiKey { get; set; } = string.Empty;
 
-    public string BaseUrl { get; set; } = "https://signalbird.io/api";
+    public string BaseUrl { get; set; } = "https://live.signalbird.io/api";
 
     /// <summary>Varsayılan 15 sn — toplu kişi yükleme uzun sürebilir.</summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(15);

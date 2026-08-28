@@ -11,7 +11,7 @@ import java.net.URL
 import java.net.URLEncoder
 
 /** Varsayılan API kökü. Kendi kurulumu olan müşteri `baseUrl` ile değiştirir. */
-const val SIGNALBIRD_DEFAULT_BASE_URL = "https://signalbird.io/api"
+const val SIGNALBIRD_DEFAULT_BASE_URL = "https://live.signalbird.io/api"
 
 /**
  * Her metodun döndüğü zarf.

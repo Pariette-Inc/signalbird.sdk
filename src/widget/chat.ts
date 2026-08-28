@@ -28,7 +28,7 @@ import type {
   Visitor,
 } from './types';
 
-const DEFAULT_BASE_URL = 'https://signalbird.io/api';
+const DEFAULT_BASE_URL = 'https://live.signalbird.io/api';
 const CONV = '/v1/sdk/chat/conversations';
 
 interface Pending {

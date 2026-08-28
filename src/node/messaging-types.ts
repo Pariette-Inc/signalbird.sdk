@@ -9,7 +9,7 @@
 export interface MessagingConfig {
   /** Takım API anahtarı (`sb_…`). GİZLİDİR, yalnız sunucuda kullanılır. */
   apiKey: string;
-  /** Varsayılan: https://signalbird.io/api */
+  /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
   /** İstek zaman aşımı (ms). Varsayılan 15000 — toplu kişi yükleme uzun sürebilir. */
   timeout?: number;

@@ -1,5 +1,5 @@
 // src/browser/index.ts
-var DEFAULT_BASE_URL = "https://signalbird.io/api";
+var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 var SignalbirdBrowser = class {
   constructor(config) {
     this.config = config;

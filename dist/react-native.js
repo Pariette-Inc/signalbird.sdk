@@ -5,7 +5,7 @@ var react = require('react');
 // src/react-native/index.ts
 
 // src/app/client.ts
-var DEFAULT_BASE_URL = "https://signalbird.io/api";
+var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 var STORAGE_KEY = "sb_visitor";
 function defaultStorage() {
   try {

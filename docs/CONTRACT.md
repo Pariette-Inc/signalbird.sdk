@@ -42,9 +42,14 @@ varsayılanı** geçerlidir — istemci burada bir varsayılan uydurmaz.
 
 | Ortam | Başlık | Anahtar biçimi |
 |---|---|---|
-| Sunucu | `Authorization: Bearer <key>` | `sbr_live_…` |
+| Sunucu | `Authorization: Bearer <key>` | `sb_…` (takım) ya da `sbr_live_…` (proje) |
 | Tarayıcı | `X-Signalbird-Key: <key>` | `sbr_pub_…` |
 | Tarayıcı (yalnız `sendBeacon`) | `?key=<key>` | `sbr_pub_…` |
+
+**Takım anahtarı Telsiz'e de yazar** (28 Ağu 2026, `radio:write` kapsamıyla).
+Proje takımdan çözülür: ilk proje kullanılır, hiç yoksa "Varsayılan" adıyla
+açılır. Proje anahtarı kalkmadı — birden çok projeyi ayrı ayrı yönetmek
+isteyen (ör. ajans) onu kullanmaya devam eder.
 
 **Gizli anahtar sorgu dizesine KONMAZ** ve sunucu bunu reddeder
 (`SECRET_KEY_IN_QUERY`): sorgu dizeleri erişim günlüklerine düşer.
@@ -55,7 +60,7 @@ haftalar sonra fark edilmesi demektir.
 
 ## 3. baseUrl
 
-Varsayılan `https://signalbird.io/api`. Kullanıcının kendi kurulumu olabileceği
+Varsayılan `https://live.signalbird.io/api`. Kullanıcının kendi kurulumu olabileceği
 için serbest `baseUrl` **kabul edilir** (eski sözleşmede yasaktı; kendi
 kurulumunu yapan müşteriyi dışarıda bırakıyordu).
 
@@ -109,7 +114,7 @@ istemcisiyle karışmaz. Yalnız **sunucuda** çalışır; tarayıcı girişi yo
 | Alan | Varsayılan | Not |
 |---|---|---|
 | `apiKey` | — | `sb_` ile başlamalı. `sbr_` (Telsiz) ya da `sbw_pub_` (uygulama) verilirse **kurulum anında** `WRONG_KEY_TYPE`; boşsa `NO_KEY` |
-| `baseUrl` | `https://signalbird.io/api` | sondaki `/` kırpılır |
+| `baseUrl` | `https://live.signalbird.io/api` | sondaki `/` kırpılır |
 | `timeout` | 15 s | toplu kişi yükleme uzun sürebilir |
 | `throwOnError` | `false` | açıksa `SignalbirdError` / `SignalbirdException` |
 

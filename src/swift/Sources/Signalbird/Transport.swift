@@ -5,7 +5,7 @@ import FoundationNetworking
 #endif
 
 /// Varsayılan API kökü. Kendi kurulumu olan müşteri `baseURL` ile değiştirir.
-public let signalbirdDefaultBaseURL = "https://signalbird.io/api"
+public let signalbirdDefaultBaseURL = "https://live.signalbird.io/api"
 
 /// Her metodun döndüğü zarf.
 ///

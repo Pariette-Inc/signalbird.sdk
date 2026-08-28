@@ -20,7 +20,7 @@ export interface SignalbirdConfig {
    */
   apiKey: string;
 
-  /** Varsayılan: https://signalbird.io/api */
+  /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
 
   /** Her olaya eklenen köken adı (sunucu adı, servis adı). */
@@ -79,4 +79,4 @@ export class SignalbirdError extends Error {
   }
 }
 
-export const DEFAULT_BASE_URL = 'https://signalbird.io/api';
+export const DEFAULT_BASE_URL = 'https://live.signalbird.io/api';

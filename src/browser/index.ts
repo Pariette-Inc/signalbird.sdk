@@ -34,7 +34,7 @@ interface QueuedEvent {
   source?: string;
 }
 
-const DEFAULT_BASE_URL = 'https://signalbird.io/api';
+const DEFAULT_BASE_URL = 'https://live.signalbird.io/api';
 
 export class SignalbirdBrowser {
   private queue: QueuedEvent[] = [];

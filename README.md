@@ -54,14 +54,29 @@ kanal  →  critical, info, deploy…   (bildirim kuralı burada)
 olay   →  tek bir kayıt
 ```
 
-## İki anahtar, iki paket
+## Tek anahtar
 
-| | Sunucu | Tarayıcı |
+`.env` dosyanıza **bir satır** yazarsınız:
+
+```
+SIGNALBIRD_KEY=sb_…
+```
+
+Takım anahtarı (`sb_…`) her şeyi kapsar: e-posta, SMS, push, kişi ve kampanya,
+sohbet, uygulama, domain, Telsiz log yazımı. Ne yapabileceğini anahtarın
+kapsamları belirler; panelde üretilirken seçersiniz. **Adres yazmanız
+gerekmez** — üretim kökü paketin içindedir.
+
+Ayrı anahtar isteğe bağlıdır: bir sunucunun yalnız log yazıp gönderim
+yapamamasını istiyorsanız o sunucuya dar kapsamlı ikinci bir anahtar verirsiniz.
+
+Bir de **açık** anahtarlar vardır; onlar `.env`'e değil, sayfanın içine gömülür
+ve gizli olmadıkları için ayrı durmak zorundadırlar:
+
+| Anahtar | Nerede | Ne yapar |
 |---|---|---|
-| Anahtar | `sbr_live_…` **gizli** | `sbr_pub_…` **açık** |
-| Giriş noktası | `signalbird` · `pariette/signalbird` | `signalbird/browser` |
-| Yazabildiği kanal | hepsi | yalnız izin verilenler |
-| Kısıt | — | yalnız izinli alan adlarından |
+| `sbw_pub_…` | `<script data-app-key>` | sohbet widget'ı, push cihaz kaydı |
+| `sbr_pub_…` | tarayıcı log istemcisi | yalnız izinli alan adlarından, yalnız izinli kanala |
 
 Gizli anahtar tarayıcıya **gömülemez**: sunucu, `Origin` başlığı taşıyan bir
 istekte gizli anahtarı reddeder (`SECRET_KEY_IN_BROWSER`). Bu bir kolaylık

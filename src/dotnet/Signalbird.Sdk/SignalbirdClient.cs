@@ -22,7 +22,7 @@ public sealed class SignalbirdOptions
     /// <summary>Sunucu anahtarı (<c>sbr_live_…</c>). Tarayıcıya GÖMÜLEMEZ.</summary>
     public string ApiKey { get; set; } = string.Empty;
 
-    public string BaseUrl { get; set; } = "https://signalbird.io/api";
+    public string BaseUrl { get; set; } = "https://live.signalbird.io/api";
 
     /// <summary>Her olaya eklenen köken adı (sunucu ya da servis adı).</summary>
     public string? Source { get; set; }

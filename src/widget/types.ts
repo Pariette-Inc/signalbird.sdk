@@ -7,7 +7,7 @@
 
 export interface InitOptions {
   appKey: string;
-  /** Varsayılan https://signalbird.io/api */
+  /** Varsayılan https://live.signalbird.io/api */
   baseUrl?: string;
   /** 'tr' | 'en' — verilmezse uygulama ayarı → navigator.language */
   locale?: string;

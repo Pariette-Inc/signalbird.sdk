@@ -24,7 +24,7 @@ use Signalbird\Sdk\SignalbirdException;
  */
 class ManagementClient
 {
-    public const DEFAULT_BASE_URL = 'https://signalbird.io/api';
+    public const DEFAULT_BASE_URL = 'https://live.signalbird.io/api';
 
     private string $baseUrl;
 

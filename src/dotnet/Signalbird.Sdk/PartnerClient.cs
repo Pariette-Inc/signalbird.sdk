@@ -15,7 +15,7 @@ public sealed class SignalbirdPartnerOptions
     /// <summary>Sözleşmeli partner anahtarı (<c>sbp_live_…</c>). Tarayıcıya İNMEZ.</summary>
     public string ApiKey { get; set; } = string.Empty;
 
-    public string BaseUrl { get; set; } = "https://signalbird.io/api";
+    public string BaseUrl { get; set; } = "https://live.signalbird.io/api";
 
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(15);
 

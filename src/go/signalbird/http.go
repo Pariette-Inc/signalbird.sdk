@@ -27,7 +27,7 @@ import (
 )
 
 // DefaultBaseURL — kendi kurulumu olan müşteri BaseURL ile değiştirebilir.
-const DefaultBaseURL = "https://signalbird.io/api"
+const DefaultBaseURL = "https://live.signalbird.io/api"
 
 // Result, her metodun döndüğü zarftır. Başarısızlık hata değil, veridir:
 // log göndermek ya da bir kaydı okumak uygulamanın ASIL işi değildir.

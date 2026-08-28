@@ -12,7 +12,7 @@ export type { SbResult };
 export interface ManagementConfig {
   /** Takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
   apiKey: string;
-  /** Varsayılan: https://signalbird.io/api */
+  /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
   /** İstek zaman aşımı (ms). Varsayılan 15000. */
   timeout?: number;

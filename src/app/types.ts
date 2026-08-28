@@ -31,7 +31,7 @@ export interface AppStorage {
 export interface AppConfig {
   /** Uygulama anahtarı (`sbw_pub_…`). Panelden ya da `createApp` ile alınır. */
   appKey: string;
-  /** Varsayılan: https://signalbird.io/api */
+  /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
   /** `tr` ya da `en`; verilmezse uygulamanın ayarı, sonra cihazın dili. */
   locale?: string;
