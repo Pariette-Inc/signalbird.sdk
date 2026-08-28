@@ -1,3 +1,5 @@
+import type { EmbedModule } from './partner-types';
+
 /**
  * Yönetim (Management) yüzeyinin tipleri.
  *
@@ -339,4 +341,20 @@ export interface ChatReport {
   resolution: { median_s: number | null; p90_s: number | null; resolved: number };
   satisfaction: { average: number | null; count: number; breakdown: Record<string, number> };
   agents: ChatReportAgent[];
+}
+
+/**
+ * Gömme jetonu isteği — MÜŞTERİNİN kendi paneli için.
+ *
+ * Partner sürümünden (`EmbedTokenInput`) tek farkı kimliğin nasıl verildiği:
+ * partner kendi sistemindeki dış kimliği (`user_external_id`) yollar, müşteri
+ * ise kendi takımındaki kullanıcıyı (`user_id`). Boş bırakılırsa anahtarın
+ * sahibi kullanılır.
+ */
+export interface TeamEmbedTokenInput {
+  module: EmbedModule;
+  user_id?: number | string;
+  locale?: string;
+  theme?: 'light' | 'dark';
+  accent?: string;
 }

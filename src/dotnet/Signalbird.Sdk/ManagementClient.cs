@@ -194,6 +194,13 @@ public sealed class ManagementClient
     public Task<SbResult> RotateAppKeyAsync(object id, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Post, $"/v1/apps/{Transport.Seg(id)}/rotate-key", null, null, ct);
 
+    /// <summary>
+    /// Gömme jetonu — Signalbird ekranını kendi panelinizde göstermek için.
+    /// 120 saniye yaşar ve tek kullanımlıktır; anahtar <c>embed:issue</c> kapsamı ister.
+    /// </summary>
+    public Task<SbResult> EmbedTokenAsync(IDictionary<string, object?> input, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Post, "/v1/embed/tokens", input, null, ct);
+
     public Task<SbResult> ListAppDevicesAsync(object id, IDictionary<string, object?>? query = null, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Get, $"/v1/apps/{Transport.Seg(id)}/devices", null, query, ct);
 }

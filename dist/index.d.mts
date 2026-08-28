@@ -411,12 +411,164 @@ interface SbResult<T = unknown> {
 }
 
 /**
- * Yönetim (Management) yüzeyinin tipleri.
+ * Partner (beşinci yüzey) tipleri.
  *
- * Alan adları API ile BİREBİR aynıdır (snake_case). SDK yeniden adlandırmaz:
- * müşteri bir alanı belgede görüp kodda başka adla bulursa, kaybettiği zaman
- * SDK'nın kazandırdığı zamandan fazladır.
+ * Sözleşme: docs/CONTRACT.md § 12 ve
+ * signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md.
+ *
+ * Alan adları API ile birebir aynıdır (snake_case) — SDK yeniden adlandırmaz.
  */
+
+interface PartnerConfig {
+    /** `sbp_live_…` — sözleşmeli partner anahtarı. Tarayıcıya İNMEZ. */
+    apiKey: string;
+    baseUrl?: string;
+    timeout?: number;
+    throwOnError?: boolean;
+    debug?: boolean;
+}
+interface PartnerOwnerInput {
+    email: string;
+    name?: string;
+    /** Partner'ın kendi tarafındaki kullanıcı kimliği. */
+    external_id?: string;
+    locale?: string;
+}
+interface CreateCompanyInput {
+    /** Partner'ın kendi tarafındaki müşteri kimliği — idempotens anahtarı. */
+    external_id: string;
+    name: string;
+    owner: PartnerOwnerInput;
+    team_name?: string;
+    link_email?: string;
+}
+interface PartnerCompany {
+    id: number;
+    external_id: string;
+    name: string;
+    status: string;
+    billing_managed_by_partner: boolean;
+    modules: string[];
+    created_at: string | null;
+}
+interface CreateCompanyResult {
+    created: boolean;
+    company: PartnerCompany;
+    team: {
+        id: number | null;
+        name: string | null;
+    };
+    owner: {
+        id: number | null;
+        email: string | null;
+        name: string | null;
+    };
+    /** YALNIZ ilk oluşturmada döner. Kaybedilirse `rotateKey` yenisini üretir. */
+    keys?: {
+        api_key: string;
+        app_key: string;
+    };
+}
+interface DnsRecord {
+    host: string;
+    type: string;
+    value: string;
+}
+interface PartnerDomain {
+    id: number;
+    external_id: string;
+    domain: string;
+    verified_at: string | null;
+    /** `txt` | `partner` — partner beyanı kampanya için YETMEZ. */
+    verified_via: string | null;
+    can_send_campaigns: boolean;
+    is_active: boolean;
+}
+interface AddDomainInput {
+    external_id: string;
+    domain: string;
+    monitoring?: {
+        enabled?: boolean;
+        frequency?: number;
+    };
+}
+interface AddDomainResult {
+    created: boolean;
+    domain: PartnerDomain;
+    watcher: {
+        id: number;
+        frequency: number;
+    } | null;
+    dns: DnsRecord[];
+    note: string;
+}
+interface VerifyDomainResult {
+    verified: boolean;
+    domain: PartnerDomain;
+    dns: DnsRecord[];
+}
+interface UptimeIncident {
+    started_at: string;
+    ended_at: string | null;
+    duration_s: number;
+    reason: string | null;
+}
+interface UptimeReport {
+    domain?: string;
+    external_id?: string;
+    monitored?: boolean;
+    range: string;
+    /** Hiç kontrol yoksa `null` döner — %100 DEĞİL. */
+    uptime: number | null;
+    avg_response_ms: number | null;
+    checks: number;
+    status: string | null;
+    last_checked_at: string | null;
+    incidents: UptimeIncident[];
+}
+type UptimeRange = '24h' | '7d' | '30d';
+interface ModuleEntitlement {
+    module: string;
+    limits: Record<string, number>;
+    source: string;
+    expires_at: string | null;
+}
+interface GrantModuleInput {
+    module: string;
+    limits?: Record<string, number>;
+    /** Aboneliğin bittiği tarih; yenilemede tazelenmezse modül kendi kapanır. */
+    expires_at?: string;
+    reason?: string;
+}
+interface PartnerUserInput {
+    external_id: string;
+    email: string;
+    name?: string;
+    role?: 'owner' | 'billing' | 'member';
+    team_role?: string;
+    permissions?: string[];
+}
+interface PartnerUser {
+    id: number;
+    external_id: string | null;
+    email: string;
+    name: string | null;
+    role: string | null;
+}
+type EmbedModule = 'chat' | 'monitoring' | 'campaigns' | 'contacts' | 'radio' | 'messages' | 'topics' | 'members';
+interface EmbedTokenInput {
+    user_external_id: string;
+    module: EmbedModule;
+    locale?: string;
+    theme?: 'light' | 'dark';
+    accent?: string;
+}
+interface EmbedToken {
+    url: string;
+    token: string;
+    expires_at: string;
+    ttl: number;
+}
 
 interface ManagementConfig {
     /** Takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
@@ -729,6 +881,21 @@ interface ChatReport {
     };
     agents: ChatReportAgent[];
 }
+/**
+ * Gömme jetonu isteği — MÜŞTERİNİN kendi paneli için.
+ *
+ * Partner sürümünden (`EmbedTokenInput`) tek farkı kimliğin nasıl verildiği:
+ * partner kendi sistemindeki dış kimliği (`user_external_id`) yollar, müşteri
+ * ise kendi takımındaki kullanıcıyı (`user_id`). Boş bırakılırsa anahtarın
+ * sahibi kullanılır.
+ */
+interface TeamEmbedTokenInput {
+    module: EmbedModule;
+    user_id?: number | string;
+    locale?: string;
+    theme?: 'light' | 'dark';
+    accent?: string;
+}
 
 /**
  * Yönetim (Management) istemcisi — sunucu tarafı.
@@ -871,167 +1038,14 @@ declare class SignalbirdManagement {
     deleteApp(id: number | string): Promise<SbResult<unknown>>;
     /** Açık anahtarı yeniler; siteye gömülü eski anahtar ANINDA çalışmaz olur. */
     rotateAppKey(id: number | string): Promise<SbResult<AppRecord>>;
+    /**
+     * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
+     *
+     * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
+     * iframe'e verin, saklamayın. Anahtar `embed:issue` kapsamı ister.
+     */
+    embedToken(input: TeamEmbedTokenInput): Promise<SbResult<EmbedToken>>;
     listAppDevices(id: number | string, query?: ListAppDevicesQuery): Promise<SbResult<Paginated<AppDevice>>>;
-}
-
-/**
- * Partner (beşinci yüzey) tipleri.
- *
- * Sözleşme: docs/CONTRACT.md § 12 ve
- * signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md.
- *
- * Alan adları API ile birebir aynıdır (snake_case) — SDK yeniden adlandırmaz.
- */
-
-interface PartnerConfig {
-    /** `sbp_live_…` — sözleşmeli partner anahtarı. Tarayıcıya İNMEZ. */
-    apiKey: string;
-    baseUrl?: string;
-    timeout?: number;
-    throwOnError?: boolean;
-    debug?: boolean;
-}
-interface PartnerOwnerInput {
-    email: string;
-    name?: string;
-    /** Partner'ın kendi tarafındaki kullanıcı kimliği. */
-    external_id?: string;
-    locale?: string;
-}
-interface CreateCompanyInput {
-    /** Partner'ın kendi tarafındaki müşteri kimliği — idempotens anahtarı. */
-    external_id: string;
-    name: string;
-    owner: PartnerOwnerInput;
-    team_name?: string;
-    link_email?: string;
-}
-interface PartnerCompany {
-    id: number;
-    external_id: string;
-    name: string;
-    status: string;
-    billing_managed_by_partner: boolean;
-    modules: string[];
-    created_at: string | null;
-}
-interface CreateCompanyResult {
-    created: boolean;
-    company: PartnerCompany;
-    team: {
-        id: number | null;
-        name: string | null;
-    };
-    owner: {
-        id: number | null;
-        email: string | null;
-        name: string | null;
-    };
-    /** YALNIZ ilk oluşturmada döner. Kaybedilirse `rotateKey` yenisini üretir. */
-    keys?: {
-        api_key: string;
-        app_key: string;
-    };
-}
-interface DnsRecord {
-    host: string;
-    type: string;
-    value: string;
-}
-interface PartnerDomain {
-    id: number;
-    external_id: string;
-    domain: string;
-    verified_at: string | null;
-    /** `txt` | `partner` — partner beyanı kampanya için YETMEZ. */
-    verified_via: string | null;
-    can_send_campaigns: boolean;
-    is_active: boolean;
-}
-interface AddDomainInput {
-    external_id: string;
-    domain: string;
-    monitoring?: {
-        enabled?: boolean;
-        frequency?: number;
-    };
-}
-interface AddDomainResult {
-    created: boolean;
-    domain: PartnerDomain;
-    watcher: {
-        id: number;
-        frequency: number;
-    } | null;
-    dns: DnsRecord[];
-    note: string;
-}
-interface VerifyDomainResult {
-    verified: boolean;
-    domain: PartnerDomain;
-    dns: DnsRecord[];
-}
-interface UptimeIncident {
-    started_at: string;
-    ended_at: string | null;
-    duration_s: number;
-    reason: string | null;
-}
-interface UptimeReport {
-    domain?: string;
-    external_id?: string;
-    monitored?: boolean;
-    range: string;
-    /** Hiç kontrol yoksa `null` döner — %100 DEĞİL. */
-    uptime: number | null;
-    avg_response_ms: number | null;
-    checks: number;
-    status: string | null;
-    last_checked_at: string | null;
-    incidents: UptimeIncident[];
-}
-type UptimeRange = '24h' | '7d' | '30d';
-interface ModuleEntitlement {
-    module: string;
-    limits: Record<string, number>;
-    source: string;
-    expires_at: string | null;
-}
-interface GrantModuleInput {
-    module: string;
-    limits?: Record<string, number>;
-    /** Aboneliğin bittiği tarih; yenilemede tazelenmezse modül kendi kapanır. */
-    expires_at?: string;
-    reason?: string;
-}
-interface PartnerUserInput {
-    external_id: string;
-    email: string;
-    name?: string;
-    role?: 'owner' | 'billing' | 'member';
-    team_role?: string;
-    permissions?: string[];
-}
-interface PartnerUser {
-    id: number;
-    external_id: string | null;
-    email: string;
-    name: string | null;
-    role: string | null;
-}
-type EmbedModule = 'chat' | 'monitoring' | 'campaigns' | 'contacts' | 'radio';
-interface EmbedTokenInput {
-    user_external_id: string;
-    module: EmbedModule;
-    locale?: string;
-    theme?: 'light' | 'dark';
-    accent?: string;
-}
-interface EmbedToken {
-    url: string;
-    token: string;
-    expires_at: string;
-    ttl: number;
 }
 
 /**
@@ -1189,4 +1203,4 @@ declare function management(config?: Partial<ManagementConfig>): SignalbirdManag
 /** Test ve sıcak yeniden yükleme için yönetim istemcisini sıfırlar. */
 declare function resetManagement(): void;
 
-export { type AddDomainInput, type AddDomainResult, type AppDevice, type AppInput, type AppPlatform, type AppRecord, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateCompanyInput, type CreateCompanyResult, type CreateContactListInput, type CreateRadioProjectInput, DEFAULT_BASE_URL, type DnsRecord, type EmbedModule, type EmbedToken, type EmbedTokenInput, type GrantModuleInput, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type ModuleEntitlement, type Paginated$1 as Paginated, type PartnerCompany, type PartnerConfig, type PartnerDomain, type PartnerOwnerInput, type PartnerUser, type PartnerUserInput, type RadioChannel, type RadioChannelInput, type RadioEvent, type RadioLevel, type RadioProject, type RadioProjectCreated, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, SignalbirdPartner, type SmsPreview, type StartConversationInput, type UpdateConversationInput, type UpdateRadioProjectInput, type UpdateVisitorInput, type UptimeIncident, type UptimeRange, type UptimeReport, type VerifyDomainResult, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };
+export { type AddDomainInput, type AddDomainResult, type AppDevice, type AppInput, type AppPlatform, type AppRecord, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateCompanyInput, type CreateCompanyResult, type CreateContactListInput, type CreateRadioProjectInput, DEFAULT_BASE_URL, type DnsRecord, type EmbedModule, type EmbedToken, type EmbedTokenInput, type GrantModuleInput, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type ModuleEntitlement, type Paginated$1 as Paginated, type PartnerCompany, type PartnerConfig, type PartnerDomain, type PartnerOwnerInput, type PartnerUser, type PartnerUserInput, type RadioChannel, type RadioChannelInput, type RadioEvent, type RadioLevel, type RadioProject, type RadioProjectCreated, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, SignalbirdPartner, type SmsPreview, type StartConversationInput, type TeamEmbedTokenInput, type UpdateConversationInput, type UpdateRadioProjectInput, type UpdateVisitorInput, type UptimeIncident, type UptimeRange, type UptimeReport, type VerifyDomainResult, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };

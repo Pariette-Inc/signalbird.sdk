@@ -94,7 +94,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:1.5.0")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:1.7.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır — ayrı SDK reposu ya da
@@ -398,6 +398,16 @@ for (const conversation of inbox.data?.data ?? []) {
 }
 ```
 
+Signalbird ekranını **kendi panelinizde** göstermek isterseniz gömme jetonu:
+
+```ts
+const { data } = await management().embedToken({ module: 'chat' })
+// data.url → 120 saniyelik, TEK KULLANIMLIK adres; doğrudan <iframe>'e verin
+```
+
+Anahtar `embed:issue` kapsamı ister — jeton 60 dakikalık bir panel oturumuna
+çevrildiği için bu kapsam bilerek ayrıdır.
+
 Aynısı PHP, Python, Go ve .NET'te birebir aynı metot adlarıyla:
 
 ```php
@@ -501,7 +511,20 @@ await sb.sendEmail({ to: '…', class: 'commercial', subject: '…', body: '…'
 // config/mail.php → 'signalbird' => ['transport' => 'signalbird', 'class' => 'transactional']
 // .env           → MAIL_MAILER=signalbird, SIGNALBIRD_KEY=sb_…
 Mail::to($user)->send(new SiparisBildirimi($order));  // hiçbir Mailable değişmez
+
+// Gövde PANELDE duruyorsa (şablon + değişken), zincirlenebilir yüz:
+Signalbird::mail()
+    ->to($user->email)
+    ->template('Sipariş Onayı')        // panelde yazan ad ya da id
+    ->vars(['ad' => $user->name])
+    ->fromName('Penyu Destek')
+    ->transactional()                   // sınıf ZORUNLU, varsayılanı yok
+    ->send();
 ```
+
+İkisinin farkı gövdenin nerede durduğudur: taşıyıcıda uygulamada (Blade),
+`mail()`'de Signalbird panelinde. Metni değiştirmek için dağıtım beklemek
+istemiyorsanız ikincisi.
 
 Üç şey bilinmeli:
 

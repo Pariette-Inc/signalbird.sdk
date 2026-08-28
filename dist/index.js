@@ -670,6 +670,15 @@ var SignalbirdManagement = class {
   rotateAppKey(id) {
     return this.http.request("POST", `/v1/apps/${seg(id)}/rotate-key`);
   }
+  /**
+   * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
+   *
+   * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
+   * iframe'e verin, saklamayın. Anahtar `embed:issue` kapsamı ister.
+   */
+  embedToken(input) {
+    return this.http.request("POST", "/v1/embed/tokens", input);
+  }
   listAppDevices(id, query) {
     return this.http.request("GET", `/v1/apps/${seg(id)}/devices`, void 0, query);
   }

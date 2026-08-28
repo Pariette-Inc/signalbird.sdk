@@ -48,7 +48,9 @@ import type {
   UpdateConversationInput,
   UpdateRadioProjectInput,
   UpdateVisitorInput,
+  TeamEmbedTokenInput,
 } from './management-types';
+import type { EmbedToken } from './partner-types';
 
 export class SignalbirdManagement {
   private readonly http: SbTransport;
@@ -355,6 +357,16 @@ export class SignalbirdManagement {
   /** Açık anahtarı yeniler; siteye gömülü eski anahtar ANINDA çalışmaz olur. */
   rotateAppKey(id: number | string): Promise<SbResult<AppRecord>> {
     return this.http.request('POST', `/v1/apps/${seg(id)}/rotate-key`);
+  }
+
+  /**
+   * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
+   *
+   * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
+   * iframe'e verin, saklamayın. Anahtar `embed:issue` kapsamı ister.
+   */
+  embedToken(input: TeamEmbedTokenInput): Promise<SbResult<EmbedToken>> {
+    return this.http.request('POST', '/v1/embed/tokens', input);
   }
 
   listAppDevices(

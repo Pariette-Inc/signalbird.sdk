@@ -212,5 +212,12 @@ class SignalbirdManagement:
         """Siteye gömülü eski anahtar ANINDA çalışmaz olur."""
         return self._http.request("POST", f"/v1/apps/{seg(id)}/rotate-key")
 
+    def embed_token(self, input: Mapping[str, Any]) -> Result:
+        """Gömme jetonu — Signalbird ekranını kendi panelinizde göstermek için.
+
+        120 saniye yaşar ve tek kullanımlıktır; anahtar `embed:issue` kapsamı ister.
+        """
+        return self._http.request("POST", "/v1/embed/tokens", dict(input))
+
     def list_app_devices(self, id: Any, query: Optional[Mapping[str, Any]] = None) -> Result:
         return self._http.request("GET", f"/v1/apps/{seg(id)}/devices", None, query)

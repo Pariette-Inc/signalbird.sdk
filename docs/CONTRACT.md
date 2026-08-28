@@ -144,7 +144,7 @@ denetler. Alan adları API ile aynıdır (snake_case) — SDK yeniden adlandırm
 
 | Alan | Metot | HTTP |
 |---|---|---|
-| e-posta | `sendEmail({to, class, subject, body?, template_hash?, vars?, sending_domain_id?, contact_id?})` | `POST /v1/email/send` |
+| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, template_hash?, vars?, sending_domain_id?, contact_id?, from_name?, reply_to?})` | `POST /v1/email/send` |
 | SMS | `sendSms({to, class, body, brand_id?, contact_id?})` · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
 | push | `sendPush({to, class, subject, body, vars?, contact_id?})` — `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
 | olay | `track({event, contact:{email?|phone?|external_id?}, data?})` — kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
@@ -155,6 +155,32 @@ denetler. Alan adları API ile aynıdır (snake_case) — SDK yeniden adlandırm
 
 `class` (`transactional` | `commercial`) zorunludur ve **varsayılanı yoktur** —
 hukuki kapı çağıranın elindedir.
+
+**Şablon seçimi** üç biçimde olur ve biri yeterlidir: `template` (panelde
+yazan AD, büyük/küçük harfe duyarsız), `template_id` (sayı) ya da
+`template_hash` (gövde parmak izi — kampanya yolunda üretilir). Şablon
+verildiğinde `subject` ve `body` isteğe bağlıdır: konu şablondan gelir, ama
+istekte konu varsa **çağıranınki kazanır**. Bulunamayan şablon 422
+`TEMPLATE_NOT_FOUND` döner — yok sayılıp gövdesiz posta gönderilmez.
+
+### 8.3.1 PHP: `Signalbird::mail()`
+
+Laravel kurulumunda aynı uca zincirlenebilir bir yüz vardır:
+
+```php
+Signalbird::mail()
+    ->to($user->email)
+    ->template('Sipariş Onayı')
+    ->vars(['ad' => $user->name])
+    ->fromName('Penyu Destek')
+    ->replyTo('destek@penyu.io')
+    ->transactional()
+    ->send();
+```
+
+`transactional()` / `commercial()` demek **zorunludur** — sınıfın varsayılanı
+yoktur. Uygulamanın mevcut `Mailable` sınıfları için bu gerekmez:
+`MAIL_MAILER=signalbird` ile hepsi zaten Signalbird'den çıkar (§8.8).
 
 ### 8.4 Toplu kişi yükleme
 
@@ -189,6 +215,31 @@ bozar). Yeniden gönderimlere karşı `id` (`evt_…`) alanıyla tekilleştirme
 
 Yoktur. Aynı iletiyi iki kez göndermek hiç göndermemekten pahalıdır;
 yeniden deneme kararı çağıranındır (Telsiz ile aynı ilke).
+
+### 8.8 Laravel posta taşıyıcısı — `MAIL_MAILER=signalbird`
+
+`config/mail.php` içine tek bir satır:
+
+```php
+'signalbird' => ['transport' => 'signalbird'],
+```
+
+Bundan sonra uygulamanın **her** `Mailable`'ı (Blade görünümleriyle birlikte)
+Signalbird'den çıkar ve orada kayda geçer; hiçbir çağrı yeri değişmez.
+
+İki yolun ayrımı şudur: taşıyıcıda **gövde uygulamada** üretilir,
+`Signalbird::mail()`'de **gövde panelde** durur. Onlarca Mailable'ı tek tek
+SDK çağrısına çevirmek hem çok iş hem de kaçınılmaz olarak eksik kalır —
+biri unutulur ve o posta kayıtlarda hiç görünmez.
+
+Taşıyıcının sınırları:
+
+- **Alıcı başına ayrı istek**: Signalbird'de her alıcı ayrı bir kayıttır
+  (açılma/tıklama/bounce alıcıya bağlıdır). Toplu olan kampanyadır.
+- **Ek dosya taşınmaz** ve sessizce düşürülmez: `TransportException` fırlatılır.
+  Gönderdiğini sandığın fatura hiç gitmesin diye.
+- **Sınıf yapılandırmadan gelir** (`SIGNALBIRD_MAIL_CLASS`, varsayılan
+  `transactional`). Bu taşıyıcıdan ticari toplu posta çıkmaz.
 
 ## 9. Tarayıcı widget'ı (`signalbird.js`)
 
@@ -374,7 +425,33 @@ ziyaretçiye **asla** gitmez.
 snippet güncellenene kadar widget çalışmaz. Cihaz listesinde token **maskeli**
 döner; tamamı hiçbir zaman dönmez.
 
-### 10.4 Retry
+### 10.4 Gömme jetonu — kendi panelinizde Signalbird ekranı
+
+| Metot | HTTP |
+|---|---|
+| `embedToken(input)` | `POST /v1/embed/tokens` |
+
+Girdi: `module` (`chat` · `monitoring` · `campaigns` · `contacts` · `radio` ·
+`messages` · `topics` · `members`), `user_id?`, `locale?`, `theme?`, `accent?`.
+Dönen `url` doğrudan bir `<iframe>`'e verilir (ya da `signalbird/embed` yüzeyi
+kullanılır, §13).
+
+Üç kural:
+
+- **120 saniye ve TEK KULLANIM.** Jeton URL'de gider; `Referer` başlığına ve
+  sunucu loglarına düşer. Saklanmaz, istendiği an kullanılır.
+- **Anahtar `embed:issue` kapsamı ister** ve bu kapsam geri-uyum listesinde
+  yoktur. Sebebi: jeton 60 dakikalık bir **panel oturumuna** çevrilir ve o
+  oturum, seçilen kullanıcının panelde yapabildiği her şeyi yapar. Dar
+  kapsamlı bir anahtarın bunu üretebilmesi, kapsam kısıtını tek çağrıyla
+  aşmak olurdu.
+- **`user_id` takımın üyesi olmalıdır**; verilmezse anahtarın sahibi kullanılır.
+  Yetkiler kişinin kendi yetkileridir, anahtarın değil.
+
+Partner yüzeyindeki karşılığı `createEmbedToken` (§12): tek fark kimliğin
+`user_external_id` ile verilmesidir.
+
+### 10.5 Retry
 
 Yoktur (§8.7 ile aynı ilke). Bir kanalı iki kez açmak ya da bir mesajı iki kez
 göndermek, hiç yapmamaktan pahalıdır.

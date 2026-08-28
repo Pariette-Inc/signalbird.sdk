@@ -8,7 +8,7 @@
  * Beş yüzey, beş küme:
  *   - Telsiz    (docs/CONTRACT.md § 4)   — 7 metot   · sunucu dilleri
  *   - Gönderim  (docs/CONTRACT.md § 8.3) — 21 metot  · sunucu dilleri
- *   - Yönetim   (docs/CONTRACT.md § 10)  — 45 metot  · sunucu dilleri
+ *   - Yönetim   (docs/CONTRACT.md § 10)  — 46 metot  · sunucu dilleri
  *   - Uygulama  (docs/CONTRACT.md § 11)  — 18 metot  · istemci dilleri
  *                                                     (TS, Swift, Kotlin)
  *   - Partner   (docs/CONTRACT.md § 12)  — 23 metot  · sunucu dilleri
@@ -133,6 +133,8 @@ const SURFACES = [
       'chatReport',
       // Uygulamalar
       'listApps', 'createApp', 'getApp', 'updateApp', 'deleteApp', 'rotateAppKey', 'listAppDevices',
+      // Gömme: Signalbird ekranını müşterinin KENDİ panelinde göstermek.
+      'embedToken',
     ],
     aliases: noProto({}),
     ignored: new Set(['constructor', '__construct', 'request', 'transport', 'fail', 'success', 'buildQuery', 'stringify', 'seg']),

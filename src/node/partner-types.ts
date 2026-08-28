@@ -147,7 +147,15 @@ export interface PartnerUser {
   role: string | null;
 }
 
-export type EmbedModule = 'chat' | 'monitoring' | 'campaigns' | 'contacts' | 'radio';
+export type EmbedModule =
+  | 'chat'
+  | 'monitoring'
+  | 'campaigns'
+  | 'contacts'
+  | 'radio'
+  | 'messages'
+  | 'topics'
+  | 'members';
 
 export interface EmbedTokenInput {
   user_external_id: string;

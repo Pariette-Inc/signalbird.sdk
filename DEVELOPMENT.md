@@ -2,6 +2,25 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-29 — Gömme jetonu takım anahtarıyla, şablonla mail, sohbet bitişi
+
+**Yönetim yüzeyine `embedToken`** (46. metot). Signalbird ekranını MÜŞTERİNİN
+kendi panelinde göstermek partnerliğe özgü bir ayrıcalık değil; artık takım
+anahtarıyla da jeton alınıyor. Kapsam ayrı: `embed:issue` — jeton 60 dakikalık
+bir panel oturumuna çevrildiği için dar kapsamlı bir anahtarın bunu üretmesi
+kapsam kısıtını tek çağrıyla aşmak olurdu.
+
+**`Signalbird::mail()`** (PHP): zincirlenebilir e-posta — şablon (ad ya da id),
+değişkenler, gönderen adı, yanıt adresi, hukukî sınıf. Sınıf zorunlu, varsayılanı
+yok. Mevcut Mailable'lar için gerekmez: `MAIL_MAILER=signalbird` zaten hepsini
+Signalbird'den geçiriyor. Sunucu tarafında `template`/`template_id` artık
+gerçekten çalışıyor (doğrulanıp sessizce atılıyordu).
+
+**Widget** (29 Ağu kararları): balonda Signalbird kuşu; balonu tamamen gizleyen
+`x` (widget sökülmez, gizlenir — `chat.open()` geri getirir); kimliği bilinen
+ziyaretçiye ön-form çizilmez; bitiş ekranında puanlama bağlantısı (eşik ve
+adres sunucudan); ziyaretçi yalnız fotoğraf yükler.
+
 ## 2026-08-28 (2. tur) — Ziyaretçi konu seçimi
 
 `bootstrap` yanıtındaki `topics[]` iki yüzeyde de karşılık buldu:

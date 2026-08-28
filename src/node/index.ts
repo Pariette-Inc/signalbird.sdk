@@ -23,6 +23,7 @@ export { SignalbirdManagement } from './management';
 export { SignalbirdPartner } from './partner';
 export { verifyWebhook } from './webhook';
 export type {
+  TeamEmbedTokenInput,
   ManagementConfig,
   AppDevice,
   AppInput,

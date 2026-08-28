@@ -365,6 +365,21 @@ class ManagementClient
         return $this->request('POST', '/v1/apps/' . self::seg($id) . '/rotate-key');
     }
 
+    /**
+     * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
+     *
+     * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
+     * iframe'e verin, saklamayın. Anahtar `embed:issue` kapsamı ister.
+     *
+     * @param  array<string,mixed>  $input  module (chat|monitoring|campaigns|
+     *                                      contacts|radio|messages|topics|members),
+     *                                      user_id?, locale?, theme?, accent?
+     */
+    public function embedToken(array $input): array
+    {
+        return $this->request('POST', '/v1/embed/tokens', $input);
+    }
+
     /** @param array<string, mixed> $query */
     public function listAppDevices(int|string $id, array $query = []): array
     {

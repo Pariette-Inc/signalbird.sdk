@@ -3,6 +3,7 @@
 namespace Signalbird\Sdk\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Signalbird\Sdk\Mail\MailBuilder;
 use Signalbird\Sdk\Management\ManagementClient;
 use Signalbird\Sdk\Messaging\MessagingClient;
 use Signalbird\Sdk\Partner\PartnerClient;
@@ -42,6 +43,21 @@ class Signalbird extends Facade
         return static::$app
             ? static::$app->make(MessagingClient::class)
             : \Signalbird\Sdk\Signalbird::messaging();
+    }
+
+    /**
+     * Zincirlenebilir e-posta gönderimi — şablon, değişken, gönderen adı.
+     *
+     *   Signalbird::mail()->to($u->email)->template('Hoş Geldiniz')
+     *       ->vars(['ad' => $u->name])->transactional()->send();
+     *
+     * Mevcut Mailable'larınız için buna gerek yok: `MAIL_MAILER=signalbird`
+     * ile hepsi zaten Signalbird'den çıkar. Bu yol, gövdenin PANELDE durduğu
+     * gönderimler içindir.
+     */
+    public static function mail(): MailBuilder
+    {
+        return new MailBuilder(static::messaging());
     }
 
     /**
