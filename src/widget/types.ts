@@ -81,8 +81,24 @@ export interface TopicOption {
   parent_id?: number | null;
 }
 
+/**
+ * Canlı bağlantı bilgisi — adres ve AÇIK anahtar sunucudan gelir.
+ *
+ * Gömme etiketine yazılmaz: adres değişirse müşterinin sitesindeki tek satır
+ * yeniden düzenlenmek zorunda kalmasın. `enabled:false` ise widget polling ile
+ * çalışır — canlı bağlantı bir iyileştirmedir, onsuz da sistem tamdır.
+ */
+export interface RealtimeInfo {
+  enabled: boolean;
+  key?: string;
+  host?: string;
+  port?: number;
+  scheme?: string;
+}
+
 export interface Bootstrap {
   app: SdkApp;
+  realtime?: RealtimeInfo;
   online: boolean;
   within_hours: boolean;
   /** Boşsa ön-formda konu adımı HİÇ çizilmez. */

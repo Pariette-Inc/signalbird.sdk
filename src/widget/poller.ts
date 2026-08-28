@@ -12,10 +12,25 @@
 const IDLE_LADDER = [20000, 20000, 20000, 60000, 60000, 180000];
 const OPEN_INTERVAL = 3000;
 
+/*
+ * Canlı bağlantı varken polling SUSMAZ, YAVAŞLAR (29 Ağu 2026).
+ *
+ * Soket bağlıyken yeni mesaj zaten haber olarak geliyor ve tur o haberle
+ * tetikleniyor; buradaki turlar yalnız EMNİYET AĞIDIR — soket sessizce
+ * ölmüşse (vekil sunucu kesmiş, ağ değişmiş) kullanıcı sonsuza kadar boş
+ * ekrana bakmasın.
+ *
+ * Tamamen kapatmadık: "bağlıyım" diyen ama olay taşımayan bir soket, en kötü
+ * arıza türüdür — hiçbir şey kırılmış görünmez, yalnız mesajlar gelmez.
+ */
+const LIVE_OPEN_INTERVAL = 45000;
+const LIVE_IDLE_INTERVAL = 300000;
+
 export class Poller {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private step = 0;
   private open = false;
+  private live = false;
   private running = false;
   private stopped = true;
 
@@ -56,7 +71,18 @@ export class Poller {
     this.schedule(0);
   }
 
+  /** Soket bağlandı/koptu. Bağlıyken tur aralığı emniyet ağına çekilir. */
+  setLive(live: boolean): void {
+    if (this.live === live) return;
+
+    this.live = live;
+    this.step = 0;
+    this.schedule();
+  }
+
   private interval(): number {
+    if (this.live) return this.open ? LIVE_OPEN_INTERVAL : LIVE_IDLE_INTERVAL;
+
     return this.open ? OPEN_INTERVAL : IDLE_LADDER[Math.min(this.step, IDLE_LADDER.length - 1)];
   }
 

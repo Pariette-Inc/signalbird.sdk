@@ -9,6 +9,7 @@
 import { Api } from './api';
 import { Store } from './store';
 import { Poller } from './poller';
+import { Socket } from './socket';
 import { UI } from './ui';
 import { uuid } from './ui/dom';
 import { TitleBlinker } from './title';
@@ -65,6 +66,11 @@ export class ChatController {
   private lastTypingSent = 0;
   private pollCount = 0;
   private baseUrl: string;
+  /**
+   * Canlı bağlantı. `null` = sunucu kapalı diyor ya da tarayıcı desteklemiyor;
+   * o hâlde polling bugünkü hızıyla devam eder.
+   */
+  private socket: Socket | null = null;
 
   constructor(private readonly opts: InitOptions) {
     this.baseUrl = (opts.baseUrl || DEFAULT_BASE_URL).replace(/\/$/, '');
@@ -95,7 +101,7 @@ export class ChatController {
     }
     if (this.destroyed) return;
 
-    const { app, online, within_hours, visitor, conversation, topics } = boot.data;
+    const { app, online, within_hours, visitor, conversation, topics, realtime } = boot.data;
     if (!app.chat_enabled) {
       this.log('chat disabled for app');
       return;
@@ -160,6 +166,32 @@ export class ChatController {
 
     this.started = true;
     this.poller.start();
+
+    /*
+     * Canlı bağlantı — polling'in YERİNE değil, ÜSTÜNE.
+     *
+     * Soket bağlanınca merdiven yavaşlar (`poller.setLive(true)`), koptuğunda
+     * kendiliğinden eski hâline döner. Tek yolun soket olduğu bir sohbet,
+     * WebSocket'i kesen ilk kurumsal vekil sunucuda ölürdü.
+     */
+    if (realtime?.enabled) {
+      this.socket = new Socket(
+        realtime,
+        (socketId, channel) => this.authorizeChannel(socketId, channel),
+        (event) => this.onSocketEvent(event),
+        (connected) => {
+          this.log('socket', connected ? 'connected' : 'disconnected');
+          this.poller.setLive(connected);
+          // Bağlantı kurulduğu/koptuğu anda bir kez tazele: kopukken kaçan
+          // mesaj varsa hemen görünsün.
+          if (connected) this.poller.poke(0);
+        },
+        (...a) => this.log(...a),
+      );
+
+      this.socket.connect();
+      this.subscribeVisitor();
+    }
 
     if (this.opts.user) void this.identify(this.opts.user);
   }
@@ -301,6 +333,8 @@ export class ChatController {
 
   destroy(): void {
     this.destroyed = true;
+    this.socket?.close();
+    this.socket = null;
     this.poller.stop();
     this.title.end();
     document.removeEventListener('visibilitychange', this.onVisibility);
@@ -449,6 +483,8 @@ export class ChatController {
         return false;
       }
       this.store.setVisitor(v);
+      this.subscribeVisitor();
+
       return true;
     }
 
@@ -460,6 +496,49 @@ export class ChatController {
 
     this.check(r);
     return false;
+  }
+
+  /**
+   * Ziyaretçi kanalına abone ol.
+   *
+   * Ziyaretçi kimliği oturum açılınca doğar; bootstrap sırasında henüz
+   * olmayabilir. Bu yüzden hem başlangıçta hem her yeni oturumda çağrılır —
+   * `Socket.subscribe` aynı kanalı iki kez abone etmez.
+   */
+  private subscribeVisitor(): void {
+    const id = this.store.visitor?.id;
+
+    if (this.socket && id) this.socket.subscribe(`private-sb-visitor.${id}`);
+  }
+
+  /** Özel kanal imzası — ziyaretçi sırrıyla, SDK'nın kendi kapısından. */
+  private async authorizeChannel(socketId: string, channel: string): Promise<string | null> {
+    const r = await this.api.post<{ auth: string }>('/v1/sdk/chat/socket/auth', {
+      socket_id: socketId,
+      channel_name: channel,
+    });
+
+    return r.ok && r.data?.auth ? r.data.auth : null;
+  }
+
+  /**
+   * Sunucudan gelen haber.
+   *
+   * Gövde YOK: yayın "hareket var" der, veriyi buradan tetiklenen tur çeker.
+   * "Yazıyor" tek istisnadır — o zaten bir işarettir, çekilecek verisi yoktur.
+   */
+  private onSocketEvent(event: { name: string; data: Record<string, unknown> }): void {
+    if (event.name === 'chat.typing') {
+      if (event.data.who === 'agent') {
+        this.store.agentTyping = event.data.active === true;
+        this.ui?.setTyping(this.store.agentTyping, this.store.agent?.name || this.t.agent);
+      }
+
+      return;
+    }
+
+    // Mesaj ya da konuşma değişimi: hemen bir tur.
+    this.poller.poke(0);
   }
 
   private async loadConversation(): Promise<void> {
