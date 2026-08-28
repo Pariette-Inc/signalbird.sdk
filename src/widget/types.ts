@@ -59,10 +59,24 @@ export interface SdkApp {
   max_attachment_mb?: number;
 }
 
+/**
+ * Ziyaretçinin seçebileceği destek konusu. Sunucu yalnız GÖRÜNÜR konuları
+ * yollar; widget listeyi olduğu gibi çizer, kendi süzgeci yoktur.
+ */
+export interface TopicOption {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string | null;
+  parent_id?: number | null;
+}
+
 export interface Bootstrap {
   app: SdkApp;
   online: boolean;
   within_hours: boolean;
+  /** Boşsa ön-formda konu adımı HİÇ çizilmez. */
+  topics?: TopicOption[];
   visitor?: { id: string; name?: string | null; email?: string | null; unread?: number } | null;
   conversation?: Conversation | null;
 }

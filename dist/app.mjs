@@ -302,6 +302,8 @@ var ChatSession = class {
     this.state = {
       enabled: false,
       loading: true,
+      topics: [],
+      topic: null,
       conversation: null,
       messages: [],
       unread: 0,
@@ -334,7 +336,11 @@ var ChatSession = class {
       this.patch({ enabled: false, loading: false, errorCode: boot.code });
       return;
     }
-    this.patch({ enabled: true, withinHours: app.within_hours ?? true });
+    this.patch({
+      enabled: true,
+      withinHours: app.within_hours ?? true,
+      topics: boot.data?.topics ?? []
+    });
     if (await this.app.currentVisitor()) {
       await this.refresh();
     }
@@ -387,12 +393,25 @@ var ChatSession = class {
       if (!session.ok) return this.markFailed(cid, session);
     }
     const conversation = this.state.conversation;
-    const result = conversation ? await this.app.sendMessage(conversation.id, { body: trimmed, client_id: cid, attachments }) : await this.app.startConversation({ body: trimmed, client_id: cid, attachments });
+    const result = conversation ? await this.app.sendMessage(conversation.id, { body: trimmed, client_id: cid, attachments }) : await this.app.startConversation({
+      body: trimmed,
+      client_id: cid,
+      attachments,
+      ...this.state.topic ? { topic: this.state.topic } : {}
+    });
     if (!result.ok) return this.markFailed(cid, result);
     await this.refresh();
     this.step = 0;
     this.schedule();
     return result;
+  }
+  /**
+   * Ziyaretçinin konu seçimi. Konuşma AÇILDIKTAN sonra çağrılırsa etkisizdir:
+   * açılmış konuşmanın konusunu ajan panelden değiştirir — ziyaretçiye kendi
+   * konuşmasını yeniden sınıflandırma yetkisi vermek, atamayı da bozardı.
+   */
+  setTopic(slug) {
+    this.patch({ topic: slug });
   }
   /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` — çağıran zamanlar. */
   typing(isTyping) {

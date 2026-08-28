@@ -45,6 +45,18 @@ export interface AppConfig {
   fetchImpl?: typeof fetch;
 }
 
+/**
+ * Ziyaretçinin seçebileceği destek konusu ("Konu → [ilgililer]").
+ * Sunucu yalnız görünür konuları yollar; istemci süzgeç uygulamaz.
+ */
+export interface TopicOption {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string | null;
+  parent_id?: number | null;
+}
+
 /** `POST /v1/sdk/bootstrap` yanıtı — widget çizilmeden önceki tek soru. */
 export interface BootstrapResult {
   app: {
@@ -66,6 +78,8 @@ export interface BootstrapResult {
       prechat?: { name?: boolean; email?: boolean };
     };
   };
+  /** Boşsa konu adımı hiç gösterilmez. */
+  topics?: TopicOption[];
 }
 
 export interface Visitor {
@@ -138,6 +152,11 @@ export interface StartConversationInput {
   client_id?: string;
   attachments?: unknown[];
   page_url?: string;
+  /**
+   * Destek konusu — id ya da slug. Seçim SUNUCUDA doğrulanır; geçersizse
+   * konuşma yine açılır, konu yok sayılır.
+   */
+  topic?: string | number;
 }
 
 export interface SendMessageInput {

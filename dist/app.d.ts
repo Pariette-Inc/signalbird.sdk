@@ -41,6 +41,17 @@ interface AppConfig {
     /** Özel `fetch` (React Native polyfill, test sahtesi). */
     fetchImpl?: typeof fetch;
 }
+/**
+ * Ziyaretçinin seçebileceği destek konusu ("Konu → [ilgililer]").
+ * Sunucu yalnız görünür konuları yollar; istemci süzgeç uygulamaz.
+ */
+interface TopicOption {
+    id: number;
+    slug: string;
+    name: string;
+    description?: string | null;
+    parent_id?: number | null;
+}
 /** `POST /v1/sdk/bootstrap` yanıtı — widget çizilmeden önceki tek soru. */
 interface BootstrapResult {
     app: {
@@ -65,6 +76,8 @@ interface BootstrapResult {
             };
         };
     };
+    /** Boşsa konu adımı hiç gösterilmez. */
+    topics?: TopicOption[];
 }
 interface Visitor {
     id: string;
@@ -129,6 +142,11 @@ interface StartConversationInput {
     client_id?: string;
     attachments?: unknown[];
     page_url?: string;
+    /**
+     * Destek konusu — id ya da slug. Seçim SUNUCUDA doğrulanır; geçersizse
+     * konuşma yine açılır, konu yok sayılır.
+     */
+    topic?: string | number;
 }
 interface SendMessageInput {
     body?: string;
@@ -300,6 +318,13 @@ interface ChatState {
     unread: number;
     agentTyping: boolean;
     withinHours: boolean;
+    /**
+     * Ziyaretçinin seçebileceği destek konuları (boşsa konu adımı çizilmez).
+     * Seçimi `setTopic()` taşır; ilk konuşma açılırken gönderilir.
+     */
+    topics: TopicOption[];
+    /** Seçili konu (slug) — ilk konuşmayla birlikte gider. */
+    topic: string | null;
     /** Son hatanın kodu — arayüz isterse gösterir, göstermezse yutar. */
     errorCode?: string;
 }
@@ -340,6 +365,12 @@ declare class ChatSession {
      * işaretlenir ve arayüz "yeniden dene" gösterebilir.
      */
     send(body: string, attachments?: unknown[]): Promise<SbResult<unknown>>;
+    /**
+     * Ziyaretçinin konu seçimi. Konuşma AÇILDIKTAN sonra çağrılırsa etkisizdir:
+     * açılmış konuşmanın konusunu ajan panelden değiştirir — ziyaretçiye kendi
+     * konuşmasını yeniden sınıflandırma yetkisi vermek, atamayı da bozardı.
+     */
+    setTopic(slug: string | null): void;
     /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` — çağıran zamanlar. */
     typing(isTyping: boolean): void;
     /** Görülen son mesaja kadar okundu işaretler. */

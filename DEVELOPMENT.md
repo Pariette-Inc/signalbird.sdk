@@ -2,6 +2,19 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-28 (2. tur) — Ziyaretçi konu seçimi
+
+`bootstrap` yanıtındaki `topics[]` iki yüzeyde de karşılık buldu:
+
+- **Widget**: ön-formda konu seçici. Konu HER ZAMAN isteğe bağlıdır (ön-form
+  zorunlu olsa bile): konusunu bilmeyen ziyaretçiyi kapıda tutmak, gelmeyecek
+  bir mesaj demektir. Seçim ilk konuşma açılırken gönderilir — form doldurulup
+  hiç yazılmadan kapatılabilir.
+- **App yüzeyi** (`ChatSession`): `state.topics`, `setTopic(slug)`;
+  `startConversation` konuyu taşır. Konuşma açıldıktan sonra `setTopic`
+  etkisizdir — ziyaretçinin kendi konuşmasını yeniden sınıflandırması atamayı
+  bozardı.
+
 ## 2026-08-28 — Tek anahtar + üretim adresi pakete taşındı
 
 `.env` artık tek satır: `SIGNALBIRD_KEY=sb_…`. Gönderim ve yönetim istemcileri

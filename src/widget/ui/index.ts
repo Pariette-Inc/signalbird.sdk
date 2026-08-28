@@ -6,7 +6,7 @@
 import { CSS } from './styles';
 import { h, icon, clear } from './dom';
 import { renderMessages, scrollToBottom, snippet, type MessageActions, type RenderCtx } from './messages';
-import type { Message, ChatSettings, Agent } from '../types';
+import type { Message, ChatSettings, Agent, TopicOption } from '../types';
 import type { Strings } from '../i18n';
 import { fmt } from '../i18n';
 
@@ -15,8 +15,8 @@ export interface UIActions extends MessageActions {
   close(): void;
   send(text: string, files: File[], replyTo: Message | null): void;
   typing(active: boolean): void;
-  submitPrechat(name: string, email: string): void;
-  skipPrechat(): void;
+  submitPrechat(name: string, email: string, topic: string | null): void;
+  skipPrechat(topic: string | null): void;
   rate(stars: number, comment: string): void;
   endChat(): void;
   newChat(): void;
@@ -29,6 +29,8 @@ export interface UIOptions {
   settings: ChatSettings;
   appName: string;
   maxMb: number;
+  /** Ziyaretçinin seçebileceği konular; boşsa ön-formda adım çizilmez. */
+  topics: TopicOption[];
   actions: UIActions;
 }
 
@@ -172,6 +174,19 @@ export class UI {
 
     const name = h('input', { type: 'text', placeholder: t.name, value: defaults.name || '', autocomplete: 'name' });
     const email = h('input', { type: 'email', placeholder: t.email, value: defaults.email || '', autocomplete: 'email' });
+
+    /*
+     * Konu seçimi HER ZAMAN isteğe bağlıdır — ön-form zorunlu olsa bile.
+     * Konusunu bilmeyen ziyaretçiyi kapıda tutmak, gelmeyecek bir mesaj
+     * demektir; sınıflandırmayı ajan sonradan düzeltebilir.
+     */
+    const topics = this.o.topics || [];
+    const topicSelect = topics.length
+      ? h('select', { 'aria-label': t.topicLabel },
+          h('option', { value: '' }, t.topicPlaceholder),
+          ...topics.map((topic) => h('option', { value: topic.slug }, topic.name)))
+      : null;
+
     const submit = () => {
       const n = name.value.trim();
       const e = email.value.trim();
@@ -183,15 +198,16 @@ export class UI {
         email.focus();
         return;
       }
-      this.o.actions.submitPrechat(n, e);
+      this.o.actions.submitPrechat(n, e, topicSelect?.value || null);
     };
     const form = h('form', { class: 'fm', onsubmit: (ev: Event) => { ev.preventDefault(); submit(); } },
       h('h3', null, t.prechatTitle),
       h('p', null, this.o.settings.greeting || t.prechatHint),
       p.name ? name : null,
       p.email ? email : null,
+      topicSelect,
       h('button', { class: 'btn', type: 'submit' }, t.start),
-      p.required ? null : h('button', { class: 'btn gh', type: 'button', onclick: () => this.o.actions.skipPrechat() }, t.skip));
+      p.required ? null : h('button', { class: 'btn gh', type: 'button', onclick: () => this.o.actions.skipPrechat(topicSelect?.value || null) }, t.skip));
     this.body.appendChild(form);
     setTimeout(() => (p.name ? name : email).focus(), 50);
   }

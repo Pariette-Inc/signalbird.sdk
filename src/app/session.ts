@@ -13,7 +13,7 @@
  * kendini toparlar ve mobil ağda pil yakmaz.
  */
 import { clientId, SignalbirdApp } from './client';
-import type { Conversation, Message, SbResult, SessionInput, StartConversationInput } from './types';
+import type { Conversation, Message, SbResult, SessionInput, StartConversationInput, TopicOption } from './types';
 
 export interface ChatState {
   /** Sohbet bu uygulamada açık mı (`bootstrap` cevabı). */
@@ -24,6 +24,13 @@ export interface ChatState {
   unread: number;
   agentTyping: boolean;
   withinHours: boolean;
+  /**
+   * Ziyaretçinin seçebileceği destek konuları (boşsa konu adımı çizilmez).
+   * Seçimi `setTopic()` taşır; ilk konuşma açılırken gönderilir.
+   */
+  topics: TopicOption[];
+  /** Seçili konu (slug) — ilk konuşmayla birlikte gider. */
+  topic: string | null;
   /** Son hatanın kodu — arayüz isterse gösterir, göstermezse yutar. */
   errorCode?: string;
 }
@@ -47,6 +54,8 @@ export class ChatSession {
   private state: ChatState = {
     enabled: false,
     loading: true,
+    topics: [],
+    topic: null,
     conversation: null,
     messages: [],
     unread: 0,
@@ -96,7 +105,11 @@ export class ChatSession {
       return;
     }
 
-    this.patch({ enabled: true, withinHours: app.within_hours ?? true });
+    this.patch({
+      enabled: true,
+      withinHours: app.within_hours ?? true,
+      topics: boot.data?.topics ?? [],
+    });
 
     // Ziyaretçi yoksa oturum AÇILMAZ: ilk mesaja kadar bekleriz. Her sayfa
     // görüntülemesinde ziyaretçi kaydı açmak, hiç konuşmayacak binlerce boş
@@ -176,7 +189,12 @@ export class ChatSession {
 
     const result = conversation
       ? await this.app.sendMessage(conversation.id, { body: trimmed, client_id: cid, attachments })
-      : await this.app.startConversation({ body: trimmed, client_id: cid, attachments } as StartConversationInput);
+      : await this.app.startConversation({
+          body: trimmed,
+          client_id: cid,
+          attachments,
+          ...(this.state.topic ? { topic: this.state.topic } : {}),
+        } as StartConversationInput);
 
     if (!result.ok) return this.markFailed(cid, result);
 
@@ -185,6 +203,15 @@ export class ChatSession {
     this.schedule();
 
     return result;
+  }
+
+  /**
+   * Ziyaretçinin konu seçimi. Konuşma AÇILDIKTAN sonra çağrılırsa etkisizdir:
+   * açılmış konuşmanın konusunu ajan panelden değiştirir — ziyaretçiye kendi
+   * konuşmasını yeniden sınıflandırma yetkisi vermek, atamayı da bozardı.
+   */
+  setTopic(slug: string | null): void {
+    this.patch({ topic: slug });
   }
 
   /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` — çağıran zamanlar. */

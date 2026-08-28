@@ -42,6 +42,8 @@ export class ChatController {
   private store: Store;
   private poller: Poller;
   private title = new TitleBlinker();
+  /** Ön-formda seçilen konu (slug); ilk konuşmayla birlikte gönderilir. */
+  private topic: string | null = null;
   private ui: UI | null = null;
   private t: Strings;
   private locale: 'tr' | 'en';
@@ -84,7 +86,7 @@ export class ChatController {
     }
     if (this.destroyed) return;
 
-    const { app, online, within_hours, visitor, conversation } = boot.data;
+    const { app, online, within_hours, visitor, conversation, topics } = boot.data;
     if (!app.chat_enabled) {
       this.log('chat disabled for app');
       return;
@@ -110,13 +112,17 @@ export class ChatController {
       settings: this.settings,
       appName: this.appName,
       maxMb,
+      topics: topics || [],
       actions: {
         open: () => this.open(),
         close: () => this.close(),
         send: (text, files, replyTo) => void this.send(text, files, replyTo),
         typing: (active) => void this.typing(active),
-        submitPrechat: (name, email) => void this.submitPrechat(name, email),
-        skipPrechat: () => this.enterChat(),
+        submitPrechat: (name, email, topic) => void this.submitPrechat(name, email, topic),
+        skipPrechat: (topic) => {
+          this.topic = topic;
+          this.enterChat();
+        },
         rate: (stars, comment) => void this.rate(stars, comment),
         endChat: () => this.endChat(),
         newChat: () => this.newChat(),
@@ -296,7 +302,12 @@ export class ChatController {
     }
   }
 
-  private async submitPrechat(name: string, email: string): Promise<void> {
+  private async submitPrechat(name: string, email: string, topic: string | null): Promise<void> {
+    // Konu ön-formda seçilir ama İLK KONUŞMA AÇILIRKEN gönderilir: ziyaretçi
+    // formu doldurup hiç yazmadan kapatabilir, o hâlde açılmış bir konuşma da
+    // olmaz.
+    this.topic = topic;
+
     const ok = await this.session({ name: name || undefined, email: email || undefined });
     if (ok) this.enterChat();
     else this.ui?.setBanner(this.t.unavailable, true);
@@ -489,7 +500,12 @@ export class ChatController {
 
       // Metin-yalnız ilk mesaj: konuşma + mesaj tek çağrıda
       if (needNew && files.length === 0) {
-        const r = await this.api.post<ConversationPayload>(CONV, { body: text, page_url: location.href, client_id: clientId });
+        const r = await this.api.post<ConversationPayload>(CONV, {
+          body: text,
+          page_url: location.href,
+          client_id: clientId,
+          ...(this.topic ? { topic: this.topic } : {}),
+        });
         if (!r.ok) return this.sendFailed(r, fail);
         this.store.setConversation(r.data.conversation);
         this.store.mergeMessages(r.data.messages || []);
@@ -500,7 +516,10 @@ export class ChatController {
       }
 
       if (needNew) {
-        const r = await this.api.post<ConversationPayload>(CONV, { page_url: location.href });
+        const r = await this.api.post<ConversationPayload>(CONV, {
+          page_url: location.href,
+          ...(this.topic ? { topic: this.topic } : {}),
+        });
         if (!r.ok) return this.sendFailed(r, fail);
         this.store.setConversation(r.data.conversation);
         this.store.mergeMessages(r.data.messages || []);

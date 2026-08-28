@@ -129,8 +129,8 @@ transform-origin:bottom right;animation:sbIn .18s ease-out}
 .fm{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:12px}
 .fm h3{margin:0;font-size:17px}
 .fm p{margin:0 0 6px;color:var(--sb-m);font-size:13px}
-.fm input,.fm textarea{width:100%;border:1px solid var(--sb-b);border-radius:10px;padding:10px 12px;outline:none}
-.fm input:focus,.fm textarea:focus{border-color:var(--sb-c)}
+.fm input,.fm textarea,.fm select{width:100%;border:1px solid var(--sb-b);border-radius:10px;padding:10px 12px;outline:none;background:var(--sb-bg);color:inherit;font:inherit}
+.fm input:focus,.fm textarea:focus,.fm select:focus{border-color:var(--sb-c)}
 .fm textarea{resize:vertical;min-height:70px}
 .btn{background:var(--sb-c);color:var(--sb-fg);border-radius:10px;padding:11px 16px;font-weight:600;text-align:center}
 .btn.gh{background:none;color:var(--sb-m);font-weight:500}
