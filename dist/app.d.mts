@@ -429,6 +429,14 @@ declare class ChatSession {
     private polling;
     private socket;
     private live;
+    /**
+     * Bir sonraki `refresh()` İMLEÇSİZ olsun mu.
+     *
+     * "Var olan mesaj değişti" haberi geldiğinde açılır: imleçli çekim
+     * (`?after=<son mesaj>`) o mesajı bir daha getirmez, dolayısıyla çeviri ya
+     * da düzenleme ekrana hiç yansımaz.
+     */
+    private forceFull;
     constructor(app: SignalbirdApp, options?: ChatSessionOptions);
     subscribe(listener: ChatListener): () => void;
     snapshot(): ChatState;

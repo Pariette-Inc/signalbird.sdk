@@ -486,6 +486,14 @@ var ChatSession = class {
     this.polling = false;
     this.socket = null;
     this.live = false;
+    /**
+     * Bir sonraki `refresh()` İMLEÇSİZ olsun mu.
+     *
+     * "Var olan mesaj değişti" haberi geldiğinde açılır: imleçli çekim
+     * (`?after=<son mesaj>`) o mesajı bir daha getirmez, dolayısıyla çeviri ya
+     * da düzenleme ekrana hiç yansımaz.
+     */
+    this.forceFull = false;
     this.active = options.active ?? false;
   }
   // ── Abonelik ──────────────────────────────────────────────────────────
@@ -647,7 +655,8 @@ var ChatSession = class {
       this.applyConversation(detail2.data?.conversation ?? first, true);
       return;
     }
-    const after = this.lastServerMessageId();
+    const after = this.forceFull ? void 0 : this.lastServerMessageId();
+    this.forceFull = false;
     const detail = await this.app.getConversation(current.id, after ? { after } : void 0);
     if (!detail.ok || !detail.data?.conversation) {
       this.patch({ errorCode: detail.code });
@@ -704,7 +713,8 @@ var ChatSession = class {
         const result = await this.app.socketAuth(socketId, channel);
         return result.ok && result.data ? result.data : null;
       },
-      () => {
+      (event) => {
+        if (event.data.updated === true) this.forceFull = true;
         this.step = 0;
         void this.refresh();
       },

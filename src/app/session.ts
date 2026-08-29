@@ -98,6 +98,14 @@ export class ChatSession {
   private polling = false;
   private socket: Socket | null = null;
   private live = false;
+  /**
+   * Bir sonraki `refresh()` İMLEÇSİZ olsun mu.
+   *
+   * "Var olan mesaj değişti" haberi geldiğinde açılır: imleçli çekim
+   * (`?after=<son mesaj>`) o mesajı bir daha getirmez, dolayısıyla çeviri ya
+   * da düzenleme ekrana hiç yansımaz.
+   */
+  private forceFull = false;
 
   constructor(
     private readonly app: SignalbirdApp,
@@ -344,7 +352,12 @@ export class ChatSession {
       return;
     }
 
-    const after = this.lastServerMessageId();
+    // `forceFull` açıksa imleç atlanır: değişen mesaj zaten imlecin
+    // gerisinde kaldığı için `after` ile hiç dönmez.
+    const after = this.forceFull ? undefined : this.lastServerMessageId();
+
+    this.forceFull = false;
+
     const detail = await this.app.getConversation(current.id, after ? { after } : undefined);
 
     if (!detail.ok || !detail.data?.conversation) {
@@ -419,9 +432,12 @@ export class ChatSession {
 
         return result.ok && result.data ? result.data : null;
       },
-      () => {
+      (event) => {
         // OLAYIN İÇİNDEKİ VERİ KULLANILMAZ, yalnız "bir şey oldu" bilgisi:
-        // mesajı kendi yetkimizle çekeriz.
+        // mesajı kendi yetkimizle çekeriz. Tek istisna `updated` işareti —
+        // o, verinin kendisi değil, NASIL çekileceğinin talimatıdır.
+        if (event.data.updated === true) this.forceFull = true;
+
         this.step = 0;
         void this.refresh();
       },

@@ -25,7 +25,7 @@ from .partner import SignalbirdPartner
 from .messaging import SignalbirdMessaging
 from .webhook import verify_webhook
 
-__version__ = "1.8.0"
+__version__ = "1.8.1"
 
 __all__ = [
     "SignalbirdClient",

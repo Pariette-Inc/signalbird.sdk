@@ -65,6 +65,13 @@ export class ChatController {
   private identity: IdentifyInput | null = null;
   private lastTypingSent = 0;
   private pollCount = 0;
+  /**
+   * Bir sonraki tur İMLEÇSİZ atılsın mı.
+   *
+   * "Var olan mesaj değişti" haberi geldiğinde açılır: imleçli tur o mesajı
+   * bir daha getirmez, dolayısıyla çeviri ya da düzenleme ekrana yansımaz.
+   */
+  private forceFull = false;
   private baseUrl: string;
   /**
    * Canlı bağlantı. `null` = sunucu kapalı diyor ya da tarayıcı desteklemiyor;
@@ -560,6 +567,19 @@ export class ChatController {
       return;
     }
 
+    /*
+     * VAR OLAN MESAJ DEĞİŞTİYSE İMLEÇSİZ TUR ATILIR.
+     *
+     * Normal tur `?after=<son mesaj>` ile gider ve zaten görülmüş bir mesajı
+     * bir daha getirmez. Çeviri (ya da düzenleme) tam olarak böyle bir
+     * değişikliktir: ekrandaki mesajın metni değişir, kimliği değişmez.
+     *
+     * 29 Ağu 2026'da canlıda: ajan Türkçe yazdı, müşteriye önce Türkçesi
+     * düştü ve İngilizce çevirisi ancak sayfa yenilenince geldi. İmleci
+     * atlamak bunun tek çaresi.
+     */
+    if (event.data.updated === true) this.forceFull = true;
+
     // Mesaj ya da konuşma değişimi: hemen bir tur.
     this.poller.poke(0);
   }
@@ -599,7 +619,9 @@ export class ChatController {
 
     if (this.store.isOpen && c) {
       // Açık panel: yeni mesajlar; her 5. turda tam liste (tepki/düzenleme/okundu tazelensin)
-      const full = this.pollCount % 5 === 0;
+      // ya da bir "güncellendi" haberi geldiyse hemen.
+      const full = this.pollCount % 5 === 0 || this.forceFull;
+      this.forceFull = false;
       const after = full ? undefined : this.store.lastServerMessageId || undefined;
       const r = await this.api.get<ConversationPayload>(`${CONV}/${c.id}`, after ? { after } : { limit: 50 });
       const fresh = this.applyPayload(r, !after);

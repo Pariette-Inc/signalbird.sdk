@@ -301,6 +301,21 @@ Sunucu tarafında ikinci bir kapı var: sağlayıcı kaynak dili hedefle **aynı
 bildirirse çeviri hiç saklanmaz (`ChatTranslationService`). Ziyaretçi dilini
 seçmemişse ipucu boştur ve "aynı dil" ancak cevap geldikten sonra anlaşılır.
 
+### 9.2b-2 `updated` işareti — imleci atla
+
+Yayın gövdesinde `updated: true` varsa VAR OLAN bir mesaj değişmiştir (çeviri
+yetişti, mesaj düzenlendi); yeni mesaj eklenmemiştir. İstemci o tur imleci
+(`?after=`) ATLAMAK ZORUNDADIR: imleçli çekim zaten görülmüş bir mesajı bir
+daha getirmez, dolayısıyla değişiklik ekrana hiç yansımaz.
+
+29 Ağu 2026'da canlıda: ajan Türkçe yazdı, müşteriye önce Türkçesi düştü ve
+İngilizce çevirisi ancak sayfa yenilenince geldi. Çeviri bilerek asenkrondur
+(mesaj onu beklemez) ama tamamlandığında haber verilmezse ekranda yanlış dil
+kalır.
+
+Soketi olmayan istemciler aynı sonuca periyodik TAM turla ulaşır (widget: her
+5. tur; ajan uygulaması: 30 sn).
+
 ### 9.2c Kapanmış konuşma geri açılmaz
 
 Ziyaretçi sohbeti bitirdikten sonra paneli yeniden açtığında **sıfırdan

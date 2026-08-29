@@ -2,6 +2,22 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-29 (4. tur) — Çeviri yetiştiğinde ekran güncelleniyor (v1.8.1)
+
+Ajan Türkçe yazdı, müşteriye önce Türkçesi düştü, İngilizce çevirisi ancak
+sayfa yenilenince geldi. İki sebep üst üste binmişti:
+
+1. Çeviri kaydedilince kimse haber vermiyordu (asenkron; mesaj çeviriyi
+   bilerek beklemiyor).
+2. Haber verilse bile istemcinin turu İMLEÇLİ: `?after=<son mesaj>` zaten
+   görülmüş bir mesajı bir daha getirmez, dolayısıyla metnin değişmesi hiç
+   görülmez.
+
+Sunucu artık `chat.message` yayınını `updated: true, reason: 'translation'`
+ile tekrarlıyor; widget ve `ChatSession` bu işareti görünce o turu imleçsiz
+atıyor. Soketi olmayan yol için widget'ta zaten olan "her 5. turda tam liste"
+kuralı yeterli.
+
 ## 2026-08-29 (3. tur) — Canlı bağlantı `app` yüzeyine de geldi
 
 Soket istemcisi `src/widget/socket.ts`ten `src/shared/socket.ts`e taşındı ve
