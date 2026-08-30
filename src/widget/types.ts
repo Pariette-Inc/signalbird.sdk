@@ -67,6 +67,31 @@ export interface ChatSettings {
   logo_url?: string | null;
   theme?: 'light' | 'dark' | 'auto';
   launcher_icon?: 'bird' | 'chat' | 'logo';
+
+  /**
+   * Balonun görünürlüğü (30 Ağu 2026).
+   *
+   * `always` : balon her zaman durur.
+   * `manual` : balon hiç çizilmez; sitenin kendi düğmesi
+   *            `Signalbird.chat.open()` çağırır. Sohbet başlayınca balon
+   *            görünür olur (kapatılan pencerede yanıt görülebilsin),
+   *            ziyaretçi sohbeti BİTİRİNCE yeniden gizlenir.
+   */
+  launcher_mode?: 'always' | 'manual';
+
+  /**
+   * Panelin biçimi: köşedeki küçük pencere ya da ekran boyu çekmece.
+   * `position` ikisinde de geçerlidir.
+   */
+  layout?: 'bubble' | 'sidebar';
+
+  /**
+   * Dile göre metinler. Sunucu ziyaretçinin diline göre ÇÖZER ve tek dilli
+   * alanları (greeting, offline_message, launcher_text) doldurarak gönderir;
+   * widget burada bir şey hesaplamaz. Alan yine de tipte durur: müşterinin
+   * kendi panelinde ayarı okuyan kod aynı tipi kullanıyor.
+   */
+  texts?: Record<string, Record<string, string>> | null;
   [key: string]: unknown;
 }
 

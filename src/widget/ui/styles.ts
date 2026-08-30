@@ -94,6 +94,11 @@ box-shadow:0 2px 8px rgba(16,20,30,.24);display:flex;align-items:center;justify-
    sayfadaki "destek" düğmesi Signalbird.chat.open() ile onu geri getirir. */
 .sb.hidden .ln{display:none}
 
+/* launcher_mode:'manual' — balon hiç çizilmez, sohbeti sitenin kendi düğmesi
+   açar. Ziyaretçinin kapatma tercihinden AYRI bir sınıf: biri site sahibinin
+   ayarı, diğeri ziyaretçinin kararı. */
+.sb.no-ln .ln,.sb.no-ln .dm{display:none}
+
 /* ── Panel ───────────────────────────────────────────────────────────── */
 .pn{position:absolute;bottom:0;width:400px;max-width:calc(100vw - 40px);height:min(660px,calc(100vh - 40px));
 background:var(--sb-bg);border-radius:var(--sb-r);box-shadow:var(--sb-sh);
@@ -108,8 +113,24 @@ transform-origin:bottom right;animation:sbIn .22s cubic-bezier(.2,.8,.25,1)}
 .sb.moving .pn,.sb.sizing .pn{animation:none;transition:none;user-select:none}
 @keyframes sbIn{from{opacity:0;transform:translateY(14px) scale(.975)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.pn{animation:none}.ln{transition:none}}
+/* ── Çekmece (layout:'sidebar') ───────────────────────────────────────────
+   Ekran boyu, kenara yaslı panel. Köşe penceresinin aksine taşınmaz ve
+   boyutlandırılmaz; genişlik sabittir, yükseklik ekranın kendisidir. Mobilde
+   zaten tam ekran açılıyordu, orada iki biçim aynı yere varır. */
+.sb.sidebar{top:0;bottom:0;height:100vh;height:100dvh;display:flex;align-items:flex-end;padding-bottom:20px}
+.sb.sidebar.right{right:20px}.sb.sidebar.left{left:20px}
+.sb.sidebar .pn{position:fixed;top:0;bottom:0;height:100vh;height:100dvh;width:420px;max-width:100vw;
+border-radius:0;translate:none!important;animation:sbSlideR .24s cubic-bezier(.2,.8,.25,1)}
+.sb.sidebar.right .pn{right:0;left:auto}
+.sb.sidebar.left .pn{left:0;right:auto;animation-name:sbSlideL}
+.sb.sidebar .gp{display:none}
+@keyframes sbSlideR{from{opacity:.4;transform:translateX(24px)}to{opacity:1;transform:none}}
+@keyframes sbSlideL{from{opacity:.4;transform:translateX(-24px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.sb.sidebar .pn{animation:none}}
+
 @media (max-width:640px){
   .sb.open{inset:0!important;bottom:0}
+  .sb.sidebar{padding-bottom:0}
   .pn{position:fixed;inset:0;width:100%!important;max-width:none;height:100%!important;border-radius:0;translate:none!important}
   .gp{display:none!important}
 }

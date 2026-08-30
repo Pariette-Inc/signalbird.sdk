@@ -166,6 +166,7 @@ export class ChatController {
 
     this.ui.mount();
     this.ui.setDismissed(this.store.dismissed);
+    this.syncLauncher();
     this.ui.setHeader(this.store.agent, this.store.online);
     this.applyBanner();
     this.store.setUnread(visitor?.unread || conversation?.visitor_unread || 0);
@@ -220,6 +221,40 @@ export class ChatController {
     this.ui?.setUnread(this.store.unread);
     this.title.update(n, (c) => fmt(this.t.unreadTitle, { n: c }));
     this.store.emit('public:unread', this.store.unread);
+    this.syncLauncher();
+  }
+
+  /**
+   * Balonun görünüp görünmeyeceği (`launcher_mode`).
+   *
+   * `always` (varsayılan): balon her zaman durur, bugüne kadarki davranış.
+   *
+   * `manual` (30 Ağu 2026, Ahmet): balon çizilmez, sohbeti sitenin kendi
+   * "Canlı destek" düğmesi açar. Üç durumda görünür olur ve bunların hepsi
+   * aynı gerekçeye dayanır — ziyaretçinin okumadığı bir yanıt ortada
+   * kalmasın:
+   *
+   *   • panel açıkken,
+   *   • sohbet SÜRERKEN (pencere kapatılmış olabilir, ajan yazacak),
+   *   • okunmamış mesaj varken.
+   *
+   * Ziyaretçi sohbeti BİTİRDİĞİNDE balon yeniden kaybolur: konuşma kapalıdır,
+   * ajan oraya yazamaz (sunucu da reddeder) ve ortada beklenen bir yanıt
+   * yoktur.
+   */
+  private syncLauncher(): void {
+    if (!this.ui) return;
+
+    if (this.settings?.launcher_mode !== 'manual') {
+      this.ui.setLauncherHidden(false);
+
+      return;
+    }
+
+    const c = this.store.conversation;
+    const live = !!c && c.status !== 'closed';
+
+    this.ui.setLauncherHidden(!(this.store.isOpen || live || this.store.unread > 0));
   }
 
   // ── Dış API ──────────────────────────────────────────────────────────
@@ -270,8 +305,15 @@ export class ChatController {
       this.ratingMode = null;
     }
 
+    /*
+     * `manual` modda balon, sohbet AÇILDIĞI andan itibaren görünür olur
+     * (30 Ağu 2026, Ahmet). Sebep: ziyaretçi pencereyi kapattığında sohbet
+     * bitmiş olmaz; ajan yazdığında ışığın ve sesin çıkacağı yer balondur.
+     * Balon olmasaydı yanıt hiçbir yerde görünmezdi.
+     */
     this.store.isOpen = true;
     this.ui.setOpen(true);
+    this.syncLauncher();
     this.poller.setOpen(true);
     this.decideView();
     this.store.emit('public:open');
@@ -304,6 +346,7 @@ export class ChatController {
     void this.typing(false);
     this.store.emit('public:close');
     this.syncUnread();
+    this.syncLauncher();
   }
 
   toggle(): void {

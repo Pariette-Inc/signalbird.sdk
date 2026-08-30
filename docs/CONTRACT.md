@@ -273,6 +273,38 @@ olarak saklanır; `appKey` uyuşmazsa yok sayılır. Sunucu `VISITOR_INVALID`
    `launcher_icon` = `bird` | `chat` | `logo`; `logo` seçilip adres boşsa
    kuşa düşülür.
 
+2a. **Balon her zaman çizilmeyebilir** (`launcher_mode`, 30 Ağu 2026).
+
+   `always` (varsayılan) bugüne kadarki davranıştır. `manual` seçildiğinde
+   balon HİÇ çizilmez: sohbeti sitenin kendi düğmesi `Signalbird.chat.open()`
+   ile açar. Balon üç durumda görünür olur ve üçü de tek bir gerekçeye dayanır,
+   ziyaretçinin okumadığı bir yanıt ortada kalmasın:
+
+   * panel açıkken,
+   * sohbet SÜRERKEN (pencere kapatılmış olabilir; ajan yazınca ışık ve ses
+     balonda çıkar),
+   * okunmamış mesaj varken.
+
+   Ziyaretçi sohbeti BİTİRDİĞİNDE balon yeniden gizlenir. Bu yalnız görüntü
+   değil: ziyaretçinin kapattığı konuşmaya sunucu ajanın yazmasına da izin
+   vermez (409 `CONVERSATION_ENDED_BY_VISITOR`), yani beklenen bir yanıt
+   gerçekten yoktur.
+
+   Bu gizleme, ziyaretçinin kendi `dismiss` kararından AYRIDIR: biri site
+   sahibinin ayarı, diğeri o cihazdaki kişinin tercihi.
+
+2c. **Panelin biçimi: `layout`** (30 Ağu 2026). `bubble` (varsayılan) köşedeki
+   küçük penceredir; `sidebar` ekran boyu, kenara yaslı çekmecedir. `position`
+   ikisinde de geçerlidir. Çekmecede taşıma ve boyutlandırma KAPALIDIR: kenara
+   yaslı ve ekran boyu bir paneli birkaç piksel oynatmak tercih değil kazadır.
+
+2d. **Metinler dile göre**: `texts` = `{ "tr": {greeting, offline_message,
+   launcher_text, review_label}, "en": {…} }`. Çözüm SUNUCUDA yapılır
+   (`App::chatSettingsFor`): widget'a tek dilli alanlar zaten doldurulmuş
+   gelir, bir dil sözlüğü taşımaz. Ziyaretçinin dili için karşılık yoksa tek
+   dilli eski alan kullanılır, yani bugün tek dille kurulmuş her widget
+   çalışmaya devam eder.
+
 2b. **Panelin ölçüsü ve konumu ZİYARETÇİNİNDİR.** Başlık sürüklenerek panel
    taşınır, dış üst köşedeki tutamakla boyutlandırılır; ikisi de
    `localStorage['sb_geometry']` içinde saklanır ve ekran küçüldüyse atılır.

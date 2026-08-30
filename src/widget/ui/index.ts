@@ -80,8 +80,11 @@ export class UI {
     this.root.appendChild(h('style', null, CSS));
 
     const pos = o.settings.position === 'left' ? 'left' : 'right';
+    // Ekran boyu çekmece (30 Ağu 2026). Konum ikisinde de geçerli: sidebar
+    // sağa da sola da yaslanır.
+    const layout = o.settings.layout === 'sidebar' ? ' sidebar' : '';
     this.wrap = h('div', {
-      class: `sb ${pos}${prefersDark(o.settings.theme) ? ' dark' : ''}`,
+      class: `sb ${pos}${layout}${prefersDark(o.settings.theme) ? ' dark' : ''}`,
       style: `--sb-c:${safeColor(o.settings.color)}`,
     });
 
@@ -145,9 +148,16 @@ export class UI {
     this.panel = h('div', { class: 'pn', role: 'dialog', 'aria-label': t.title },
       h('div', { class: 'br' }), header, this.banner, this.body, this.grip);
 
-    this.restoreGeometry();
-    this.enableMove(header);
-    this.enableResize();
+    /*
+     * Taşıma ve boyutlandırma yalnız köşe penceresinde vardır. Çekmecede
+     * ikisi de anlamsız: kenara yaslı, ekran boyu bir paneli 12 piksel sola
+     * çekmek bir tercih değil kazadır.
+     */
+    if (o.settings.layout !== 'sidebar') {
+      this.restoreGeometry();
+      this.enableMove(header);
+      this.enableResize();
+    }
 
     this.wrap.appendChild(this.launcher);
     this.wrap.appendChild(this.dismissBtn);
@@ -180,6 +190,18 @@ export class UI {
   /** Balon gizli mi — `dismiss` sonrası. Widget DOM'da kalır, görünmez olur. */
   setDismissed(hidden: boolean): void {
     this.wrap.classList.toggle('hidden', hidden);
+  }
+
+  /**
+   * Balonu `launcher_mode: 'manual'` için gizler.
+   *
+   * `dismiss`ten AYRI bir sınıf kullanır ve bilerek: biri ziyaretçinin
+   * kararı (tarayıcıda saklanır), diğeri site sahibinin ayarı. Aynı bayrağa
+   * bindirilseydi, ziyaretçi balonu bir kez kapattığında site sahibinin
+   * ayarı da onun cihazında kalıcı olarak bozulurdu.
+   */
+  setLauncherHidden(hidden: boolean): void {
+    this.wrap.classList.toggle('no-ln', hidden);
   }
 
   setOpen(open: boolean): void {

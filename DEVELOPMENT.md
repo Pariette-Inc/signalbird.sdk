@@ -2,6 +2,25 @@
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
+## 2026-08-30 — Balon modu, çekmece düzeni, dile göre metinler (v1.9.0)
+
+Üç ayar sunucudan gelir, widget yalnız uygular:
+
+| Ayar | Değerler | Davranış |
+|---|---|---|
+| `launcher_mode` | `always` (varsayılan) / `manual` | `manual`: balon hiç çizilmez, sohbeti sitenin kendi düğmesi `Signalbird.chat.open()` ile açar. Sohbet başlayınca balon GÖRÜNÜR olur (pencere kapatılırsa ajanın yanıtı balonda ışık ve sesle görünsün), ziyaretçi sohbeti BİTİRİNCE yeniden gizlenir. |
+| `layout` | `bubble` (varsayılan) / `sidebar` | `sidebar`: ekran boyu, kenara yaslı çekmece. Taşıma ve boyutlandırma o modda kapalı. |
+| `texts` | `{tr: {greeting…}, en: {…}}` | Çözüm SUNUCUDA (`App::chatSettingsFor`); widget'a tek dilli alanlar dolu gelir. |
+
+Balon gizleme, ziyaretçinin `dismiss` kararından AYRI bir sınıfla yapılır
+(`.no-ln` ve `.hidden`): biri site sahibinin ayarı, diğeri ziyaretçinin
+cihazındaki tercihi. Aynı bayrağa bindirilseydi ziyaretçi balonu bir kez
+kapattığında site ayarı da bozulurdu.
+
+Sunucu tarafı: ziyaretçinin bitirdiği konuşmaya ajan artık yazamıyor
+(409 `CONVERSATION_ENDED_BY_VISITOR`), yani balonun gizlenmesiyle sunucunun
+davranışı birbirini tutuyor.
+
 ## 2026-08-29 (4. tur) — Çeviri yetiştiğinde ekran güncelleniyor (v1.8.1)
 
 Ajan Türkçe yazdı, müşteriye önce Türkçesi düştü, İngilizce çevirisi ancak
