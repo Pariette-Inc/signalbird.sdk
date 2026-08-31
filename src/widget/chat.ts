@@ -55,6 +55,15 @@ export class ChatController {
   private destroyed = false;
   private pendingSends = new Map<string, Pending>();
   private ratingMode: 'end' | 'resolved' | null = null;
+
+  /**
+   * Panel proaktif bir mesaj yüzünden kendiliğinden açıldı mı?
+   *
+   * Sayfa başına tek: her yeni mesajda paneli açmak musallat olmaktır. İlk
+   * açılıştan sonra rozet, ses ve hareket yeter - müşteri artık bir sohbet
+   * olduğunu biliyor.
+   */
+  private autoOpened = false;
   /**
    * Sayfanın bize verdiği kimlik (`init({user})` ya da `identify()`).
    *
@@ -426,7 +435,17 @@ export class ChatController {
     // e-postası bir daha hiç sorulmuyordu.
     const v = this.store.visitor;
     const known = !!(this.identity?.name || this.identity?.email || v?.name || v?.email);
-    const needsPrechat = !known && p && (p.name || p.email);
+
+    /*
+     * KONUŞMA VARSA FORM SORULMAZ, MESAJ GÖSTERİLİR.
+     *
+     * Ön-form ziyaretçi konuşmayı BAŞLATIRKEN kimliğini almak içindir. Ajan
+     * proaktif olarak yazdığında konuşma zaten açıktır: müşteri balona
+     * dokunduğunda ona ad/e-posta sormak, gelen mesajı bir formun arkasına
+     * saklamak demektir - müşteri "skip" bulup geçmek zorunda kalır ve çoğu
+     * kalmaz. Kimliği sonra da isteyebiliriz; okunmamış mesajı geciktiremeyiz.
+     */
+    const needsPrechat = !known && !this.store.conversation && p && (p.name || p.email);
 
     if (needsPrechat) this.ui.showPrechat({});
     else this.enterChat();
@@ -720,6 +739,23 @@ export class ChatController {
         // gönderilmemiş sayılır.
         if (this.settings?.sound) beep();
         this.ui?.attention();
+
+        /*
+         * AJANIN BAŞLATTIĞI KONUŞMA PANELİ KENDİLİĞİNDEN AÇAR - BİR KEZ.
+         *
+         * Rozet ve hareket fark edilmeyebiliyor; oysa bu mesajı müşteri
+         * istemedi, BİZ başlattık ("sepette takıldın mı?"). Görülmezse
+         * gönderilmemiş sayılır.
+         *
+         * Yalnız bir kez ve yalnız sekme ÖNDEYKEN: arka plandaki sekmeyi
+         * açmak müşterinin işini böler ve geri döndüğünde ne olduğunu
+         * anlamaz. Her yeni mesajda açmak ise musallat olmaktır - ilk
+         * açılıştan sonra rozet ve hareket yeter.
+         */
+        if (!this.autoOpened && !document.hidden) {
+          this.autoOpened = true;
+          this.open();
+        }
       }
     }
     return grew;
