@@ -174,6 +174,13 @@ class ManagementClient
     /**
      * Proaktif sohbet — ziyaretçi yazmadan ajan başlatır.
      *
+     * Ziyaretçi üç yoldan adreslenebilir: `visitor_id` (Signalbird kimliği),
+     * `contact_id` ya da `external_id` (entegre eden tarafın kendi damgası).
+     * Çoğu entegrasyon `visitor_id`'yi bilmez — o kimliği yalnızca tarayıcıdaki
+     * sohbet oturumu görür — bu yüzden `external_id` pratikte en kullanışlı
+     * olanıdır. Aynı damgaya sahip birden çok ziyaretçi varsa EN SON görülen
+     * seçilir.
+     *
      * @param array<string, mixed> $input
      */
     public function startConversation(array $input): array
