@@ -418,8 +418,15 @@ export class ChatController {
 
     // Sayfanın verdiği kimlik ön-formun cevabıdır: adı ve e-postası zaten
     // bizde olan birine formu göstermek, bildiğimiz şeyi sormaktır.
-    const known = !!(this.identity?.name || this.identity?.email);
-    const needsPrechat = !this.store.visitor && !known && p && (p.name || p.email);
+    //
+    // BELİRLEYİCİ OLAN ZİYARETÇİ KAYDININ VARLIĞI DEĞİL, ADININ/E-POSTASININ
+    // BİLİNMESİ. Eskiden kayıt varsa form atlanıyordu; oysa sayfa ziyaretçiyi
+    // yalnız kendi damgasıyla (external_id) tanıtmışsa kayıt vardır ama kim
+    // olduğu HÂLÂ bilinmez - o kişiye form gösterilmeliydi, gösterilmiyordu ve
+    // e-postası bir daha hiç sorulmuyordu.
+    const v = this.store.visitor;
+    const known = !!(this.identity?.name || this.identity?.email || v?.name || v?.email);
+    const needsPrechat = !known && p && (p.name || p.email);
 
     if (needsPrechat) this.ui.showPrechat({});
     else this.enterChat();
