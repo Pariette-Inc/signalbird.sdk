@@ -219,6 +219,26 @@ export class UI {
     this.badge.style.display = n > 0 ? 'flex' : 'none';
   }
 
+  /**
+   * Balonu kısa süre oynatır — "yeni mesaj var, bana bak".
+   *
+   * Rozet ve ses tek başına yetmiyordu: rozet küçük ve ekranın köşesinde, ses
+   * ise tarayıcı kullanıcı etkileşimi beklediği için çoğu zaman hiç çalmıyor
+   * (bkz. sound.ts). Hareket, sessiz sekmede de görülen tek sinyaldir.
+   *
+   * Hareketi kapatan kullanıcıya saygı gösterilir: `prefers-reduced-motion`
+   * varsa animasyon çalışmaz (stil tarafında), rozet ve ses görevi devralır.
+   */
+  attention(): void {
+    const el = this.launcher;
+    el.classList.remove('sb-attn');
+    // Sınıf yeniden eklenmeden önce tarayıcının animasyonu sıfırlaması gerekir;
+    // arka arkaya gelen iki mesajda ikincisi yoksa hiç oynamaz.
+    void el.offsetWidth;
+    el.classList.add('sb-attn');
+    window.setTimeout(() => el.classList.remove('sb-attn'), 2400);
+  }
+
   setHeader(agent: Agent | null, online: boolean): void {
     const t = this.o.t;
     const name = agent?.name || this.o.appName || t.title;

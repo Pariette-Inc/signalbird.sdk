@@ -79,6 +79,19 @@ transition:transform .18s cubic-bezier(.2,.7,.3,1),box-shadow .18s}
 .badge{position:absolute;top:-3px;right:-3px;min-width:21px;height:21px;padding:0 6px;border-radius:11px;background:#ef4444;color:#fff;
 font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;
 border:2px solid var(--sb-bg);box-shadow:0 2px 6px rgba(239,68,68,.4)}
+
+/* Yeni mesaj dikkat çekmesi: balon iki kez yaylanır ve etrafında bir halka
+   dağılır. Rozet küçük, ses ise tarayıcı etkileşim beklediği için çoğu zaman
+   hiç çalmıyor - sessiz sekmede görülen tek sinyal hareket.
+   Hareketi kapatan kullanıcıda animasyon HİÇ çalışmaz; rozet ve ses kalır. */
+@keyframes sb-attn{0%,100%{transform:scale(1)}15%{transform:scale(1.16)}30%{transform:scale(.96)}
+45%{transform:scale(1.10)}60%{transform:scale(1)}}
+@keyframes sb-attn-ring{0%{box-shadow:0 0 0 0 rgba(99,102,241,.45)}100%{box-shadow:0 0 0 18px rgba(99,102,241,0)}}
+.sb-attn{animation:sb-attn 1.2s ease-in-out 2}
+.sb-attn::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+animation:sb-attn-ring 1.2s ease-out 2}
+@media (prefers-reduced-motion:reduce){.sb-attn,.sb-attn::after{animation:none}}
+
 .sb.open .ln{display:none}
 
 /* Balonu kapatma — balonun dışında, üst köşede. Masaüstünde yalnız hover'da:

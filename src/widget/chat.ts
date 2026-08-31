@@ -712,7 +712,15 @@ export class ChatController {
     }
     if (!this.store.isOpen || document.hidden) {
       this.store.setUnread(unread);
-      if (grew && this.settings?.sound) beep();
+
+      if (grew) {
+        // Ses ayara bağlı ve tarayıcı çoğu zaman engelliyor; hareket her
+        // koşulda görülür. İkisi birbirinin yerine değil, ÜST ÜSTE çalışır:
+        // proaktif mesaj müşterinin fark etmediği bir rozet olarak kalırsa
+        // gönderilmemiş sayılır.
+        if (this.settings?.sound) beep();
+        this.ui?.attention();
+      }
     }
     return grew;
   }
