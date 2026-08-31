@@ -1,5 +1,24 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-08-31 — Ön-form kararı ziyaretçi KAYDINA değil, BİLİNİYOR OLMASINA bakıyor
+
+Widget'ın ön-formu (ad/e-posta) `!this.store.visitor` koşuluyla kapanıyordu:
+ziyaretçi kaydı varsa form gösterilmiyordu. Oysa sayfa ziyaretçiyi yalnızca
+kendi damgasıyla (`external_id`) tanıtmışsa kayıt VARDIR ama kim olduğu hâlâ
+bilinmez — o kişiye form gösterilmeliydi, gösterilmiyordu ve e-postası bir daha
+hiç sorulmuyordu.
+
+Bu, sayfanın her ziyaretçiyi baştan `identify` etmesini mümkün kılıyor
+(penyu'nun `client_uid` damgası): kayıt açılıyor ama misafirin e-postası yine
+soruluyor.
+
+`src/widget/chat.ts` · `decideView()` — davranış: adı ya da e-postası bilinen
+(sayfadan gelen kimlikte ya da kayıtlı ziyaretçide) kişiye form gösterilmez;
+ikisi de yoksa gösterilir.
+
+**Widget'ın yeniden yayımlanması gerekir** — bu değişiklik `sdk/v1/signalbird.js`
+paketinin içinde.
+
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
 ## 2026-08-30 — Balon modu, çekmece düzeni, dile göre metinler (v1.9.0)
