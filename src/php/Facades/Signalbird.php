@@ -14,6 +14,7 @@ use Signalbird\Sdk\Partner\PartnerClient;
  * Yönetim (Telsiz projesi, sohbet gelen kutusu, uygulama) için
  * `Signalbird::management()` konteynerdeki tekili döner.
  *
+ * @method static \Signalbird\Sdk\RadioChannel radio(string $key)
  * @method static array log(string $key, string $message, ?string $level = null, ?array $context = null)
  * @method static array debug(string $key, string $message, ?array $context = null)
  * @method static array info(string $key, string $message, ?array $context = null)

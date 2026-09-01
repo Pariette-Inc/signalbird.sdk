@@ -1,5 +1,32 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-01 — v2.1.0: `radio()` kanal bağlama
+
+Sözleşme: `docs/CONTRACT.md` § 1.1.
+
+```php
+Signalbird::radio('penyuCritical')->error('Ödeme düğümü öldü', $ctx);
+```
+```ts
+signalbird().radio('penyuCritical').error('Ödeme düğümü öldü', ctx)
+```
+
+NEDEN: bu sözdizimi 1 Eyl 2026 anahtar sözleşmesinde ve panelin kopyala-yapıştır
+kod örneğinde YAZIYORDU ama SDK'da karşılığı yoktu — müşteri panelde kopyala
+düğmesine basınca çalışmayan kod alıyordu. Var olan tek biçim
+`Signalbird::error('penyuCritical', 'mesaj', $ctx)` idi; kanal adı her satırda
+tekrar ediliyordu.
+
+Sözdizimi şekeridir: her metot `log()`'a gider, gövde değişmez. Bu yüzden
+diller arası parite denetiminden muaf (`check-parity.mjs` → `ignored`), PHP ve
+TypeScript'te var. Python/Go/.NET/Swift/Kotlin'de seviye kısayolları kanalı
+zaten ilk argüman olarak alıyor.
+
+Yeni: `src/php/RadioChannel.php`, `SignalbirdClient::radio()`,
+`Facades\Signalbird::radio()`, node `SignalbirdClient.radio()`.
+Test: `tests/php/RadioChannelTest.php` — kanal adının her seviyede aynı
+kaldığını sınar; kaybolursa kayıt yanlış kanala düşer ve hata sessizdir.
+
 ## 2026-09-01 — v2.0.0: tek anahtar (domain key + module key)
 
 Sözleşme: `docs/CONTRACT.md` §0–2, §10 · platform:

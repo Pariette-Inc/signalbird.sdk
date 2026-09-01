@@ -52,6 +52,23 @@ kayıt düşmez ama bildirim de gitmez.
 `level` ve `context` isteğe bağlıdır. `level` verilmezse **kanalın kendi
 varsayılanı** geçerlidir — istemci burada bir varsayılan uydurmaz.
 
+## 1.1 Kanalı bağlama (`radio()`) — sözdizimi şekeri
+
+```php
+Signalbird::radio('penyuCritical')->error('Ödeme düğümü öldü', $context);
+```
+```ts
+signalbird().radio('penyuCritical').error('Ödeme düğümü öldü', context)
+```
+
+Kanal adını her satırda tekrar etmemek içindir; her metodu `log()`'a gider ve
+gövde birebir aynıdır. **Yeni bir yüzey DEĞİLDİR** ve bu yüzden diller arası
+parite denetiminden muaftır (§4): dilin kendi deyimi, API yüzeyi değil.
+
+PHP ve TypeScript'te vardır. Python, Go, .NET, Swift ve Kotlin'de `log()` ve
+seviye kısayolları zaten kanalı ilk argüman olarak alıyor; oralarda ek bir
+sarmalayıcı okunurluk kazandırmıyor.
+
 ## 2. Kimlik
 
 | Ortam | Başlık | Anahtar biçimi |

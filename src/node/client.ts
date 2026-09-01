@@ -61,6 +61,26 @@ export class SignalbirdClient {
     this.source = config.source;
   }
 
+  /**
+   * Kanalı bağlar ve yazacı döner.
+   *
+   *     signalbird().radio('penyuCritical').error('Ödeme düğümü öldü', ctx)
+   *
+   * Kanal adını her satırda tekrar etmemek için; `log()`'un kısaltmasıdır.
+   * Sözdizimi şekeridir, yeni bir yüzey değil.
+   */
+  radio(key: string) {
+    return {
+      log: (message: string, level?: Level, context?: Record<string, unknown>) =>
+        this.log({ key, message, level, context }),
+      debug: (message: string, context?: Record<string, unknown>) => this.debugLog(key, message, context),
+      info: (message: string, context?: Record<string, unknown>) => this.info(key, message, context),
+      warn: (message: string, context?: Record<string, unknown>) => this.warn(key, message, context),
+      error: (message: string, context?: Record<string, unknown>) => this.error(key, message, context),
+      critical: (message: string, context?: Record<string, unknown>) => this.critical(key, message, context),
+    };
+  }
+
   /** Tek kayıt gönderir. */
   async log(input: LogInput): Promise<LogResult> {
     return this.send('/v1/radio/log', {

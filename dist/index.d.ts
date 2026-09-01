@@ -98,6 +98,22 @@ declare class SignalbirdClient {
     private readonly debug;
     private readonly source?;
     constructor(config: SignalbirdConfig);
+    /**
+     * Kanalı bağlar ve yazacı döner.
+     *
+     *     signalbird().radio('penyuCritical').error('Ödeme düğümü öldü', ctx)
+     *
+     * Kanal adını her satırda tekrar etmemek için; `log()`'un kısaltmasıdır.
+     * Sözdizimi şekeridir, yeni bir yüzey değil.
+     */
+    radio(key: string): {
+        log: (message: string, level?: Level, context?: Record<string, unknown>) => Promise<LogResult>;
+        debug: (message: string, context?: Record<string, unknown>) => Promise<LogResult>;
+        info: (message: string, context?: Record<string, unknown>) => Promise<LogResult>;
+        warn: (message: string, context?: Record<string, unknown>) => Promise<LogResult>;
+        error: (message: string, context?: Record<string, unknown>) => Promise<LogResult>;
+        critical: (message: string, context?: Record<string, unknown>) => Promise<LogResult>;
+    };
     /** Tek kayıt gönderir. */
     log(input: LogInput): Promise<LogResult>;
     /**

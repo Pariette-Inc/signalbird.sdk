@@ -78,7 +78,12 @@ const SURFACES = [
     // Node tarafında `debug` adı `debugLog`tur: `debug` yapılandırma alanıyla
     // çakışıyordu. Eşleme burada yapılır, sözleşme bozulmaz.
     aliases: noProto({ debugLog: 'debug' }),
-    ignored: new Set(['constructor', '__construct', 'captureUncaught', 'post', 'send', 'request']),
+    /*
+     * `radio()` sözdizimi şekeridir (kanalı bağlayıp yazaç döner), yeni bir
+     * yüzey değil — her metodu `log()`'a gider. Diller arası parite API
+     * yüzeyini denetler, dilin kendi deyimini değil.
+     */
+    ignored: new Set(['constructor', '__construct', 'captureUncaught', 'post', 'send', 'request', 'radio', 'channel']),
     languages: [
       { name: 'node', file: 'src/node/client.ts', pattern: NODE_METHOD },
       { name: 'php', file: 'src/php/SignalbirdClient.php', pattern: PHP_METHOD },

@@ -45,6 +45,18 @@ class SignalbirdClient
     }
 
     /**
+     * Kanalı bağlar ve yazacı döner.
+     *
+     *     Signalbird::radio('penyuCritical')->error('Ödeme düğümü öldü', $ctx);
+     *
+     * Kanal adını her satırda tekrar etmemek için; `log()`'un kısaltmasıdır.
+     */
+    public function radio(string $key): RadioChannel
+    {
+        return new RadioChannel($this, $key);
+    }
+
+    /**
      * Bir kanala kayıt gönderir.
      *
      * @param  array<string, mixed>|null  $context

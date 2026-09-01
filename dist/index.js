@@ -43,6 +43,24 @@ var SignalbirdClient = class {
     this.debug = config.debug ?? process.env.NODE_ENV !== "production";
     this.source = config.source;
   }
+  /**
+   * Kanalı bağlar ve yazacı döner.
+   *
+   *     signalbird().radio('penyuCritical').error('Ödeme düğümü öldü', ctx)
+   *
+   * Kanal adını her satırda tekrar etmemek için; `log()`'un kısaltmasıdır.
+   * Sözdizimi şekeridir, yeni bir yüzey değil.
+   */
+  radio(key) {
+    return {
+      log: (message, level, context) => this.log({ key, message, level, context }),
+      debug: (message, context) => this.debugLog(key, message, context),
+      info: (message, context) => this.info(key, message, context),
+      warn: (message, context) => this.warn(key, message, context),
+      error: (message, context) => this.error(key, message, context),
+      critical: (message, context) => this.critical(key, message, context)
+    };
+  }
   /** Tek kayıt gönderir. */
   async log(input) {
     return this.send("/v1/radio/log", {

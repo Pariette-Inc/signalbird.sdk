@@ -94,7 +94,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.0.2")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.1.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır — ayrı SDK reposu ya da
