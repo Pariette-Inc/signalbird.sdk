@@ -8,9 +8,9 @@ import (
 
 // PartnerConfig — partner istemcisinin kurulumu.
 type PartnerConfig struct {
-	// APIKey, sözleşmeli partner anahtarıdır (sbp_live_…). Takım anahtarı
+	// DomainKey, sözleşmeli partner anahtarıdır (sb_secret_live_…). Takım anahtarı
 	// (sb_…) burada çalışmaz ve kurulum anında reddedilir.
-	APIKey  string
+	DomainKey  string
 	BaseURL string
 	// Timeout boşsa 15 saniye.
 	Timeout      time.Duration
@@ -37,11 +37,11 @@ type Partner struct {
 
 // NewPartner kurar.
 func NewPartner(config PartnerConfig) (*Partner, error) {
-	if config.APIKey == "" {
+	if config.DomainKey == "" {
 		return nil, ErrNoKey
 	}
 
-	if !strings.HasPrefix(config.APIKey, "sbp_live_") {
+	if !strings.HasPrefix(config.DomainKey, "sb_secret_live_") {
 		return nil, ErrWrongKeyType
 	}
 
@@ -51,7 +51,7 @@ func NewPartner(config PartnerConfig) (*Partner, error) {
 	}
 
 	return &Partner{
-		http: newTransport(config.APIKey, config.BaseURL, timeout, config.ThrowOnError, config.Debug),
+		http: newTransport(config.DomainKey, config.BaseURL, timeout, config.ThrowOnError, config.Debug),
 	}, nil
 }
 

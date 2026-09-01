@@ -10,15 +10,26 @@
 /** Kanalın seviyesi; verilmezse kanalın kendi varsayılanı geçerlidir. */
 export type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 
+/** Gizli domain anahtarının öneki — sunucu tarafı. */
+export const SECRET_PREFIX = 'sb_secret_live_';
+
+/** Açık domain anahtarının öneki — tarayıcı ve mobil. */
+export const PUBLIC_PREFIX = 'sb_public_live_';
+
 export interface SignalbirdConfig {
   /**
-   * Sunucu anahtarı (`sbr_live_…`).
+   * Gizli domain anahtarı (`sb_secret_live_…`) — `SIGNALBIRD_DOMAIN_KEY`.
    *
    * Bu anahtar GİZLİDİR ve tarayıcıya gömülemez: sunucu `Origin` başlığı taşıyan
-   * istekleri reddeder. Tarayıcı için `signalbird/browser` ve açık anahtar
-   * (`sbr_pub_…`) kullanılır.
+   * istekleri reddeder (401 `SECRET_KEY_IN_BROWSER`). Tarayıcı için
+   * `signalbird/browser` ve açık anahtar (`sb_public_live_…`) kullanılır.
+   *
+   * v2 (1 Eyl 2026): eskiden `apiKey` idi ve yüzey başına ayrı bir anahtar
+   * ailesi vardı (`sbr_live_`, `sb_`, `sbw_pub_`, `sbp_live_`). Hepsi tek
+   * anahtara indi — sözleşme:
+   * ../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md
    */
-  apiKey: string;
+  domainKey: string;
 
   /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
@@ -43,7 +54,14 @@ export interface SignalbirdConfig {
 }
 
 export interface LogInput {
-  channel: string;
+  /**
+   * Modül anahtarı — panelde açtığınız kanalın adı (`penyuSatisBildirimi`).
+   *
+   * Gizli DEĞİLDİR ve kodun içinde durur: domain anahtarı olmadan hiçbir işe
+   * yaramaz. Tanımsız bir ad gönderirseniz kanal SESSİZ olarak açılır — kayıt
+   * düşmez, ama bildirim de gitmez; kuralı panelden siz koyarsınız.
+   */
+  key: string;
   message: string;
   level?: Level;
   context?: Record<string, unknown>;

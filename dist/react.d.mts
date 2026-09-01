@@ -6,7 +6,7 @@ interface SignalbirdProviderProps extends AppConfig {
     children?: ReactNode;
 }
 /**
- * Uygulamanın köküne konur. İstemci bir kez kurulur; `appKey` değişirse
+ * Uygulamanın köküne konur. İstemci bir kez kurulur; `publicKey` değişirse
  * (ortam değişimi, çoklu marka) yeniden kurulur.
  */
 declare function SignalbirdProvider({ children, ...config }: SignalbirdProviderProps): react.FunctionComponentElement<react.ProviderProps<SignalbirdApp | null>>;

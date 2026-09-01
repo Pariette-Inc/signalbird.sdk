@@ -18,9 +18,9 @@ final class FakeManagementClient extends ManagementClient
     /** @var array<int, array{status: int, body: ?string, error: ?string, errno: int}> */
     private array $queue = [];
 
-    public function __construct(string $apiKey = 'sb_test_key', ?string $baseUrl = null, bool $throwOnError = false)
+    public function __construct(string $domainKey = 'sb_secret_live_test', ?string $baseUrl = null, bool $throwOnError = false)
     {
-        parent::__construct($apiKey, $baseUrl, 15, $throwOnError);
+        parent::__construct($domainKey, $baseUrl, 15, $throwOnError);
     }
 
     public function queueJson(int $status, mixed $payload): self

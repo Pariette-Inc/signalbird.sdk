@@ -4,21 +4,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | TEK ANAHTAR — `SIGNALBIRD_KEY`
+    | TEK ANAHTAR — `SIGNALBIRD_DOMAIN_KEY`
     |--------------------------------------------------------------------------
-    | KARAR 2026-08-28 (Ahmet): "2-3 farklı kayıt eklemek istemiyorum, bir tane
-    | signalbird anahtarı yeterli olmalı."
+    | Sözleşme: ../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md
     |
-    | Takım anahtarı (`sb_…`) kurulumun tamamıdır: gönderim (e-posta/SMS/push),
-    | kişi ve kampanya, yönetim (sohbet, uygulama, domain) ve Telsiz log yazımı
-    | aynı anahtarla çalışır. Kapsamlar anahtarın kendisindedir; panelde
-    | üretilirken seçilir.
+    | KARAR 1 Eyl 2026 (Ahmet): dört anahtar ailesi (`sb_`, `sbr_*`,
+    | `sbw_pub_`, `sbp_live_`) ve 17 elemanlı scope listesi kaldırıldı.
+    | Geriye TEK kavram kaldı: alan adının anahtarı.
     |
-    | Aşağıdaki yüzeye özel anahtarlar İSTEĞE BAĞLIDIR: yalnız bir yüzeyi dar
-    | kapsamlı ayrı bir anahtara bağlamak isteyen doldurur (ör. log yazan sunucu
-    | gönderim yapamasın). Boşsa hepsi bu anahtara düşer.
+    | Gizli anahtar (`sb_secret_live_…`) bu dosyanın okuduğu tek şeydir ve
+    | kurulumun TAMAMIDIR: gönderim (e-posta/SMS/push), kişi ve kampanya,
+    | yönetim (sohbet, kanal, domain) ve Telsiz log yazımı aynı anahtarla
+    | çalışır. Yüzey başına ayrı anahtar YOKTUR — 28 Ağu 2026'da "bir tane
+    | signalbird anahtarı yeterli olmalı" denmişti; artık gerçekten öyle.
+    |
+    | Panel → Alan adları → [alan adı] → Anahtarlar. Anahtar bir kez görünür;
+    | kaybedilirse yenisi üretilir ve eskisi iptal edilir (sayı sınırsızdır).
     */
-    'key' => env('SIGNALBIRD_KEY', ''),
+    'domain_key' => env('SIGNALBIRD_DOMAIN_KEY', ''),
+
+    /*
+    | Tarayıcıya/mobile inen AÇIK anahtar (`sb_public_live_…`).
+    |
+    | PHP tarafında yalnız görünüme (Blade'e gömülen widget etiketi) gerekir;
+    | sunucu istemcileri bunu KULLANMAZ ve verilirse reddeder.
+    */
+    'public_key' => env('SIGNALBIRD_PUBLIC_KEY', ''),
 
     /*
     | API kökü. Üretim adresi paketin İÇİNDEDİR; uygulamanın `.env`'i onu
@@ -38,31 +49,8 @@ return [
     */
     'throw_on_error' => env('SIGNALBIRD_THROW', false),
 
-    /*
-    | Yönetim (Management) yüzeyi için AYRI anahtar — `radio:*`, `chat:*`,
-    | `apps:*` kapsamlarıyla. Boşsa `SIGNALBIRD_KEY` kullanılır.
-    */
-    'api_key' => env('SIGNALBIRD_API_KEY') ?: env('SIGNALBIRD_MESSAGING_KEY') ?: env('SIGNALBIRD_KEY', ''),
-
-    /*
-    | Gönderim (Messaging) yüzeyi için AYRI anahtar. Boşsa `SIGNALBIRD_KEY`
-    | kullanılır — normal kurulumda bu satır hiç doldurulmaz.
-    */
-    'messaging_key' => env('SIGNALBIRD_MESSAGING_KEY') ?: env('SIGNALBIRD_KEY', ''),
-
-    /* Gönderim için ayrı kök (nadiren gerekir). Boşsa `url` kullanılır. */
-    'messaging_url' => env('SIGNALBIRD_MESSAGING_URL'),
-
     /* Gönderim istek zaman aşımı (sn). Toplu kişi yükleme uzun sürebilir. */
     'messaging_timeout' => env('SIGNALBIRD_MESSAGING_TIMEOUT', 15),
-
-
-    /*
-    | Partner anahtarı (`sbp_live_…`) — YALNIZ sözleşmeli platformlar için
-    | (veribenim, submitcms). Müşteri sağlama, modül yetkisi ve gömme jetonu
-    | bu anahtarla yapılır. Tarayıcıya İNMEZ.
-    */
-    'partner_key' => env('SIGNALBIRD_PARTNER_KEY', ''),
 
     /*
     | Posta taşıyıcısı (`MAIL_MAILER=signalbird`) hangi ileti sınıfını

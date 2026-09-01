@@ -82,13 +82,13 @@ internal static class SignalbirdJson
 internal sealed class Transport
 {
     private readonly HttpClient _http;
-    private readonly string _apiKey;
+    private readonly string _domainKey;
     private readonly string _baseUrl;
     private readonly bool _throwOnError;
 
-    internal Transport(string apiKey, string baseUrl, TimeSpan timeout, bool throwOnError, HttpClient? http = null)
+    internal Transport(string domainKey, string baseUrl, TimeSpan timeout, bool throwOnError, HttpClient? http = null)
     {
-        _apiKey = apiKey;
+        _domainKey = domainKey;
         _baseUrl = baseUrl.TrimEnd('/');
         _throwOnError = throwOnError;
         _http = http ?? new HttpClient();
@@ -108,7 +108,7 @@ internal sealed class Transport
     {
         using var request = new HttpRequestMessage(method, _baseUrl + path + BuildQuery(query));
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
-        request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + _apiKey);
+        request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + _domainKey);
 
         if (body is not null)
         {

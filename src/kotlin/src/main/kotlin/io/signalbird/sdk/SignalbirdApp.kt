@@ -3,8 +3,8 @@ package io.signalbird.sdk
 import java.util.UUID
 
 data class SignalbirdAppConfig(
-    /** Uygulama anahtarı (`sbw_pub_…`). Takım anahtarını (`sb_…`) BURAYA KOYMAYIN. */
-    val appKey: String,
+    /** Uygulama anahtarı (`sb_public_live_…`). Takım anahtarını (`sb_…`) BURAYA KOYMAYIN. */
+    val publicKey: String,
     val baseUrl: String = SIGNALBIRD_DEFAULT_BASE_URL,
     val locale: String? = null,
     val timeoutMs: Int = 10_000,
@@ -17,27 +17,27 @@ data class SignalbirdAppConfig(
  * Müşterinin MÜŞTERİSİ için. Yalnız ziyaretçinin KENDİ verisine dokunur;
  * gönderim yapmaz, kişi listesi okumaz.
  *
- * Kimlik iki parçadır: açık uygulama anahtarı (`X-Signalbird-App-Key`) ve
+ * Kimlik iki parçadır: açık uygulama anahtarı (`X-Signalbird-Key`) ve
  * ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner.
  *
  * Sözleşme: docs/CONTRACT.md § 11
  */
 class SignalbirdApp(private val config: SignalbirdAppConfig) {
-    private val visitor = VisitorStore(config.storage, config.appKey)
+    private val visitor = VisitorStore(config.storage, config.publicKey)
     private val http: Transport
 
     init {
-        require(config.appKey.isNotEmpty()) { "Signalbird: appKey zorunlu." }
+        require(config.publicKey.isNotEmpty()) { "Signalbird: publicKey zorunlu." }
 
         // Takım anahtarı istemciye gömülürse tüm gönderim yetkisi sızar.
         // Sunucu da reddederdi ama o noktada anahtar çoktan yayınlanmış olurdu.
-        require(config.appKey.startsWith("sbw_pub_")) {
-            "Signalbird: uygulama istemcisi açık uygulama anahtarı ister (sbw_pub_…)."
+        require(config.publicKey.startsWith("sb_public_live_")) {
+            "Signalbird: uygulama istemcisi açık uygulama anahtarı ister (sb_public_live_…)."
         }
 
         http = Transport(config.baseUrl, config.timeoutMs, throwOnError = false) {
             buildMap {
-                put("X-Signalbird-App-Key", config.appKey)
+                put("X-Signalbird-Key", config.publicKey)
                 config.locale?.let { put("X-Locale", it) }
                 visitor.secret?.let { put("X-Signalbird-Visitor", it) }
             }

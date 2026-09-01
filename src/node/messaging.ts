@@ -43,29 +43,31 @@ const BULK_CHUNK = 1000;
 type Query = object | undefined;
 
 export class SignalbirdMessaging {
-  private readonly apiKey: string;
+  private readonly domainKey: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
   private readonly throwOnError: boolean;
   private readonly debug: boolean;
 
   constructor(config: MessagingConfig) {
-    if (!config.apiKey) {
-      throw new SignalbirdError('Signalbird: apiKey zorunlu.', 0, 'NO_KEY');
+    if (!config.domainKey) {
+      throw new SignalbirdError('Signalbird: domainKey zorunlu.', 0, 'NO_KEY');
     }
-
-    // Telsiz (`sbr_`) ya da uygulama (`sbw_pub_`) anahtarı buraya verilirse
-    // her istek 401 döner; baştan söylemek haftalar sonra bulunacak hatayı önler.
-    if (!config.apiKey.startsWith('sb_')) {
+    /*
+     * Açık anahtar (`sb_public_live_…`) buraya verilirse her istek 403 döner
+     * (`SECRET_KEY_REQUIRED`). Kurulumda söylemek, haftalar sonra bulunacak
+     * bir hatayı önler.
+     */
+    if (!config.domainKey.startsWith('sb_secret_live_')) {
       throw new SignalbirdError(
-        'Signalbird: gönderim istemcisi takım API anahtarı ister (sb_…). ' +
-          'Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.',
+        'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). ' +
+          'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
         0,
         'WRONG_KEY_TYPE'
       );
     }
 
-    this.apiKey = config.apiKey;
+    this.domainKey = config.domainKey;
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, '');
     this.timeout = config.timeout ?? 15000;
     this.throwOnError = config.throwOnError ?? false;
@@ -262,7 +264,7 @@ export class SignalbirdMessaging {
         method,
         headers: {
           Accept: 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
+          'X-Signalbird-Key': this.domainKey,
           ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,

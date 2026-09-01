@@ -12,7 +12,7 @@ import { SignalbirdApp, SessionInput, ChatState, IdentifyInput, RegisterDeviceIn
 
 declare const SIGNALBIRD_KEY: InjectionKey<SignalbirdApp>;
 /**
- * `app.use(signalbirdPlugin, { appKey })`
+ * `app.use(signalbirdPlugin, { publicKey })`
  *
  * Tek istemci tüm bileşenlere `provide` edilir: her bileşenin kendi istemcisini
  * kurması, ziyaretçi sırrının iki kez yüklenmesi ve iki ayrı yoklama döngüsü

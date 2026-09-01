@@ -29,22 +29,23 @@ class ManagementClient
     private string $baseUrl;
 
     public function __construct(
-        private string $apiKey,
+        private string $domainKey,
         ?string $baseUrl = null,
         private int $timeout = 15,
         private bool $throwOnError = false,
     ) {
-        if ($apiKey === '') {
-            throw new SignalbirdException('Signalbird: apiKey zorunlu.', 'NO_KEY', 0);
+        if ($domainKey === '') {
+            throw new SignalbirdException('Signalbird: domainKey zorunlu.', 'NO_KEY', 0);
         }
 
-        // Telsiz (`sbr_`) ya da uygulama (`sbw_pub_`) anahtarı buraya verilirse
-        // her istek 401 döner; kurulum anında söylemek haftalar sonra bulunacak
-        // hatayı önler.
-        if (! str_starts_with($apiKey, 'sb_')) {
+        /*
+         * Açık anahtar buraya verilirse her istek 403 `SECRET_KEY_REQUIRED`
+         * döner. Kurulumda söylemek, haftalar sonra bulunacak hatayı önler.
+         */
+        if (! str_starts_with($domainKey, 'sb_secret_live_')) {
             throw new SignalbirdException(
-                'Signalbird: yönetim istemcisi takım API anahtarı ister (sb_…). '
-                . 'Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.',
+                'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). '
+                . 'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
                 'WRONG_KEY_TYPE',
                 0,
             );
@@ -66,78 +67,65 @@ class ManagementClient
         return $this->request('GET', '/v1/radio/events', null, $query);
     }
 
-    public function listRadioProjects(): array
+    // ── Modül anahtarları ─────────────────────────────────────────────
+    //
+    // Telsiz projesi/kanalı ve uygulama kaydı 1 Eyl 2026'da kaldırıldı
+    // (../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md §3). Beş modülün
+    // (logger, email, sms, push, chat) hepsi aynı gövdeyi kullanır.
+
+    /** @return array{ok: bool, status: int, data: mixed, code: ?string} */
+    public function listModuleKeys(string $module, array $query = []): array
     {
-        return $this->request('GET', '/v1/radio/projects');
+        return $this->request('GET', '/v1/modules/' . self::seg($module) . '/keys', null, $query);
+    }
+
+    /** @return array{ok: bool, status: int, data: mixed, code: ?string} */
+    public function getModuleKey(string $module, int|string $id): array
+    {
+        return $this->request('GET', '/v1/modules/' . self::seg($module) . '/keys/' . self::seg($id));
     }
 
     /**
-     * Proje açar.
+     * Kanal açar. `key` verilmezse başlıktan üretilir; çakışırsa sonuna sayı
+     * eklenir — "bu ad alınmış" hatası CI'da kanal açan betiği durdururdu.
      *
-     * Dönen `secret` (`sbr_live_…`) YALNIZ BURADA görünür: sunucuda yalnız
-     * SHA-256 özeti saklanır. Kaybedilirse `rotateRadioSecret` ile yenilenir.
-     *
-     * @param array<string, mixed> $input
+     * @param  array<string, mixed>  $input
+     * @return array{ok: bool, status: int, data: mixed, code: ?string}
      */
-    public function createRadioProject(array $input): array
+    public function createModuleKey(string $module, array $input): array
     {
-        return $this->request('POST', '/v1/radio/projects', $input);
-    }
-
-    public function getRadioProject(int|string $id): array
-    {
-        return $this->request('GET', '/v1/radio/projects/' . self::seg($id));
-    }
-
-    /** @param array<string, mixed> $input */
-    public function updateRadioProject(int|string $id, array $input): array
-    {
-        return $this->request('PATCH', '/v1/radio/projects/' . self::seg($id), $input);
-    }
-
-    public function deleteRadioProject(int|string $id): array
-    {
-        return $this->request('DELETE', '/v1/radio/projects/' . self::seg($id));
-    }
-
-    /** Gizli anahtarı yeniler; eski anahtar ANINDA geçersizleşir. */
-    public function rotateRadioSecret(int|string $id): array
-    {
-        return $this->request('POST', '/v1/radio/projects/' . self::seg($id) . '/rotate');
-    }
-
-    // ── Telsiz: kanallar ──────────────────────────────────────────────────
-
-    /** @param array<string, mixed> $input */
-    public function createRadioChannel(int|string $projectId, array $input): array
-    {
-        return $this->request('POST', '/v1/radio/projects/' . self::seg($projectId) . '/channels', $input);
+        return $this->request('POST', '/v1/modules/' . self::seg($module) . '/keys', $input);
     }
 
     /**
-     * Kanalı günceller. `key` DEĞİŞMEZ — müşterinin kodundaki `log('critical', …)`
-     * çağrısı ona bağlıdır; sunucu gönderilse de yok sayar.
+     * Kanalı günceller. `key` DEĞİŞTİRİLEBİLİR: eski ad 30 gün daha kabul
+     * edilir, böylece üretimdeki kod bir sonraki deploya kadar kayıt
+     * kaybetmez. `keep_previous: false` eski adı anında kapatır.
      *
-     * @param array<string, mixed> $input
+     * @param  array<string, mixed>  $input
+     * @return array{ok: bool, status: int, data: mixed, code: ?string}
      */
-    public function updateRadioChannel(int|string $projectId, int|string $channelId, array $input): array
+    public function updateModuleKey(string $module, int|string $id, array $input): array
     {
-        return $this->request(
-            'PATCH',
-            '/v1/radio/projects/' . self::seg($projectId) . '/channels/' . self::seg($channelId),
-            $input,
-        );
+        return $this->request('PATCH', '/v1/modules/' . self::seg($module) . '/keys/' . self::seg($id), $input);
     }
 
-    public function deleteRadioChannel(int|string $projectId, int|string $channelId): array
+    /** @return array{ok: bool, status: int, data: mixed, code: ?string} */
+    public function deleteModuleKey(string $module, int|string $id): array
     {
-        return $this->request(
-            'DELETE',
-            '/v1/radio/projects/' . self::seg($projectId) . '/channels/' . self::seg($channelId),
-        );
+        return $this->request('DELETE', '/v1/modules/' . self::seg($module) . '/keys/' . self::seg($id));
     }
 
-    // ── Sohbet: gelen kutusu ──────────────────────────────────────────────
+    /**
+     * Push kanalına kayıtlı son kullanıcı cihazları (token MASKELİ döner).
+     *
+     * @param  array<string, mixed>  $query
+     * @return array{ok: bool, status: int, data: mixed, code: ?string}
+     */
+    public function listModuleKeyDevices(string $module, int|string $id, array $query = []): array
+    {
+        return $this->request('GET', '/v1/modules/' . self::seg($module) . '/keys/' . self::seg($id) . '/devices', null, $query);
+    }
 
     public function chatSummary(): array
     {
@@ -335,62 +323,12 @@ class ManagementClient
 
     // ── Uygulamalar ───────────────────────────────────────────────────────
 
-    public function listApps(): array
-    {
-        return $this->request('GET', '/v1/apps');
-    }
+    // Uygulama uçları KALDIRILDI (1 Eyl 2026): sohbet widget'ı ve push kanalı
+    // birer modül anahtarıdır — `listModuleKeys('chat')`, `listModuleKeys('push')`.
 
-    /**
-     * Yanıttaki `public_key` (`sbw_pub_…`) istemciye gömülür; gizli değildir.
-     *
-     * @param array<string, mixed> $input
-     */
-    public function createApp(array $input): array
-    {
-        return $this->request('POST', '/v1/apps', $input);
-    }
-
-    public function getApp(int|string $id): array
-    {
-        return $this->request('GET', '/v1/apps/' . self::seg($id));
-    }
-
-    /** @param array<string, mixed> $input */
-    public function updateApp(int|string $id, array $input): array
-    {
-        return $this->request('PATCH', '/v1/apps/' . self::seg($id), $input);
-    }
-
-    public function deleteApp(int|string $id): array
-    {
-        return $this->request('DELETE', '/v1/apps/' . self::seg($id));
-    }
-
-    /** Açık anahtarı yeniler; siteye gömülü eski anahtar ANINDA çalışmaz olur. */
-    public function rotateAppKey(int|string $id): array
-    {
-        return $this->request('POST', '/v1/apps/' . self::seg($id) . '/rotate-key');
-    }
-
-    /**
-     * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
-     *
-     * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
-     * iframe'e verin, saklamayın. Anahtar `embed:issue` kapsamı ister.
-     *
-     * @param  array<string,mixed>  $input  module (chat|monitoring|campaigns|
-     *                                      contacts|radio|messages|topics|members),
-     *                                      user_id?, locale?, theme?, accent?
-     */
     public function embedToken(array $input): array
     {
         return $this->request('POST', '/v1/embed/tokens', $input);
-    }
-
-    /** @param array<string, mixed> $query */
-    public function listAppDevices(int|string $id, array $query = []): array
-    {
-        return $this->request('GET', '/v1/apps/' . self::seg($id) . '/devices', null, $query);
     }
 
     // ── HTTP ──────────────────────────────────────────────────────────────
@@ -448,7 +386,7 @@ class ManagementClient
     {
         $headers = [
             'Accept: application/json',
-            'Authorization: Bearer ' . $this->apiKey,
+            'X-Signalbird-Key: ' . $this->domainKey,
         ];
 
         $options = [

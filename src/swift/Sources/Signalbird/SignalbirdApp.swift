@@ -1,21 +1,21 @@
 import Foundation
 
 public struct SignalbirdAppConfig {
-    /// Uygulama anahtarı (`sbw_pub_…`). Takım anahtarını (`sb_…`) BURAYA KOYMAYIN.
-    public let appKey: String
+    /// Uygulama anahtarı (`sb_public_live_…`). Takım anahtarını (`sb_…`) BURAYA KOYMAYIN.
+    public let publicKey: String
     public let baseURL: String
     public let locale: String?
     public let timeout: TimeInterval
     public let storage: SignalbirdStorage
 
     public init(
-        appKey: String,
+        publicKey: String,
         baseURL: String = signalbirdDefaultBaseURL,
         locale: String? = nil,
         timeout: TimeInterval = 10,
         storage: SignalbirdStorage = UserDefaultsStorage()
     ) {
-        self.appKey = appKey
+        self.publicKey = publicKey
         self.baseURL = baseURL
         self.locale = locale
         self.timeout = timeout
@@ -28,7 +28,7 @@ public struct SignalbirdAppConfig {
 /// Müşterinin MÜŞTERİSİ için: uygulama kullanıcısı. Yalnız ziyaretçinin KENDİ
 /// verisine dokunur; gönderim yapmaz, kişi listesi okumaz.
 ///
-/// Kimlik iki parçadır: açık uygulama anahtarı (`X-Signalbird-App-Key`) ve
+/// Kimlik iki parçadır: açık uygulama anahtarı (`X-Signalbird-Key`) ve
 /// ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner
 /// ve `storage` içinde saklanır.
 ///
@@ -46,21 +46,21 @@ public final class SignalbirdApp: @unchecked Sendable {
     /// taşır — bu, sohbet istemcisinin tamamını aktöre hapsetmekten hem daha
     /// basit hem SwiftUI'dan çağırması daha kolaydır.
     public init(config: SignalbirdAppConfig) throws {
-        guard !config.appKey.isEmpty else {
-            throw SignalbirdError(code: "NO_KEY", status: 0, message: "appKey zorunlu")
+        guard !config.publicKey.isEmpty else {
+            throw SignalbirdError(code: "NO_KEY", status: 0, message: "publicKey zorunlu")
         }
 
         // Takım anahtarı istemciye gömülürse tüm gönderim yetkisi sızar.
-        guard config.appKey.hasPrefix("sbw_pub_") else {
+        guard config.publicKey.hasPrefix("sb_public_live_") else {
             throw SignalbirdError(
                 code: "WRONG_KEY_TYPE",
                 status: 0,
-                message: "uygulama istemcisi açık uygulama anahtarı ister (sbw_pub_…)"
+                message: "uygulama istemcisi açık uygulama anahtarı ister (sb_public_live_…)"
             )
         }
 
         self.config = config
-        self.visitor = VisitorStore(storage: config.storage, appKey: config.appKey)
+        self.visitor = VisitorStore(storage: config.storage, publicKey: config.publicKey)
 
         let store = visitor
 
@@ -71,7 +71,7 @@ public final class SignalbirdApp: @unchecked Sendable {
             timeout: config.timeout,
             throwOnError: false
         ) {
-            var headers = ["X-Signalbird-App-Key": config.appKey]
+            var headers = ["X-Signalbird-Key": config.publicKey]
 
             if let locale = config.locale { headers["X-Locale"] = locale }
             if let secret = store.secret { headers["X-Signalbird-Visitor"] = secret }

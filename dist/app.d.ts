@@ -2,7 +2,7 @@
  * Uygulama (son kullanıcı) yüzeyinin tipleri.
  *
  * Bu yüzey MÜŞTERİNİN MÜŞTERİSİ içindir: ziyaretçi ya da uygulama kullanıcısı.
- * Anahtarı açıktır (`sbw_pub_…`) ve istemciye gömülür; güvenliği gizlilikten
+ * Anahtarı açıktır (`sb_public_live_…`) ve istemciye gömülür; güvenliği gizlilikten
  * değil kısıttan gelir — yalnız izinli kökenden çalışır ve yalnız ziyaretçinin
  * KENDİ verisine dokunur.
  */
@@ -26,8 +26,23 @@ interface AppStorage {
     removeItem(key: string): Promise<void> | void;
 }
 interface AppConfig {
-    /** Uygulama anahtarı (`sbw_pub_…`). Panelden ya da `createApp` ile alınır. */
-    appKey: string;
+    /**
+     * Açık domain anahtarı (`sb_public_live_…`) — KİMLİĞİ doğrular.
+     *
+     * Panel → Alan adları → [alan adı] → Anahtarlar. Web anahtarı yalnız izinli
+     * kökenlerden, mobil anahtarı yalnız Origin taşımayan isteklerden çalışır.
+     */
+    publicKey: string;
+    /**
+     * Sohbet kanalı — `chat` modülünün anahtarı (`destek`). DAVRANIŞI seçer:
+     * hangi widget ayarı, hangi gelen kutusu.
+     *
+     * Anahtardan AYRIDIR ve bu bilinçlidir (1 Eyl 2026): domain anahtarını
+     * yenilediğinizde kanal adı değişmez, yani kodunuz aynı kalır.
+     */
+    chatKey?: string;
+    /** Push kanalı — `push` modülünün anahtarı. Cihaz kaydı için gerekir. */
+    pushKey?: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
     /** `tr` ya da `en`; verilmezse uygulamanın ayarı, sonra cihazın dili. */
@@ -226,7 +241,7 @@ interface RegisterDeviceInput {
  * yazmak yerine bunu seçtik — React, Vue, Angular ve RN uyarlamaları bu sınıfın
  * ÜSTÜNE oturur, kopyası değildir.
  *
- * Kimlik iki parçadır: açık uygulama anahtarı (`X-Signalbird-App-Key`) ve
+ * Kimlik iki parçadır: açık domain anahtarı (`X-Signalbird-Key`) ve
  * ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner;
  * kaybolursa yeni oturum açılır ve geçmiş konuşmalar görünmez — bu yüzden
  * saklama katmanı zorunludur, isteğe bağlı değil.

@@ -6,26 +6,26 @@ public enum SignalbirdLevel: String, Sendable {
 }
 
 public struct SignalbirdConfig {
-    /// Sunucu anahtarı (`sbr_live_…`).
+    /// Sunucu anahtarı (`sb_secret_live_…`).
     ///
     /// Bu anahtar GİZLİDİR: iOS uygulamasına gömülmemelidir — uygulama paketi
     /// çözülebilir ve anahtar herkesin eline geçer. Mobil taraf sohbeti ve push
     /// kaydını `SignalbirdApp` ile (açık anahtarla) yapar; Telsiz istemcisi
     /// sunucu tarafı Swift servisleri (Vapor, Hummingbird) içindir.
-    public let apiKey: String
+    public let domainKey: String
     public let baseURL: String
     public let source: String?
     public let timeout: TimeInterval
     public let throwOnError: Bool
 
     public init(
-        apiKey: String,
+        domainKey: String,
         baseURL: String = signalbirdDefaultBaseURL,
         source: String? = nil,
         timeout: TimeInterval = 5,
         throwOnError: Bool = false
     ) {
-        self.apiKey = apiKey
+        self.domainKey = domainKey
         self.baseURL = baseURL
         self.source = source
         self.timeout = timeout
@@ -41,16 +41,16 @@ public struct SignalbirdClient {
     private let source: String?
 
     public init(config: SignalbirdConfig) throws {
-        guard !config.apiKey.isEmpty else {
-            throw SignalbirdError(code: "NO_KEY", status: 0, message: "apiKey zorunlu")
+        guard !config.domainKey.isEmpty else {
+            throw SignalbirdError(code: "NO_KEY", status: 0, message: "domainKey zorunlu")
         }
 
         // Açık anahtarın sunucuda kullanılması sessiz bir güvenlik hatasıdır.
-        guard !config.apiKey.hasPrefix("sbr_pub_") else {
+        guard !config.domainKey.hasPrefix("sb_public_live_") else {
             throw SignalbirdError(
                 code: "WRONG_KEY_TYPE",
                 status: 0,
-                message: "sunucu istemcisi sbr_live_… ister"
+                message: "sunucu istemcisi sb_secret_live_… ister"
             )
         }
 
@@ -59,19 +59,19 @@ public struct SignalbirdClient {
             baseURL: config.baseURL,
             timeout: config.timeout,
             throwOnError: config.throwOnError
-        ) { ["Authorization": "Bearer \(config.apiKey)"] }
+        ) { ["Authorization": "Bearer \(config.domainKey)"] }
     }
 
     /// Seviye verilmezse kanalın kendi varsayılanı geçerlidir.
     @discardableResult
     public func log(
-        channel: String,
+        key: String,
         message: String,
         level: SignalbirdLevel? = nil,
         context: [String: Any]? = nil
     ) async throws -> SbResult {
         try await http.request("POST", "/v1/radio/log", body: [
-            "channel": channel,
+            "key": key,
             "message": message,
             "level": level?.rawValue as Any,
             "context": context as Any,
@@ -80,28 +80,28 @@ public struct SignalbirdClient {
     }
 
     @discardableResult
-    public func debug(_ channel: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
-        try await log(channel: channel, message: message, level: .debug, context: context)
+    public func debug(_ key: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
+        try await log(key: key, message: message, level: .debug, context: context)
     }
 
     @discardableResult
-    public func info(_ channel: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
-        try await log(channel: channel, message: message, level: .info, context: context)
+    public func info(_ key: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
+        try await log(key: key, message: message, level: .info, context: context)
     }
 
     @discardableResult
-    public func warn(_ channel: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
-        try await log(channel: channel, message: message, level: .warn, context: context)
+    public func warn(_ key: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
+        try await log(key: key, message: message, level: .warn, context: context)
     }
 
     @discardableResult
-    public func error(_ channel: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
-        try await log(channel: channel, message: message, level: .error, context: context)
+    public func error(_ key: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
+        try await log(key: key, message: message, level: .error, context: context)
     }
 
     @discardableResult
-    public func critical(_ channel: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
-        try await log(channel: channel, message: message, level: .critical, context: context)
+    public func critical(_ key: String, _ message: String, _ context: [String: Any]? = nil) async throws -> SbResult {
+        try await log(key: key, message: message, level: .critical, context: context)
     }
 
     /// En fazla 100 kayıt, satır satır sonuç. Başarısız satırlar YENİDEN DENENMEZ.

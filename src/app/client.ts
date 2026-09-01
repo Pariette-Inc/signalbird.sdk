@@ -7,7 +7,7 @@
  * yazmak yerine bunu seçtik — React, Vue, Angular ve RN uyarlamaları bu sınıfın
  * ÜSTÜNE oturur, kopyası değildir.
  *
- * Kimlik iki parçadır: açık uygulama anahtarı (`X-Signalbird-App-Key`) ve
+ * Kimlik iki parçadır: açık domain anahtarı (`X-Signalbird-Key`) ve
  * ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner;
  * kaybolursa yeni oturum açılır ve geçmiş konuşmalar görünmez — bu yüzden
  * saklama katmanı zorunludur, isteğe bağlı değil.
@@ -39,7 +39,7 @@ const STORAGE_KEY = 'sb_visitor';
 interface StoredVisitor {
   id: string;
   secret: string;
-  appKey: string;
+  publicKey: string;
   name?: string | null;
   email?: string | null;
 }
@@ -89,15 +89,15 @@ export class SignalbirdApp {
   private loaded = false;
 
   constructor(private readonly config: AppConfig) {
-    if (!config?.appKey) {
-      throw new Error('Signalbird: appKey zorunlu (sbw_pub_…).');
+    if (!config?.publicKey) {
+      throw new Error('Signalbird: publicKey zorunlu (sb_public_live_…).');
     }
 
     // Takım anahtarı istemciye gömülürse tüm gönderim yetkisi sızar. Sunucu da
     // reddederdi ama o noktada anahtar çoktan yayınlanmış olurdu.
-    if (!config.appKey.startsWith('sbw_pub_')) {
+    if (!config.publicKey.startsWith('sb_public_live_')) {
       throw new Error(
-        'Signalbird: uygulama istemcisi açık uygulama anahtarı ister (sbw_pub_…). ' +
+        'Signalbird: uygulama istemcisi açık domain anahtarı ister (sb_public_live_…). ' +
           'Takım anahtarını (sb_…) istemci koduna KOYMAYIN.'
       );
     }
@@ -141,7 +141,7 @@ export class SignalbirdApp {
       await this.storeVisitor({
         id: visitor.id,
         secret: visitor.secret,
-        appKey: this.config.appKey,
+        publicKey: this.config.publicKey,
         name: visitor.name ?? null,
         email: visitor.email ?? null,
       });
@@ -310,8 +310,19 @@ export class SignalbirdApp {
 
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      'X-Signalbird-App-Key': this.config.appKey,
+      'X-Signalbird-Key': this.config.publicKey,
     };
+
+    /*
+     * Kanal başlığı YOLA göre seçilir: cihaz uçları push kanalını, geri kalan
+     * her şey sohbet kanalını ister. İstemciye "hangi başlığı göndereyim"
+     * diye sormak, ilk entegrasyonda kaybedilen yarım saat demekti.
+     */
+    const moduleKey = path.startsWith('/v1/sdk/devices') || path.startsWith('/v1/sdk/push')
+      ? this.config.pushKey
+      : this.config.chatKey;
+
+    if (moduleKey) headers['X-Signalbird-Module-Key'] = moduleKey;
 
     if (stored?.secret) headers['X-Signalbird-Visitor'] = stored.secret;
     if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
@@ -394,7 +405,7 @@ export class SignalbirdApp {
       const parsed = JSON.parse(raw) as StoredVisitor;
 
       // Anahtar değiştiyse (uygulama döndürüldü, farklı ortam) kimlik geçersizdir.
-      if (!parsed?.secret || parsed.appKey !== this.config.appKey) return null;
+      if (!parsed?.secret || parsed.publicKey !== this.config.publicKey) return null;
 
       this.visitor = parsed;
     } catch {

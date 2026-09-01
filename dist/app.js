@@ -35,12 +35,12 @@ var SignalbirdApp = class {
     this.config = config;
     this.visitor = null;
     this.loaded = false;
-    if (!config?.appKey) {
-      throw new Error("Signalbird: appKey zorunlu (sbw_pub_\u2026).");
+    if (!config?.publicKey) {
+      throw new Error("Signalbird: publicKey zorunlu (sb_public_live_\u2026).");
     }
-    if (!config.appKey.startsWith("sbw_pub_")) {
+    if (!config.publicKey.startsWith("sb_public_live_")) {
       throw new Error(
-        "Signalbird: uygulama istemcisi a\xE7\u0131k uygulama anahtar\u0131 ister (sbw_pub_\u2026). Tak\u0131m anahtar\u0131n\u0131 (sb_\u2026) istemci koduna KOYMAYIN."
+        "Signalbird: uygulama istemcisi a\xE7\u0131k domain anahtar\u0131 ister (sb_public_live_\u2026). Tak\u0131m anahtar\u0131n\u0131 (sb_\u2026) istemci koduna KOYMAYIN."
       );
     }
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
@@ -76,7 +76,7 @@ var SignalbirdApp = class {
       await this.storeVisitor({
         id: visitor.id,
         secret: visitor.secret,
-        appKey: this.config.appKey,
+        publicKey: this.config.publicKey,
         name: visitor.name ?? null,
         email: visitor.email ?? null
       });
@@ -214,8 +214,10 @@ var SignalbirdApp = class {
     const isForm = typeof FormData !== "undefined" && body instanceof FormData;
     const headers = {
       Accept: "application/json",
-      "X-Signalbird-App-Key": this.config.appKey
+      "X-Signalbird-Key": this.config.publicKey
     };
+    const moduleKey = path.startsWith("/v1/sdk/devices") || path.startsWith("/v1/sdk/push") ? this.config.pushKey : this.config.chatKey;
+    if (moduleKey) headers["X-Signalbird-Module-Key"] = moduleKey;
     if (stored?.secret) headers["X-Signalbird-Visitor"] = stored.secret;
     if (body !== void 0 && !isForm) headers["Content-Type"] = "application/json";
     if (this.config.locale) headers["X-Locale"] = this.config.locale;
@@ -274,7 +276,7 @@ var SignalbirdApp = class {
       const raw = await this.storage.getItem(STORAGE_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (!parsed?.secret || parsed.appKey !== this.config.appKey) return null;
+      if (!parsed?.secret || parsed.publicKey !== this.config.publicKey) return null;
       this.visitor = parsed;
     } catch {
       this.visitor = null;

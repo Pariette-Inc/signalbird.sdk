@@ -22,26 +22,26 @@ BULK_CHUNK = 1000
 class SignalbirdMessaging:
     def __init__(
         self,
-        api_key: str,
+        domain_key: str,
         base_url: Optional[str] = None,
         timeout: float = 15.0,
         throw_on_error: bool = False,
         debug: bool = False,
     ):
-        if not api_key:
-            raise SignalbirdError("Signalbird: api_key zorunlu.", 0, "NO_KEY")
+        if not domain_key:
+            raise SignalbirdError("Signalbird: domain_key zorunlu.", 0, "NO_KEY")
 
-        # Telsiz (`sbr_`) ya da uygulama (`sbw_pub_`) anahtarı buraya verilirse
+        # Açık anahtar (sb_public_live_…) buraya verilirse
         # her istek 401 döner; kurulumda söylemek haftalar sonra bulunacak
         # hatayı önler.
-        if not api_key.startswith("sb_"):
+        if not domain_key.startswith("sb_secret_live_"):
             raise SignalbirdError(
-                "Signalbird: gönderim istemcisi takım API anahtarı ister (sb_…).",
+                "Signalbird: gönderim istemcisi GİZLİ domain anahtarı ister (sb_secret_live_…).",
                 0,
                 "WRONG_KEY_TYPE",
             )
 
-        self._http = Transport(api_key, base_url or DEFAULT_BASE_URL, timeout, throw_on_error, debug)
+        self._http = Transport(domain_key, base_url or DEFAULT_BASE_URL, timeout, throw_on_error, debug)
 
     # ── Gönderim ─────────────────────────────────────────────────────────
 

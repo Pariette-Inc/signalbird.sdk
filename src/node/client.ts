@@ -7,6 +7,8 @@
  */
 import {
   DEFAULT_BASE_URL,
+  PUBLIC_PREFIX,
+  SECRET_PREFIX,
   SignalbirdError,
   type BatchResult,
   type Level,
@@ -23,16 +25,30 @@ export class SignalbirdClient {
   private readonly source?: string;
 
   constructor(private readonly config: SignalbirdConfig) {
-    if (!config.apiKey) {
-      throw new SignalbirdError('Signalbird: apiKey zorunlu.', 0, 'NO_KEY');
+    if (!config.domainKey) {
+      throw new SignalbirdError('Signalbird: domainKey zorunlu.', 0, 'NO_KEY');
     }
 
-    // Açık anahtarın sunucuda kullanılması sessiz bir güvenlik hatasıdır:
-    // çalışır görünür ama kanal kısıtlarına takılır. Baştan söylüyoruz.
-    if (config.apiKey.startsWith('sbr_pub_')) {
+    /*
+     * Yanlış anahtar türü KURULUMDA yakalanır, ilk istekte değil.
+     *
+     * Açık anahtarı sunucuda kullanmak sessiz bir hatadır: istek gider,
+     * `ORIGIN_REQUIRED` döner ve sebebi log'da görünmez. Haftalar sonra fark
+     * etmektense burada durmak yeğdir.
+     */
+    if (config.domainKey.startsWith(PUBLIC_PREFIX)) {
       throw new SignalbirdError(
-        'Signalbird: sunucu istemcisine tarayıcı anahtarı (sbr_pub_…) verildi. ' +
-          'Sunucu anahtarı (sbr_live_…) kullanın.',
+        'Signalbird: sunucu istemcisine AÇIK anahtar (sb_public_live_…) verildi. ' +
+          'Gizli anahtarı (sb_secret_live_…) kullanın; açık anahtar tarayıcı içindir.',
+        0,
+        'WRONG_KEY_TYPE'
+      );
+    }
+
+    if (!config.domainKey.startsWith(SECRET_PREFIX)) {
+      throw new SignalbirdError(
+        'Signalbird: anahtar biçimi tanınmadı. Gizli domain anahtarı ' +
+          '`sb_secret_live_` ile başlar (Panel → Alan adları → Anahtarlar).',
         0,
         'WRONG_KEY_TYPE'
       );
@@ -48,7 +64,7 @@ export class SignalbirdClient {
   /** Tek kayıt gönderir. */
   async log(input: LogInput): Promise<LogResult> {
     return this.send('/v1/radio/log', {
-      channel: input.channel,
+      key: input.key,
       message: input.message,
       level: input.level,
       context: input.context,
@@ -65,7 +81,7 @@ export class SignalbirdClient {
   async batch(events: LogInput[]): Promise<BatchResult> {
     const payload = {
       events: events.slice(0, 100).map((event) => ({
-        channel: event.channel,
+        key: event.key,
         message: event.message,
         level: event.level,
         context: event.context,
@@ -94,27 +110,27 @@ export class SignalbirdClient {
   }
 
   // ── Seviye kısayolları ────────────────────────────────────────────────
-  // `log('critical', …)` yerine `critical(…)`: kanal adı ile seviye çoğu
-  // projede aynıdır, ikisini ayrı ayrı yazdırmak gereksiz tekrar olurdu.
+  // İlk argüman MODÜL ANAHTARIDIR (panelde açtığınız kanalın adı), seviye
+  // değil: `sb.error('kritikApiHatasi', '…')`.
 
-  debugLog(channel: string, message: string, context?: Record<string, unknown>) {
-    return this.log({ channel, message, level: 'debug', context });
+  debugLog(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'debug', context });
   }
 
-  info(channel: string, message: string, context?: Record<string, unknown>) {
-    return this.log({ channel, message, level: 'info', context });
+  info(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'info', context });
   }
 
-  warn(channel: string, message: string, context?: Record<string, unknown>) {
-    return this.log({ channel, message, level: 'warn', context });
+  warn(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'warn', context });
   }
 
-  error(channel: string, message: string, context?: Record<string, unknown>) {
-    return this.log({ channel, message, level: 'error', context });
+  error(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'error', context });
   }
 
-  critical(channel: string, message: string, context?: Record<string, unknown>) {
-    return this.log({ channel, message, level: 'critical', context });
+  critical(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'critical', context });
   }
 
   /**
@@ -124,10 +140,10 @@ export class SignalbirdClient {
    * süreci ayakta tutmak, bozuk durumdaki bir uygulamayı çalıştırmaya devam
    * etmek demektir — log göndermek bunu meşrulaştırmaz.
    */
-  captureUncaught(channel = 'critical'): () => void {
+  captureUncaught(key = 'critical'): () => void {
     const onError = (error: Error) => {
       void this.log({
-        channel,
+        key,
         message: error.message,
         level: 'critical',
         context: { stack: error.stack?.split('\n').slice(0, 20).join('\n') },
@@ -136,7 +152,7 @@ export class SignalbirdClient {
 
     const onRejection = (reason: unknown) => {
       void this.log({
-        channel,
+        key,
         message: reason instanceof Error ? reason.message : String(reason),
         level: 'error',
         context: reason instanceof Error ? { stack: reason.stack } : undefined,
@@ -189,7 +205,9 @@ export class SignalbirdClient {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-          Authorization: `Bearer ${this.config.apiKey}`,
+          // Kanonik başlık `X-Signalbird-Key`; `Authorization: Bearer` de
+          // kabul edilir ama anahtarın bir OAuth jetonu olmadığı açık olsun.
+          'X-Signalbird-Key': this.config.domainKey,
         },
         body: JSON.stringify(payload),
         signal: controller.signal,

@@ -38,7 +38,7 @@ class SignalbirdServiceProvider extends ServiceProvider
             $config = $app['config']['signalbird'];
 
             return new SignalbirdClient(
-                apiKey: (string) $config['key'],
+                domainKey: (string) ($config['domain_key'] ?? ''),
                 baseUrl: $config['url'] ?? null,
                 source: $config['source'] ?? null,
                 timeout: (int) ($config['timeout'] ?? 5),
@@ -54,7 +54,7 @@ class SignalbirdServiceProvider extends ServiceProvider
             $config = $app['config']['signalbird'];
 
             return new MessagingClient(
-                apiKey: (string) ($config['messaging_key'] ?? ''),
+                domainKey: (string) ($config['domain_key'] ?? ''),
                 baseUrl: ($config['messaging_url'] ?? null) ?: ($config['url'] ?? null),
                 timeout: (int) ($config['messaging_timeout'] ?? 15),
                 throwOnError: (bool) ($config['throw_on_error'] ?? false),
@@ -70,7 +70,7 @@ class SignalbirdServiceProvider extends ServiceProvider
             $config = $app['config']['signalbird'];
 
             return new ManagementClient(
-                apiKey: (string) (($config['api_key'] ?? '') ?: ($config['messaging_key'] ?? '')),
+                domainKey: (string) ($config['domain_key'] ?? ''),
                 baseUrl: ($config['messaging_url'] ?? null) ?: ($config['url'] ?? null),
                 timeout: (int) ($config['messaging_timeout'] ?? 15),
                 throwOnError: (bool) ($config['throw_on_error'] ?? false),
@@ -79,14 +79,14 @@ class SignalbirdServiceProvider extends ServiceProvider
 
         $this->app->alias(ManagementClient::class, 'signalbird.management');
 
-        // Partner istemcisi: takımlar üstü, ayrı anahtar ailesi (`sbp_live_…`).
+        // Partner istemcisi: takımlar üstü, ayrı anahtar ailesi (gizli domain anahtarı).
         // Anahtar tanımlı değilse kurucu `NO_KEY` fırlatır — bu bilinçlidir;
         // partner olmayan kurulum bu tekili hiç çözmez.
         $this->app->singleton(PartnerClient::class, function ($app) {
             $config = $app['config']['signalbird'];
 
             return new PartnerClient(
-                apiKey: (string) ($config['partner_key'] ?? ''),
+                domainKey: (string) ($config['domain_key'] ?? ''),
                 baseUrl: ($config['messaging_url'] ?? null) ?: ($config['url'] ?? null),
                 timeout: (int) ($config['messaging_timeout'] ?? 15),
                 throwOnError: (bool) ($config['throw_on_error'] ?? false),

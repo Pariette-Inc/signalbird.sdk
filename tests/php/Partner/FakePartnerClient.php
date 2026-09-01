@@ -16,9 +16,9 @@ final class FakePartnerClient extends PartnerClient
     /** @var array<int, array{status: int, body: ?string, error: ?string, errno: int}> */
     private array $queue = [];
 
-    public function __construct(string $apiKey = 'sbp_live_test', ?string $baseUrl = null, bool $throwOnError = false)
+    public function __construct(string $domainKey = 'sb_secret_live_test', ?string $baseUrl = null, bool $throwOnError = false)
     {
-        parent::__construct($apiKey, $baseUrl, 15, $throwOnError);
+        parent::__construct($domainKey, $baseUrl, 15, $throwOnError);
     }
 
     public function queueJson(int $status, mixed $payload): self

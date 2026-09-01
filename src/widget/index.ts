@@ -2,15 +2,17 @@
  * Signalbird widget — `dist/signalbird.js` (IIFE, global `Signalbird`).
  *
  * Tek satır kurulum:
- *   <script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>
+ *   <script async src="https://signalbird.io/sdk/v1/signalbird.js"
+ *           data-key="sb_public_live_…" data-channel="destek"></script>
  *
- * Betik yüklenince `data-app-key` varsa kendini başlatır; yoksa ev sahibi
- * `Signalbird.init({appKey})` çağırır. Buradaki HER dışa açık fonksiyon
+ * Betik yüklenince `data-key` varsa kendini başlatır; yoksa ev sahibi
+ * `Signalbird.init({publicKey, chatKey})` çağırır. İki değer ayrıdır: anahtar
+ * kimliği doğrular, kanal davranışı seçer (1 Eyl 2026 anahtar mimarisi). Buradaki HER dışa açık fonksiyon
  * try/catch içindedir: widget, ev sahibi sayfaya asla hata fırlatmaz —
  * sohbet balonunun çökmesi müşterinin ödeme sayfasını çökertmemeli.
  *
  * Genel API (docs/PLATFORM_EXPANSION §3.2):
- *   Signalbird.init({appKey, baseUrl?, locale?, user?})
+ *   Signalbird.init({publicKey, chatKey?, baseUrl?, locale?, user?})
  *   Signalbird.identify({external_id, email, name, phone, attributes})
  *   Signalbird.chat.open() / close() / toggle() / isOpen() / on('unread', fn) / off(…)
  *   Signalbird.push.register({token, platform, provider?})
@@ -57,8 +59,8 @@ function swallow(promise: Promise<unknown>): void {
  */
 export function init(options: InitOptions): void {
   safe(() => {
-    if (!options || !options.appKey) {
-      console.warn('[signalbird] init: appKey zorunlu');
+    if (!options || !options.publicKey) {
+      console.warn('[signalbird] init: publicKey zorunlu');
       return;
     }
     if (typeof document === 'undefined' || typeof window === 'undefined') return;
@@ -162,20 +164,23 @@ export function destroy(): void {
 }
 
 // ── Otomatik başlatma ──────────────────────────────────────────────────
-// `<script data-app-key>` — `document.currentScript` yalnız betik çalışırken
+// `<script data-key data-channel>` — `document.currentScript` yalnız betik çalışırken
 // doludur (async dahil); module/defer dışı senaryolarda da tutar. Bulunamazsa
 // aynı isimde bir script etiketi aranır (ör. tag manager enjeksiyonu).
 safe(() => {
   if (typeof document === 'undefined') return;
   const current =
     (document.currentScript as HTMLScriptElement | null) ||
-    (document.querySelector('script[data-app-key][src*="signalbird"]') as HTMLScriptElement | null);
+    (document.querySelector('script[data-key][src*="signalbird"]') as HTMLScriptElement | null);
   const ds = current?.dataset;
-  if (!ds || !ds.appKey) return;
+  if (!ds || !ds.key) return;
 
   const start = () =>
     init({
-      appKey: ds.appKey!,
+      publicKey: ds.key!,
+      // Kanal verilmezse sunucu 400 `MODULE_KEY_MISSING` döner ve widget
+      // çizilmez — sessizce yanlış gelen kutusuna yazmaktansa doğrusu bu.
+      chatKey: ds.channel || undefined,
       baseUrl: ds.baseUrl || undefined,
       locale: ds.locale || undefined,
       debug: ds.debug === 'true' || ds.debug === '1',

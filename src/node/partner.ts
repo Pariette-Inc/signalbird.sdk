@@ -41,23 +41,25 @@ export class SignalbirdPartner {
   private readonly http: SbTransport;
 
   constructor(config: PartnerConfig) {
-    if (!config.apiKey) {
-      throw new SignalbirdError('Signalbird: apiKey zorunlu.', 0, 'NO_KEY');
+    if (!config.domainKey) {
+      throw new SignalbirdError('Signalbird: domainKey zorunlu.', 0, 'NO_KEY');
     }
-
-    // Takım anahtarı (`sb_`) buraya verilirse her istek 401 döner; kurulum
-    // anında söylemek, haftalar sonra bulunacak hatayı önler.
-    if (!config.apiKey.startsWith('sbp_live_')) {
+    /*
+     * Açık anahtar (`sb_public_live_…`) buraya verilirse her istek 403 döner
+     * (`SECRET_KEY_REQUIRED`). Kurulumda söylemek, haftalar sonra bulunacak
+     * bir hatayı önler.
+     */
+    if (!config.domainKey.startsWith('sb_secret_live_')) {
       throw new SignalbirdError(
-        'Signalbird: partner istemcisi partner anahtarı ister (sbp_live_…). ' +
-          'Takım (sb_…), Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.',
+        'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). ' +
+          'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
         0,
         'WRONG_KEY_TYPE'
       );
     }
 
     this.http = new SbTransport({
-      apiKey: config.apiKey,
+      domainKey: config.domainKey,
       baseUrl: (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, ''),
       timeout: config.timeout ?? 15000,
       throwOnError: config.throwOnError ?? false,

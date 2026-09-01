@@ -90,8 +90,8 @@ export class ChatController {
 
   constructor(private readonly opts: InitOptions) {
     this.baseUrl = (opts.baseUrl || DEFAULT_BASE_URL).replace(/\/$/, '');
-    this.store = new Store(opts.appKey);
-    this.api = new Api(this.baseUrl, opts.appKey, () => this.store.secret, (...a) => this.log(...a));
+    this.store = new Store(opts.publicKey);
+    this.api = new Api(this.baseUrl, opts.publicKey, opts.chatKey, () => this.store.secret, (...a) => this.log(...a));
     this.poller = new Poller(() => this.tick());
     this.identity = opts.user && (opts.user.name || opts.user.email || opts.user.external_id) ? opts.user : null;
     this.locale = resolveLocale(null, opts.locale);

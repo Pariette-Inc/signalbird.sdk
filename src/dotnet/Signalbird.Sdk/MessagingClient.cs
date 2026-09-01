@@ -10,7 +10,7 @@ namespace Signalbird.Sdk;
 public sealed class SignalbirdKeyOptions
 {
     /// <summary>Takım API anahtarı (<c>sb_…</c>). Telsiz anahtarı burada çalışmaz.</summary>
-    public string ApiKey { get; set; } = string.Empty;
+    public string DomainKey { get; set; } = string.Empty;
 
     public string BaseUrl { get; set; } = "https://live.signalbird.io/api";
 
@@ -207,26 +207,26 @@ internal static class KeyTransport
     /// Takım anahtarını doğrular ve taşımayı kurar.
     ///
     /// <para>
-    /// Telsiz (<c>sbr_</c>) ya da uygulama (<c>sbw_pub_</c>) anahtarı verilirse
+    /// Açık anahtar (<c>sb_public_live_</c>) verilirse
     /// her istek 401 döner; kurulum anında söylemek haftalar sonra bulunacak
     /// hatayı önler.
     /// </para>
     /// </summary>
     internal static Transport Create(SignalbirdKeyOptions options, string surface, HttpClient? http)
     {
-        if (string.IsNullOrEmpty(options.ApiKey))
+        if (string.IsNullOrEmpty(options.DomainKey))
         {
-            throw new SignalbirdException("Signalbird: ApiKey zorunlu.", 0, "NO_KEY");
+            throw new SignalbirdException("Signalbird: DomainKey zorunlu.", 0, "NO_KEY");
         }
 
-        if (!options.ApiKey.StartsWith("sb_", StringComparison.Ordinal))
+        if (!options.DomainKey.StartsWith("sb_secret_live_", StringComparison.Ordinal))
         {
             throw new SignalbirdException(
-                $"Signalbird: {surface} istemcisi takım API anahtarı ister (sb_…). Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.",
+                $"Signalbird: {surface} istemcisi GİZLİ domain anahtarı ister (sb_secret_live_…). Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.",
                 0,
                 "WRONG_KEY_TYPE");
         }
 
-        return new Transport(options.ApiKey, options.BaseUrl, options.Timeout, options.ThrowOnError, http);
+        return new Transport(options.DomainKey, options.BaseUrl, options.Timeout, options.ThrowOnError, http);
     }
 }

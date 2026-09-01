@@ -6,18 +6,28 @@ kural yoktur.
 
 ## 0. Beş yüzey
 
+> **v2 — 1 Eyl 2026.** Dört anahtar ailesi (`sbr_*`, `sb_`, `sbw_pub_`,
+> `sbp_live_`) ve 17 elemanlı scope listesi KALDIRILDI. Beş yüzeyin tamamı tek
+> anahtar kullanır: alan adının anahtarı. Platform sözleşmesi:
+> `../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md`.
+
 | # | Yüzey | Kim kullanır | Anahtar | Diller |
 |---|---|---|---|---|
-| §1–7 | **Telsiz** (Radio) | müşterinin sunucusu ve sitesi | `sbr_live_…` / `sbr_pub_…` | Node, PHP, Python, Go, .NET, tarayıcı |
-| §8 | **Gönderim** (Messaging) | müşterinin sunucusu | `sb_…` | Node, PHP, Python, Go, .NET |
-| §10 | **Yönetim** (Management) | müşterinin sunucusu / otomasyonu | `sb_…` + `radio\|chat\|apps` scope'ları | Node, PHP, Python, Go, .NET |
-| §11 | **Uygulama** (App) | müşterinin **müşterisi** | `sbw_pub_…` + ziyaretçi sırrı | TypeScript (web/RN), Swift, Kotlin |
-| §12 | **Partner** | sözleşmeli platform (veribenim, submitcms) | `sbp_live_…` | Node, PHP, Python, Go, .NET |
+| §1–7 | **Telsiz** (Radio) | müşterinin sunucusu ve sitesi | `sb_secret_live_…` / `sb_public_live_…` | Node, PHP, Python, Go, .NET, tarayıcı |
+| §8 | **Gönderim** (Messaging) | müşterinin sunucusu | `sb_secret_live_…` | Node, PHP, Python, Go, .NET |
+| §10 | **Yönetim** (Management) | müşterinin sunucusu / otomasyonu | `sb_secret_live_…` | Node, PHP, Python, Go, .NET |
+| §11 | **Uygulama** (App) | müşterinin **müşterisi** | `sb_public_live_…` + ziyaretçi sırrı | TypeScript (web/RN), Swift, Kotlin |
+| §12 | **Partner** | sözleşmeli platform (veribenim, submitcms) | `sb_secret_live_…` | Node, PHP, Python, Go, .NET |
 
-İlk üçü **sunucu** yüzeyidir ve gizli anahtar ister. Dördüncüsü **istemci**
-yüzeyidir: açık anahtar taşır, yalnız ziyaretçinin KENDİ verisine dokunur ve
-mobil uygulamaya gömülür. Beşincisi de sunucu yüzeyidir ama **takımlar
-üstüdür** ve yalnız sözleşmeli platformlara verilir (§12).
+Ayrım artık YÜZEYDE değil ANAHTARIN TÜRÜNDE: gizli anahtar sunucuda durur ve
+her şeyi yapar; açık anahtar istemciye gömülür ve yalnız ziyaretçinin KENDİ
+verisine dokunur. Beş ayrı anahtar ailesi tutmak, müşteriye anlatılamayan ve
+her entegrasyonun ilk yarım saatini 403 ayıklamakla geçirten bir düzendi.
+
+**İkinci bir kavram var ve gizli DEĞİLDİR: modül anahtarı.** Müşterinin panelde
+açtığı kanalın adıdır (`penyuSatisBildirimi`), kodun içine gömülür ve domain
+anahtarı olmadan hiçbir işe yaramaz. Domain anahtarına referans VERMEZ —
+anahtar yenilendiğinde müşterinin kodu aynı kalsın diye.
 
 `scripts/check-parity.mjs` beş kümeyi de denetler; bir dilde olup diğerinde
 olmayan metot CI'ı kırar.
@@ -32,8 +42,12 @@ POST {baseUrl}/v1/radio/log/batch
 Gövde:
 
 ```json
-{ "channel": "critical", "message": "…", "level": "critical", "context": {}, "source": "api-01" }
+{ "key": "kritikApiHatasi", "message": "…", "level": "critical", "context": {}, "source": "api-01" }
 ```
+
+`key` MODÜL ANAHTARIDIR (v2'de `channel` alanının yerini aldı): panelde açılan
+kanalın adı. Tanımsız bir ad gönderilirse sunucu kanalı SESSİZ olarak açar —
+kayıt düşmez ama bildirim de gitmez.
 
 `level` ve `context` isteğe bağlıdır. `level` verilmezse **kanalın kendi
 varsayılanı** geçerlidir — istemci burada bir varsayılan uydurmaz.
@@ -42,21 +56,26 @@ varsayılanı** geçerlidir — istemci burada bir varsayılan uydurmaz.
 
 | Ortam | Başlık | Anahtar biçimi |
 |---|---|---|
-| Sunucu | `Authorization: Bearer <key>` | `sb_…` (takım) ya da `sbr_live_…` (proje) |
-| Tarayıcı | `X-Signalbird-Key: <key>` | `sbr_pub_…` |
-| Tarayıcı (yalnız `sendBeacon`) | `?key=<key>` | `sbr_pub_…` |
+| Sunucu | `X-Signalbird-Key: <key>` (ya da `Authorization: Bearer`) | `sb_secret_live_…` |
+| Tarayıcı / mobil | `X-Signalbird-Key: <key>` | `sb_public_live_…` |
+| Tarayıcı (yalnız `sendBeacon`) | `?k=<key>` | `sb_public_live_…` |
+| Kanal (her ortam) | `X-Signalbird-Module-Key: <slug>` | gizli değil |
 
-**Takım anahtarı Telsiz'e de yazar** (28 Ağu 2026, `radio:write` kapsamıyla).
-Proje takımdan çözülür: ilk proje kullanılır, hiç yoksa "Varsayılan" adıyla
-açılır. Proje anahtarı kalkmadı — birden çok projeyi ayrı ayrı yönetmek
-isteyen (ör. ajans) onu kullanmaya devam eder.
+**Origin matrisi güvenliğin kendisidir.** Tarayıcı her cross-origin isteğe
+`Origin` koyar ve sayfa JavaScript'i bunu silemez:
+
+| Anahtar | `Origin` var | `Origin` yok |
+|---|---|---|
+| gizli | **401** `SECRET_KEY_IN_BROWSER` | kabul |
+| açık · web | `allowed_origins` eşleşmeli | **403** `ORIGIN_REQUIRED` |
+| açık · app | **403** `APP_KEY_IN_BROWSER` | kabul |
 
 **Gizli anahtar sorgu dizesine KONMAZ** ve sunucu bunu reddeder
 (`SECRET_KEY_IN_QUERY`): sorgu dizeleri erişim günlüklerine düşer.
 
-Sunucu istemcisi `sbr_pub_` ile başlayan anahtarı kabul etmez ve kurulum
-anında hata verir. Sessizce çalışıp kanal kısıtına takılması, hatanın
-haftalar sonra fark edilmesi demektir.
+Sunucu istemcisi `sb_public_live_` ile başlayan anahtarı kabul etmez ve kurulum
+anında hata verir. Sessizce çalışıp `ORIGIN_REQUIRED` alması, hatanın haftalar
+sonra fark edilmesi demektir.
 
 ## 3. baseUrl
 
@@ -113,7 +132,7 @@ istemcisiyle karışmaz. Yalnız **sunucuda** çalışır; tarayıcı girişi yo
 
 | Alan | Varsayılan | Not |
 |---|---|---|
-| `apiKey` | — | `sb_` ile başlamalı. `sbr_` (Telsiz) ya da `sbw_pub_` (uygulama) verilirse **kurulum anında** `WRONG_KEY_TYPE`; boşsa `NO_KEY` |
+| `domainKey` | — | `sb_secret_live_` ile başlamalı. Açık anahtar (`sb_public_live_`) verilirse **kurulum anında** `WRONG_KEY_TYPE`; boşsa `NO_KEY` |
 | `baseUrl` | `https://live.signalbird.io/api` | sondaki `/` kırpılır |
 | `timeout` | 15 s | toplu kişi yükleme uzun sürebilir |
 | `throwOnError` | `false` | açıksa `SignalbirdError` / `SignalbirdException` |
@@ -253,7 +272,8 @@ global `Signalbird`); iOS/Android SDK'ları geldiğinde aynı sözleşmeye uyar.
 
 | Başlık | Değer |
 |---|---|
-| `X-Signalbird-App-Key` | `sbw_pub_…` (uygulama anahtarı; açık, origin kısıtlı) |
+| `X-Signalbird-Key` | `sb_public_live_…` (açık domain anahtarı; origin kısıtlı) |
+| `X-Signalbird-Module-Key` | sohbet/push kanalının adı (gizli değil) |
 | `X-Signalbird-Visitor` | ziyaretçi sırrı — `POST /v1/sdk/chat/session` **yalnız oluşturma anında** döner |
 
 Ziyaretçi `localStorage['sb_visitor']` içinde `{id, secret, appKey, name?, email?}`
@@ -437,34 +457,39 @@ zorlamak, ilk entegrasyonda 403 alıp anahtarı yeniden üretmek demekti.
 (`Authorization: Bearer sb_…`) kullanır; hata kodlarının ayrışması müşterinin
 tek bir hata işleyicisi yazmasını imkânsız kılardı.
 
-### 10.3 Metot kümesi — 45 metot
+### 10.3 Metot kümesi — 36 metot
 
 Adlar diller arasında birebir aynıdır; her dil kendi yazım geleneğini korur
 (`createRadioProject` / `create_radio_project` / `CreateRadioProject` /
 `CreateRadioProjectAsync` aynı metottur). Alan adları API ile aynıdır
 (snake_case) — SDK yeniden adlandırmaz.
 
-**Telsiz yönetimi (11)**
+**Telsiz okuma + modül anahtarları (8)**
 
 | Metot | HTTP |
 |---|---|
 | `radioSummary()` | `GET /v1/radio/summary` |
 | `radioEvents(query?)` | `GET /v1/radio/events` |
-| `listRadioProjects()` | `GET /v1/radio/projects` |
-| `createRadioProject({name})` | `POST /v1/radio/projects` |
-| `getRadioProject(id)` | `GET /v1/radio/projects/{id}` |
-| `updateRadioProject(id, input)` | `PATCH /v1/radio/projects/{id}` |
-| `deleteRadioProject(id)` | `DELETE /v1/radio/projects/{id}` |
-| `rotateRadioSecret(id)` | `POST /v1/radio/projects/{id}/rotate` |
-| `createRadioChannel(projectId, input)` | `POST …/{id}/channels` |
-| `updateRadioChannel(projectId, channelId, input)` | `PATCH …/channels/{cid}` |
-| `deleteRadioChannel(projectId, channelId)` | `DELETE …/channels/{cid}` |
+| `listModuleKeys(module, query?)` | `GET /v1/modules/{module}/keys` |
+| `getModuleKey(module, id)` | `GET /v1/modules/{module}/keys/{id}` |
+| `createModuleKey(module, input)` | `POST /v1/modules/{module}/keys` |
+| `updateModuleKey(module, id, input)` | `PATCH /v1/modules/{module}/keys/{id}` |
+| `deleteModuleKey(module, id)` | `DELETE /v1/modules/{module}/keys/{id}` |
+| `listModuleKeyDevices(module, id, query?)` | `GET …/keys/{id}/devices` |
 
-Gizli proje anahtarı (`sbr_live_…`) **yalnız** `createRadioProject` ve
-`rotateRadioSecret` yanıtında görünür; sunucuda yalnız SHA-256 özeti saklanır.
-Kanalın `key` alanı güncellemede DEĞİŞMEZ — müşterinin kodundaki
-`log('critical', …)` çağrısı ona bağlıdır ve değiştirmek sessizce yeni kanal
-açardı.
+`module` ∈ `logger` · `email` · `sms` · `push` · `chat`. Beş modülün gövdesi
+aynıdır; ayrı metot kümeleri yazmak, altıncı modül geldiğinde altıncısını
+yazmak demekti.
+
+**Telsiz projesi/kanalı ve uygulama metotları v2'de KALDIRILDI** (16 metot).
+Proje kavramını domain, kanal kavramını modül anahtarı devraldı; "uygulama"
+diye ayrı bir kayıt yok. Anahtar döndürme de yok: döndürülen şey DOMAIN
+anahtarıdır ve panelden yönetilir.
+
+Modül anahtarının `key` alanı güncellemede **DEĞİŞTİRİLEBİLİR** (v1'de
+değişmezdi): eski ad 30 gün daha kabul edilir (`previous_key`), böylece
+üretimdeki kod bir sonraki deploya kadar kayıt kaybetmez. `keep_previous:
+false` eski adı anında kapatır.
 
 **Sohbet — ajan tarafı (27)**
 
@@ -497,17 +522,9 @@ yapamaz: gelen kutusundaki her satırın bir sahibi olmalı, yoksa liste okunmaz
 hâle gelir. `reply` içinde `is_internal: true` verilen mesaj bir iç nottur ve
 ziyaretçiye **asla** gitmez.
 
-**Uygulamalar (7)**
+**Uygulama metotları KALDIRILDI** (v2): sohbet widget'ı ve push kanalı birer
+modül anahtarıdır — `listModuleKeys('chat')`, `listModuleKeys('push')`.
 
-| Metot | HTTP |
-|---|---|
-| `listApps()` · `createApp(input)` · `getApp(id)` · `updateApp(id, input)` · `deleteApp(id)` | `/v1/apps…` |
-| `rotateAppKey(id)` | `POST /v1/apps/{id}/rotate-key` |
-| `listAppDevices(id, query?)` | `GET /v1/apps/{id}/devices` |
-
-`rotateAppKey` eski açık anahtarı **anında** geçersizleştirir: siteye gömülü
-snippet güncellenene kadar widget çalışmaz. Cihaz listesinde token **maskeli**
-döner; tamamı hiçbir zaman dönmez.
 
 ### 10.4 Gömme jetonu — kendi panelinizde Signalbird ekranı
 
@@ -545,7 +562,7 @@ göndermek, hiç yapmamaktan pahalıdır.
 ## 11. Uygulama (App) istemcisi — son kullanıcı
 
 Müşterinin **müşterisi** için: canlı sohbet ve push cihaz kaydı. Açık uygulama
-anahtarı (`sbw_pub_…`) taşır ve istemciye gömülür; güvenliği gizlilikten değil
+anahtarı (`sb_public_live_…`) taşır ve istemciye gömülür; güvenliği gizlilikten değil
 kısıttan gelir — yalnız izinli kökenden çalışır ve yalnız ziyaretçinin KENDİ
 verisine dokunur. Gönderim yapmaz, kişi listesi okumaz, kota harcamaz (konuşma
 açmak hariç).
@@ -563,7 +580,8 @@ açmak hariç).
 
 ### 11.1 Kimlik ve saklama
 
-İki başlık: `X-Signalbird-App-Key: sbw_pub_…` ve `X-Signalbird-Visitor: <sır>`.
+Üç başlık: `X-Signalbird-Key: sb_public_live_…`, `X-Signalbird-Module-Key: <kanal>`
+ve `X-Signalbird-Visitor: <sır>`.
 Sır **yalnız** `startSession` yanıtında döner.
 
 Her dil bir **saklama katmanı** ister ve bu isteğe bağlı değildir: sır cihazda
@@ -656,7 +674,7 @@ başka partnerin ya da self-servis müşterinin kaydı **404** döner.
 
 ### 12.2 Kurucu
 
-Gönderim (§8.1) ile aynı kurallar: `sbp_live_` dışı anahtar kurulum anında
+Gönderim (§8.1) ile aynı kurallar: `sb_secret_live_` dışı anahtar kurulum anında
 `WRONG_KEY_TYPE`, boş anahtar `NO_KEY`; `baseUrl` serbest, sondaki `/` kırpılır;
 `timeout` 15 s; `throwOnError` varsayılan `false`. Zarf ve kod eşlemesi §8.2 ile
 birebir aynıdır.

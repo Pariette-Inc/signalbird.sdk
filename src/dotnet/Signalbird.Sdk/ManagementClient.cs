@@ -37,40 +37,31 @@ public sealed class ManagementClient
     public Task<SbResult> RadioEventsAsync(IDictionary<string, object?>? query = null, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Get, "/v1/radio/events", null, query, ct);
 
-    public Task<SbResult> ListRadioProjectsAsync(CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Get, "/v1/radio/projects", null, null, ct);
+    // ── Modül anahtarları ────────────────────────────────────────────────
+    //
+    // Telsiz projesi/kanalı ve uygulama kaydı 1 Eyl 2026'da kaldırıldı
+    // (../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md §3).
 
-    /// <summary>
-    /// Dönen <c>secret</c> (<c>sbr_live_…</c>) YALNIZ burada görünür: sunucuda
-    /// yalnız SHA-256 özeti saklanır.
-    /// </summary>
-    public Task<SbResult> CreateRadioProjectAsync(object input, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Post, "/v1/radio/projects", input, null, ct);
+    public Task<SbResult> ListModuleKeysAsync(string module, IDictionary<string, object?>? query = null, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Get, $"/v1/modules/{Transport.Seg(module)}/keys", null, query, ct);
 
-    public Task<SbResult> GetRadioProjectAsync(object id, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Get, $"/v1/radio/projects/{Transport.Seg(id)}", null, null, ct);
+    public Task<SbResult> GetModuleKeyAsync(string module, object id, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Get, $"/v1/modules/{Transport.Seg(module)}/keys/{Transport.Seg(id)}", null, null, ct);
 
-    public Task<SbResult> UpdateRadioProjectAsync(object id, object input, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Patch, $"/v1/radio/projects/{Transport.Seg(id)}", input, null, ct);
+    /// <summary>`key` verilmezse başlıktan üretilir; çakışırsa sonuna sayı eklenir.</summary>
+    public Task<SbResult> CreateModuleKeyAsync(string module, IDictionary<string, object?> input, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Post, $"/v1/modules/{Transport.Seg(module)}/keys", input, null, ct);
 
-    public Task<SbResult> DeleteRadioProjectAsync(object id, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Delete, $"/v1/radio/projects/{Transport.Seg(id)}", null, null, ct);
+    /// <summary>`key` DEĞİŞTİRİLEBİLİR: eski ad 30 gün daha kabul edilir.</summary>
+    public Task<SbResult> UpdateModuleKeyAsync(string module, object id, IDictionary<string, object?> input, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Patch, $"/v1/modules/{Transport.Seg(module)}/keys/{Transport.Seg(id)}", input, null, ct);
 
-    /// <summary>Gizli anahtarı yeniler; eski anahtar ANINDA geçersizleşir.</summary>
-    public Task<SbResult> RotateRadioSecretAsync(object id, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Post, $"/v1/radio/projects/{Transport.Seg(id)}/rotate", null, null, ct);
+    public Task<SbResult> DeleteModuleKeyAsync(string module, object id, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Delete, $"/v1/modules/{Transport.Seg(module)}/keys/{Transport.Seg(id)}", null, null, ct);
 
-    // ── Telsiz: kanallar ─────────────────────────────────────────────────
-
-    public Task<SbResult> CreateRadioChannelAsync(object projectId, object input, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Post, $"/v1/radio/projects/{Transport.Seg(projectId)}/channels", input, null, ct);
-
-    /// <summary><c>key</c> DEĞİŞMEZ — müşterinin kodundaki kanal adı ona bağlıdır.</summary>
-    public Task<SbResult> UpdateRadioChannelAsync(object projectId, object channelId, object input, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Patch, $"/v1/radio/projects/{Transport.Seg(projectId)}/channels/{Transport.Seg(channelId)}", input, null, ct);
-
-    public Task<SbResult> DeleteRadioChannelAsync(object projectId, object channelId, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Delete, $"/v1/radio/projects/{Transport.Seg(projectId)}/channels/{Transport.Seg(channelId)}", null, null, ct);
+    /// <summary>Push kanalının cihazları; token MASKELİ döner.</summary>
+    public Task<SbResult> ListModuleKeyDevicesAsync(string module, object id, IDictionary<string, object?>? query = null, CancellationToken ct = default)
+        => _http.RequestAsync(HttpMethod.Get, $"/v1/modules/{Transport.Seg(module)}/keys/{Transport.Seg(id)}/devices", null, query, ct);
 
     // ── Sohbet: gelen kutusu ─────────────────────────────────────────────
 
@@ -172,35 +163,9 @@ public sealed class ManagementClient
         => _http.RequestAsync(HttpMethod.Get, "/v1/chat/reports", null,
             new Dictionary<string, object?> { ["range"] = range }, ct);
 
-    // ── Uygulamalar ──────────────────────────────────────────────────────
+    // Uygulama uçları KALDIRILDI (1 Eyl 2026): sohbet ve push birer modül
+    // anahtarıdır — ListModuleKeysAsync("chat").
 
-    public Task<SbResult> ListAppsAsync(CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Get, "/v1/apps", null, null, ct);
-
-    /// <summary>Yanıttaki <c>public_key</c> (<c>sbw_pub_…</c>) istemciye gömülür.</summary>
-    public Task<SbResult> CreateAppAsync(object input, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Post, "/v1/apps", input, null, ct);
-
-    public Task<SbResult> GetAppAsync(object id, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Get, $"/v1/apps/{Transport.Seg(id)}", null, null, ct);
-
-    public Task<SbResult> UpdateAppAsync(object id, object input, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Patch, $"/v1/apps/{Transport.Seg(id)}", input, null, ct);
-
-    public Task<SbResult> DeleteAppAsync(object id, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Delete, $"/v1/apps/{Transport.Seg(id)}", null, null, ct);
-
-    /// <summary>Siteye gömülü eski anahtar ANINDA çalışmaz olur.</summary>
-    public Task<SbResult> RotateAppKeyAsync(object id, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Post, $"/v1/apps/{Transport.Seg(id)}/rotate-key", null, null, ct);
-
-    /// <summary>
-    /// Gömme jetonu — Signalbird ekranını kendi panelinizde göstermek için.
-    /// 120 saniye yaşar ve tek kullanımlıktır; anahtar <c>embed:issue</c> kapsamı ister.
-    /// </summary>
     public Task<SbResult> EmbedTokenAsync(IDictionary<string, object?> input, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Post, "/v1/embed/tokens", input, null, ct);
-
-    public Task<SbResult> ListAppDevicesAsync(object id, IDictionary<string, object?>? query = null, CancellationToken ct = default)
-        => _http.RequestAsync(HttpMethod.Get, $"/v1/apps/{Transport.Seg(id)}/devices", null, query, ct);
 }

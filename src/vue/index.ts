@@ -13,7 +13,7 @@ import type { AppConfig, ChatState, IdentifyInput, RegisterDeviceInput, SessionI
 export const SIGNALBIRD_KEY: InjectionKey<SignalbirdApp> = Symbol('signalbird');
 
 /**
- * `app.use(signalbirdPlugin, { appKey })`
+ * `app.use(signalbirdPlugin, { publicKey })`
  *
  * Tek istemci tüm bileşenlere `provide` edilir: her bileşenin kendi istemcisini
  * kurması, ziyaretçi sırrının iki kez yüklenmesi ve iki ayrı yoklama döngüsü
@@ -30,7 +30,7 @@ export function useSignalbird(): SignalbirdApp {
   const client = inject(SIGNALBIRD_KEY, null);
 
   if (!client) {
-    throw new Error('useSignalbird: app.use(signalbirdPlugin, { appKey }) çağrılmadı.');
+    throw new Error('useSignalbird: app.use(signalbirdPlugin, { publicKey }) çağrılmadı.');
   }
 
   return client;

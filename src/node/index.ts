@@ -26,30 +26,22 @@ export type {
   TeamEmbedTokenInput,
   ManagementConfig,
   AppDevice,
-  AppInput,
   AppPlatform,
-  AppRecord,
   CannedReply,
   CannedReplyInput,
   ChatConversation,
   ChatMessage,
   ChatVisitor,
   ConversationStatus,
-  CreateRadioProjectInput,
   ListAppDevicesQuery,
   ListChatMessagesQuery,
   ListConversationsQuery,
   ListRadioEventsQuery,
-  RadioChannel,
-  RadioChannelInput,
   RadioEvent,
   RadioLevel,
-  RadioProject,
-  RadioProjectCreated,
   ReplyInput,
   StartConversationInput,
   UpdateConversationInput,
-  UpdateRadioProjectInput,
   UpdateVisitorInput,
 } from './management-types';
 export type {
@@ -122,21 +114,21 @@ let singleton: SignalbirdClient | null = null;
 /**
  * Ortam değişkeninden kurulan paylaşımlı istemci.
  *
- * `SIGNALBIRD_KEY` okunur. Uygulamanın her köşesinde istemci kurup anahtarı
- * elden ele taşımak yerine tek çağrı yeter:
+ * `SIGNALBIRD_DOMAIN_KEY` okunur. Uygulamanın her köşesinde istemci kurup
+ * anahtarı elden ele taşımak yerine tek çağrı yeter:
  *
  *   import { signalbird } from 'signalbird'
- *   await signalbird().critical('critical', 'ödeme servisi öldü')
+ *   await signalbird().critical('kritikApiHatasi', 'ödeme servisi öldü')
  */
 export function signalbird(config?: Partial<SignalbirdConfig>): SignalbirdClient {
   if (singleton && !config) {
     return singleton;
   }
 
-  const apiKey = config?.apiKey ?? process.env.SIGNALBIRD_KEY ?? '';
+  const domainKey = config?.domainKey ?? process.env.SIGNALBIRD_DOMAIN_KEY ?? '';
 
   const client = new SignalbirdClient({
-    apiKey,
+    domainKey,
     baseUrl: config?.baseUrl ?? process.env.SIGNALBIRD_URL,
     source: config?.source ?? process.env.SIGNALBIRD_SOURCE,
     ...config,
@@ -159,11 +151,11 @@ let managementSingleton: SignalbirdManagement | null = null;
 /**
  * Ortam değişkeninden kurulan paylaşımlı yönetim istemcisi.
  *
- * `SIGNALBIRD_API_KEY` okunur (yoksa `SIGNALBIRD_MESSAGING_KEY` — ikisi de aynı
+ * `SIGNALBIRD_DOMAIN_KEY` okunur (yoksa `SIGNALBIRD_DOMAIN_KEY` — ikisi de aynı
  * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
  *
  *   import { management } from 'signalbird'
- *   await management().createRadioProject({ name: 'ödeme-servisi' })
+ *   await management().createModuleKey('logger', { title: 'Kritik API hatası' })
  */
 export function management(config?: Partial<ManagementConfig>): SignalbirdManagement {
   if (managementSingleton && !config) {
@@ -171,10 +163,10 @@ export function management(config?: Partial<ManagementConfig>): SignalbirdManage
   }
 
   const client = new SignalbirdManagement({
-    apiKey:
-      config?.apiKey ??
-      process.env.SIGNALBIRD_API_KEY ??
-      process.env.SIGNALBIRD_MESSAGING_KEY ??
+    domainKey:
+      config?.domainKey ??
+      process.env.SIGNALBIRD_DOMAIN_KEY ??
+      process.env.SIGNALBIRD_DOMAIN_KEY ??
       '',
     baseUrl: config?.baseUrl ?? process.env.SIGNALBIRD_URL,
     ...config,

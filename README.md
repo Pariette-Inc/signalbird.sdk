@@ -5,11 +5,11 @@ kodla da yapılabilir.
 
 | Yüzey | Ne yapar | Anahtar | Nerede |
 |---|---|---|---|
-| **Telsiz** (Radio) | projenizden bir **kanala** log/olay yazar | `sbr_live_…` / `sbr_pub_…` | sunucu / tarayıcı |
+| **Telsiz** (Radio) | projenizden bir **kanala** log/olay yazar | `sb_secret_live_…` / `sb_public_live_…` | sunucu / tarayıcı |
 | **Gönderim** (Messaging) | e-posta, SMS, push gönderir; kişi, liste, kampanya yönetir; mesaj durumu okur; webhook imzası doğrular | `sb_…` | yalnız sunucu |
 | **Yönetim** (Management) | Telsiz projesi/kanalı açar, olay akışını okur, **sohbet gelen kutusunu** işler, uygulama ve cihaz yönetir | `sb_…` + scope | yalnız sunucu |
-| **Uygulama** (App) | müşterinizin **son kullanıcısına** canlı sohbet + push cihaz kaydı | `sbw_pub_…` | web, iOS, Android |
-| **Partner** | Signalbird'ü kendi ürününde satan **sözleşmeli platform** müşterisini sağlar ve yetkilendirir | `sbp_live_…` | yalnız sunucu |
+| **Uygulama** (App) | müşterinizin **son kullanıcısına** canlı sohbet + push cihaz kaydı | `sb_public_live_…` | web, iOS, Android |
+| **Partner** | Signalbird'ü kendi ürününde satan **sözleşmeli platform** müşterisini sağlar ve yetkilendirir | `sb_secret_live_…` | yalnız sunucu |
 
 Bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
 (`signalbird.js`), siteye tek `<script>` ile gömülür.
@@ -59,7 +59,7 @@ olay   →  tek bir kayıt
 `.env` dosyanıza **bir satır** yazarsınız:
 
 ```
-SIGNALBIRD_KEY=sb_…
+SIGNALBIRD_DOMAIN_KEY=sb_secret_live_…
 ```
 
 Takım anahtarı (`sb_…`) her şeyi kapsar: e-posta, SMS, push, kişi ve kampanya,
@@ -75,8 +75,8 @@ ve gizli olmadıkları için ayrı durmak zorundadırlar:
 
 | Anahtar | Nerede | Ne yapar |
 |---|---|---|
-| `sbw_pub_…` | `<script data-app-key>` | sohbet widget'ı, push cihaz kaydı |
-| `sbr_pub_…` | tarayıcı log istemcisi | yalnız izinli alan adlarından, yalnız izinli kanala |
+| `sb_public_live_…` | `<script data-key data-channel>` | sohbet widget'ı, push cihaz kaydı |
+| `sb_public_live_…` | tarayıcı log istemcisi | yalnız izinli alan adlarından |
 
 Gizli anahtar tarayıcıya **gömülemez**: sunucu, `Origin` başlığı taşıyan bir
 istekte gizli anahtarı reddeder (`SECRET_KEY_IN_BROWSER`). Bu bir kolaylık
@@ -94,8 +94,8 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:1.9.2")` |
-| Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.0.0")` |
+| Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır — ayrı SDK reposu ya da
 > dil başına sürüm yoktur.
@@ -105,7 +105,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 ```ts
 import { signalbird } from 'signalbird'
 
-// SIGNALBIRD_KEY ortam değişkeninden okunur
+// SIGNALBIRD_DOMAIN_KEY ortam değişkeninden okunur
 await signalbird().critical('critical', 'ödeme servisi yanıt vermiyor', {
   service: 'iyzico',
   attempt: 3,
@@ -120,7 +120,7 @@ Kendi istemcinizi kurmak isterseniz:
 import { SignalbirdClient } from 'signalbird'
 
 const sb = new SignalbirdClient({
-  apiKey: process.env.SIGNALBIRD_KEY!,
+  domainKey: process.env.SIGNALBIRD_DOMAIN_KEY!,
   source: 'api-01',        // hangi sunucudan geldiği
   throwOnError: false,     // üretimde kapalı kalmalı
 })
@@ -172,7 +172,7 @@ export async function POST(req: Request) {
 import { initSignalbird } from 'signalbird/browser'
 
 const sb = initSignalbird({
-  publicKey: 'sbr_pub_…',
+  publicKey: 'sb_public_live_…',
   source: 'web',
 })
 
@@ -187,7 +187,7 @@ kapanırken `sendBeacon` ile boşaltılır.
 
 ```tsx
 useEffect(() => {
-  const sb = initSignalbird({ publicKey: process.env.NEXT_PUBLIC_SIGNALBIRD_KEY! })
+  const sb = initSignalbird({ publicKey: process.env.NEXT_PUBLIC_SIGNALBIRD_DOMAIN_KEY! })
   return sb.captureErrors()
 }, [])
 ```
@@ -195,7 +195,7 @@ useEffect(() => {
 **Vue** — `main.ts`:
 
 ```ts
-const sb = initSignalbird({ publicKey: import.meta.env.VITE_SIGNALBIRD_KEY })
+const sb = initSignalbird({ publicKey: import.meta.env.VITE_SIGNALBIRD_DOMAIN_KEY })
 app.config.errorHandler = (err) => sb.error('browser', String(err))
 ```
 
@@ -228,7 +228,7 @@ Signalbird::info('info', 'ahmet@x.com yeni hesap oluşturdu');
 `.env`:
 
 ```
-SIGNALBIRD_KEY=sbr_live_…
+SIGNALBIRD_DOMAIN_KEY=sb_secret_live_…
 SIGNALBIRD_SOURCE=api-01
 ```
 
@@ -251,7 +251,7 @@ Laravel dışı PHP:
 ```php
 use Signalbird\Sdk\Signalbird;
 
-Signalbird::configure('sbr_live_…');
+Signalbird::configure('sb_secret_live_…');
 Signalbird::error('api', 'veritabanı bağlantısı koptu');
 ```
 
@@ -280,7 +280,7 @@ Node:
 ```ts
 import { SignalbirdMessaging } from 'signalbird'
 
-const sb = new SignalbirdMessaging({ apiKey: process.env.SIGNALBIRD_MESSAGING_KEY! })
+const sb = new SignalbirdMessaging({ domainKey: process.env.SIGNALBIRD_DOMAIN_KEY! })
 
 const r = await sb.sendEmail({
   to: 'ali@example.com',
@@ -321,7 +321,7 @@ $r = Signalbird::messaging()->sendEmail([
 if (! $r['ok']) { Log::warning($r['code'], $r); }
 ```
 
-`.env`: `SIGNALBIRD_MESSAGING_KEY=sb_…` (isteğe bağlı `SIGNALBIRD_MESSAGING_URL`,
+`.env`: `SIGNALBIRD_DOMAIN_KEY=sb_secret_live_…` (isteğe bağlı `SIGNALBIRD_MESSAGING_URL`,
 `SIGNALBIRD_MESSAGING_TIMEOUT`). Laravel dışı PHP:
 `Signalbird::configureMessaging('sb_…')` ya da `new MessagingClient('sb_…')`.
 
@@ -371,7 +371,7 @@ import { management } from 'signalbird'
 const { data } = await management().createRadioProject({ name: 'ödeme-servisi' })
 
 // `secret` YALNIZ burada döner — sunucuda yalnız özeti saklanır
-await vault.write('SIGNALBIRD_KEY', data!.secret)
+await vault.write('SIGNALBIRD_DOMAIN_KEY', data!.secret)
 
 await management().createRadioChannel(data!.project.id, {
   key: 'odeme',
@@ -437,7 +437,7 @@ alındığında modül açar ve panel ekranını kendi sayfanıza gömersiniz.
 ```ts
 import { SignalbirdPartner } from 'signalbird'
 
-const partner = new SignalbirdPartner({ apiKey: process.env.SIGNALBIRD_PARTNER_KEY! })
+const partner = new SignalbirdPartner({ domainKey: process.env.SIGNALBIRD_DOMAIN_KEY! })
 
 // Müşteri açıldı — idempotent: aynı external_id ikinci kez yeni hesap AÇMAZ
 const { data } = await partner.createCompany({
@@ -491,7 +491,7 @@ gönderim yapabilirsiniz. Gereken tek şey **kendi takım anahtarınızdır**
 ```ts
 import { SignalbirdMessaging } from 'signalbird'
 
-const sb = new SignalbirdMessaging({ apiKey: process.env.SIGNALBIRD_KEY! })
+const sb = new SignalbirdMessaging({ domainKey: process.env.SIGNALBIRD_DOMAIN_KEY! })
 
 // İşlemsel: sipariş bildirimi, şifre sıfırlama. İYS'ye tabi DEĞİLDİR.
 await sb.sendEmail({
@@ -509,7 +509,7 @@ await sb.sendEmail({ to: '…', class: 'commercial', subject: '…', body: '…'
 ```php
 // Laravel: tek satır konfigürasyonla UYGULAMANIN TAMAMI buradan çıkar
 // config/mail.php → 'signalbird' => ['transport' => 'signalbird', 'class' => 'transactional']
-// .env           → MAIL_MAILER=signalbird, SIGNALBIRD_KEY=sb_…
+// .env           → MAIL_MAILER=signalbird, SIGNALBIRD_DOMAIN_KEY=sb_secret_live_…
 Mail::to($user)->send(new SiparisBildirimi($order));  // hiçbir Mailable değişmez
 
 // Gövde PANELDE duruyorsa (şablon + değişken), zincirlenebilir yüz:
@@ -535,13 +535,13 @@ istemiyorsanız ikincisi.
    (`bildirim@<takım>.sendsignalbird.com`) hesapla birlikte gelir; kendi alan
    adınızı bağlamak için DKIM/SPF/MX kayıtlarını yayınlamanız gerekir.
 3. **Anahtar sunucuda kalır.** Tarayıcıya ya da mobil uygulamaya konmaz;
-   oralar için açık uygulama anahtarı (`sbw_pub_…`) vardır.
+   oralar için açık uygulama anahtarı (`sb_public_live_…`) vardır.
 
 ## Uygulama (App) — kendi sohbet arayüzünüz
 
 Hazır widget yerine kendi arayüzünüzü yazmak, ya da sohbeti **mobil
 uygulamanıza** koymak istiyorsanız bu yüzey içindir. Açık uygulama anahtarı
-(`sbw_pub_…`) kullanır ve yalnız ziyaretçinin kendi verisine dokunur.
+(`sb_public_live_…`) kullanır ve yalnız ziyaretçinin kendi verisine dokunur.
 
 **React / Next.js**
 
@@ -550,7 +550,7 @@ import { SignalbirdProvider, useChat } from 'signalbird/react'
 
 export function App() {
   return (
-    <SignalbirdProvider appKey={process.env.NEXT_PUBLIC_SIGNALBIRD_APP_KEY!}>
+    <SignalbirdProvider publicKey={process.env.NEXT_PUBLIC_SIGNALBIRD_APP_KEY!}>
       <Chat />
     </SignalbirdProvider>
   )
@@ -572,7 +572,7 @@ function Chat() {
 **Vue 3**
 
 ```ts
-app.use(signalbirdPlugin, { appKey: import.meta.env.VITE_SIGNALBIRD_APP_KEY })
+app.use(signalbirdPlugin, { publicKey: import.meta.env.VITE_SIGNALBIRD_APP_KEY })
 
 const { state, send } = useChat({ open: isOpen })
 ```
@@ -580,7 +580,7 @@ const { state, send } = useChat({ open: isOpen })
 **Angular**
 
 ```ts
-bootstrapApplication(App, { providers: [provideSignalbird({ appKey })] })
+bootstrapApplication(App, { providers: [provideSignalbird({ publicKey, chatKey })] })
 
 // bileşende
 chat$ = inject(SignalbirdService).chat$()
@@ -593,7 +593,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createSignalbirdApp, asyncStorageAdapter, useNativeChat } from 'signalbird/react-native'
 
 // Depoyu vermek ZORUNLU: sır cihazda kalmazsa geçmiş her açılışta kaybolur
-const client = createSignalbirdApp({ appKey, storage: asyncStorageAdapter(AsyncStorage) })
+const client = createSignalbirdApp({ publicKey, chatKey, storage: asyncStorageAdapter(AsyncStorage) })
 
 const { messages, send } = useNativeChat(client, { open: true, isForeground })
 ```
@@ -601,7 +601,7 @@ const { messages, send } = useNativeChat(client, { open: true, isForeground })
 **Swift (iOS)**
 
 ```swift
-let client = try SignalbirdApp(config: .init(appKey: "sbw_pub_…"))
+let client = try SignalbirdApp(config: .init(publicKey: "sb_public_live_…"))
 
 try await client.startSession(["name": "Ayşe"])
 try await client.startConversation(body: "Kargom nerede?")
@@ -611,7 +611,7 @@ try await client.registerDevice(token: apnsToken)
 **Kotlin (Android)**
 
 ```kotlin
-val client = SignalbirdApp(SignalbirdAppConfig(appKey = "sbw_pub_…", storage = prefsStorage))
+val client = SignalbirdApp(SignalbirdAppConfig(publicKey = "sb_public_live_…", storage = prefsStorage))
 
 client.startSession(mapOf("name" to "Ayşe"))
 client.startConversation("Kargom nerede?")
@@ -623,10 +623,10 @@ Tam liste (17 metot) ve yoklama merdiveni: `docs/CONTRACT.md § 11`.
 ## Widget (canlı sohbet)
 
 Panelde **Gelen Kutusu → Ayarlar → Uygulamalar**'dan bir uygulama açın; verilen
-`sbw_pub_…` anahtarını sitenize gömün:
+`sb_public_live_…` anahtarını sitenize gömün:
 
 ```html
-<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-app-key="sbw_pub_…"></script>
+<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>
 ```
 
 Bu kadar. Sohbet modülü açıksa balon görünür; renk, konum, karşılama, ön-form,
@@ -640,7 +640,7 @@ Signalbird.push.register({ token, platform: 'web', provider: 'fcm' })
 Signalbird.destroy()
 ```
 
-`data-app-key` yerine `Signalbird.init({ appKey, baseUrl?, locale? })` da
+`data-key`/`data-channel` yerine `Signalbird.init({ publicKey, chatKey, baseUrl?, locale? })` da
 çağrılabilir. Widget ev sahibi sayfaya asla hata fırlatmaz; Shadow DOM içinde
 çalışır, sayfanızın CSS'iyle çakışmaz; < 20 KB gzip. Ayrıntı:
 `docs/CONTRACT.md § 9` ve https://signalbird.io/sdk/widget.

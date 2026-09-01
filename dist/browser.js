@@ -7,9 +7,9 @@ var SignalbirdBrowser = class {
     this.config = config;
     this.queue = [];
     this.timer = null;
-    if (!config.publicKey?.startsWith("sbr_pub_")) {
+    if (!config.publicKey?.startsWith("sb_public_live_")) {
       throw new Error(
-        "Signalbird: taray\u0131c\u0131 istemcisi a\xE7\u0131k anahtar ister (sbr_pub_\u2026). Gizli anahtar\u0131 (sbr_live_\u2026) istemci koduna KOYMAYIN."
+        "Signalbird: taray\u0131c\u0131 istemcisi a\xE7\u0131k anahtar ister (sb_public_live_\u2026). Gizli anahtar\u0131 (sb_secret_live_\u2026) istemci koduna KOYMAYIN."
       );
     }
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
@@ -19,31 +19,32 @@ var SignalbirdBrowser = class {
       window.addEventListener("pagehide", () => this.flushBeacon());
     }
   }
-  log(channel, message, level, context) {
-    this.queue.push({ channel, message, level, context, source: this.config.source });
+  log(key, message, level, context) {
+    this.queue.push({ key, message, level, context, source: this.config.source });
     if (this.queue.length >= this.maxQueue) {
       void this.flush();
     }
   }
-  info(channel, message, context) {
-    this.log(channel, message, "info", context);
+  info(key, message, context) {
+    this.log(key, message, "info", context);
   }
-  warn(channel, message, context) {
-    this.log(channel, message, "warn", context);
+  warn(key, message, context) {
+    this.log(key, message, "warn", context);
   }
-  error(channel, message, context) {
-    this.log(channel, message, "error", context);
+  error(key, message, context) {
+    this.log(key, message, "error", context);
   }
   /**
    * Tarayıcıdaki yakalanmamış hataları bağlar.
    *
-   * Kritik kanala YAZMAZ: istemci tarafı kod herkesin elindedir, oradan
-   * kritik alarm tetiklemek kötü niyetli birine ekibin telefonunu çaldırma
-   * imkânı verirdi. Sunucu zaten `browser_channels` ile bunu kısıtlar.
+   * Varsayılan anahtar `browser`dır ve KRİTİK DEĞİLDİR: istemci tarafı kod
+   * herkesin elindedir, oradan kritik alarm tetiklemek kötü niyetli birine
+   * ekibin telefonunu çaldırma imkânı verirdi. Hangi kanalın kime bildirim
+   * göndereceği panelde durur; oradan sessiz bırakılabilir.
    */
-  captureErrors(channel = "browser") {
+  captureErrors(key = "browser") {
     const onError = (event) => {
-      this.error(channel, event.message, {
+      this.error(key, event.message, {
         file: event.filename,
         line: event.lineno,
         column: event.colno,
@@ -51,7 +52,7 @@ var SignalbirdBrowser = class {
       });
     };
     const onRejection = (event) => {
-      this.error(channel, String(event.reason), { url: window.location.href });
+      this.error(key, String(event.reason), { url: window.location.href });
     };
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onRejection);
@@ -88,7 +89,7 @@ var SignalbirdBrowser = class {
       { type: "application/json" }
     );
     navigator.sendBeacon?.(
-      `${this.baseUrl}/v1/radio/log/batch?key=${encodeURIComponent(this.config.publicKey)}`,
+      `${this.baseUrl}/v1/radio/log/batch?k=${encodeURIComponent(this.config.publicKey)}`,
       blob
     );
   }

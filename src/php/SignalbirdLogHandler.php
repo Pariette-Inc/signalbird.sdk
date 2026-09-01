@@ -14,7 +14,7 @@ use Monolog\LogRecord;
  *   'signalbird' => [
  *       'driver' => 'monolog',
  *       'handler' => \Signalbird\Sdk\SignalbirdLogHandler::class,
- *       'with' => ['channel' => 'laravel', 'level' => 'info'],
+ *       'with' => ['key' => 'laravel', 'level' => 'info'],
  *   ],
  *
  * Sonra `LOG_STACK=single,signalbird`. Mevcut `Log::error()` satırları
@@ -43,11 +43,11 @@ class SignalbirdLogHandler extends AbstractProcessingHandler
     /** Telsiz'in toplu ucunun tek çağrıda aldığı en fazla olay. */
     private const FLUSH_AT = 100;
 
-    /** @var list<array{channel: string, message: string, level: string, context: ?array}> */
+    /** @var list<array{key: string, message: string, level: string, context: ?array}> */
     private array $buffer = [];
 
     public function __construct(
-        private string $channel = 'laravel',
+        private string $key = 'laravel',
         int|string|Level $level = Level::Error,
         bool $bubble = true,
     ) {
@@ -57,7 +57,7 @@ class SignalbirdLogHandler extends AbstractProcessingHandler
     protected function write(LogRecord $record): void
     {
         $this->buffer[] = [
-            'channel' => $this->channel,
+            'key' => $this->key,
             'message' => $record->message,
             'level' => $this->mapLevel($record->level),
             'context' => $record->context ?: null,

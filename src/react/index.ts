@@ -20,11 +20,11 @@ export interface SignalbirdProviderProps extends AppConfig {
 }
 
 /**
- * Uygulamanın köküne konur. İstemci bir kez kurulur; `appKey` değişirse
+ * Uygulamanın köküne konur. İstemci bir kez kurulur; `publicKey` değişirse
  * (ortam değişimi, çoklu marka) yeniden kurulur.
  */
 export function SignalbirdProvider({ children, ...config }: SignalbirdProviderProps) {
-  const client = useMemo(() => new SignalbirdApp(config), [config.appKey, config.baseUrl, config.locale]);
+  const client = useMemo(() => new SignalbirdApp(config), [config.publicKey, config.baseUrl, config.locale]);
 
   return createElement(AppContext.Provider, { value: client }, children);
 }

@@ -117,11 +117,12 @@ const SURFACES = [
     name: 'Yönetim',
     ref: 'docs/CONTRACT.md § 10',
     contract: [
-      // Telsiz yönetimi
+      // Telsiz okuma
       'radioSummary', 'radioEvents',
-      'listRadioProjects', 'createRadioProject', 'getRadioProject', 'updateRadioProject',
-      'deleteRadioProject', 'rotateRadioSecret',
-      'createRadioChannel', 'updateRadioChannel', 'deleteRadioChannel',
+      // Modül anahtarları (1 Eyl 2026) — Telsiz projesi/kanalı ve uygulama
+      // kaydının yerini aldı. Beş modül tek gövdeyi paylaşır.
+      'listModuleKeys', 'getModuleKey', 'createModuleKey', 'updateModuleKey',
+      'deleteModuleKey', 'listModuleKeyDevices',
       // Sohbet — ajan tarafı
       'chatSummary', 'chatUpdates',
       'listConversations', 'getConversation', 'listConversationMessages', 'startConversation',
@@ -131,8 +132,6 @@ const SURFACES = [
       'listCannedReplies', 'createCannedReply', 'updateCannedReply', 'deleteCannedReply',
       'listChatTriggers', 'createChatTrigger', 'updateChatTrigger', 'deleteChatTrigger',
       'chatReport',
-      // Uygulamalar
-      'listApps', 'createApp', 'getApp', 'updateApp', 'deleteApp', 'rotateAppKey', 'listAppDevices',
       // Gömme: Signalbird ekranını müşterinin KENDİ panelinde göstermek.
       'embedToken',
     ],

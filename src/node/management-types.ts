@@ -13,7 +13,7 @@ export type { SbResult };
 
 export interface ManagementConfig {
   /** Takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
-  apiKey: string;
+  domainKey: string;
   /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
   /** İstek zaman aşımı (ms). Varsayılan 15000. */
@@ -36,69 +36,69 @@ export interface Paginated<T> {
 
 export type RadioLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 
-export interface RadioProject {
-  id: number;
-  name: string;
-  slug?: string;
-  description?: string | null;
-  /** Gizli anahtarın tanınacak kadarı; tamamı yalnız oluşturmada döner. */
-  secret_hint?: string | null;
-  public_key?: string | null;
-  is_active?: boolean;
-  channels_count?: number;
-  events_count?: number;
-  last_event_at?: string | null;
-  channels?: RadioChannel[];
-}
+/** Modül anahtarı taşıyan modüller (`monitoring`/`servers` taşımaz). */
+export type KeyedModule = 'logger' | 'email' | 'sms' | 'push' | 'chat';
 
-export interface RadioChannel {
+export type ModuleKeyLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
+
+/** Bildirim kanalı — seçim KANAL düzeyindedir, kişi başına değil. */
+export type NotifyChannel = 'push' | 'email';
+
+/**
+ * Modül anahtarı — kodun içine gömülen kanal adı.
+ *
+ * Gizli DEĞİLDİR: domain anahtarı olmadan hiçbir işe yaramaz. Domain
+ * anahtarına referans da VERMEZ — anahtar yenilendiğinde bu kayıtlar
+ * bozulmasın diye (KEY_ARCHITECTURE §2).
+ */
+export interface ModuleKey {
   id: number;
+  module: KeyedModule;
   key: string;
-  name: string;
-  description?: string | null;
-  level?: RadioLevel;
-  notify_push?: boolean;
-  notify_email?: boolean;
-  recipient_user_ids?: number[] | null;
+  title: string;
+  /** Ad değiştiyse eskisi bu tarihe kadar kabul edilir. */
+  previous_key: string | null;
+  previous_key_until: string | null;
+  domain_id: number | null;
+  level: ModuleKeyLevel;
+  icon: string | null;
+  color: string | null;
+  notify: NotifyChannel[];
+  /** Boş = takımın tamamı. */
+  recipient_user_ids: number[];
+  quiet_from: number | null;
+  quiet_to: number | null;
+  dedupe_seconds: number;
+  config: Record<string, unknown> | null;
+  /** İlk çağrıda kendiliğinden açıldıysa işaretlidir ve SESSİZDİR. */
+  is_auto: boolean;
+  is_active: boolean;
+  last_used_at: string | null;
+  usage_count: number;
+  conversations_count?: number | null;
+  devices_count?: number | null;
+  created_at: string;
+}
+
+export interface ModuleKeyInput {
+  title?: string;
+  /** Verilmezse başlıktan üretilir; çakışırsa sonuna sayı eklenir. */
+  key?: string | null;
+  /** Ad değişiminde eski adı 30 gün kabul et (varsayılan `true`). */
+  keep_previous?: boolean;
+  domain_id?: number | null;
+  level?: ModuleKeyLevel;
+  icon?: string | null;
+  color?: string | null;
+  notify?: NotifyChannel[];
+  recipient_user_ids?: number[];
   quiet_from?: number | null;
   quiet_to?: number | null;
   dedupe_seconds?: number;
-  is_active?: boolean;
-  is_auto?: boolean;
-}
-
-export interface CreateRadioProjectInput {
-  name: string;
-}
-
-export interface UpdateRadioProjectInput {
-  name?: string;
-  description?: string | null;
-  is_active?: boolean;
-  /** Tarayıcıdan yazılabilen kanallar ve izinli kökenler. */
-  browser_channels?: string[] | null;
-  allowed_origins?: string[] | null;
-}
-
-export interface RadioChannelInput {
-  key?: string;
-  name?: string;
-  description?: string | null;
-  level?: RadioLevel;
-  notify_push?: boolean;
-  notify_email?: boolean;
-  recipient_user_ids?: number[] | null;
-  quiet_from?: number | null;
-  quiet_to?: number | null;
-  dedupe_seconds?: number;
+  config?: Record<string, unknown> | null;
   is_active?: boolean;
 }
 
-/** Proje açılışı: gizli anahtar YALNIZ burada döner, bir daha okunamaz. */
-export interface RadioProjectCreated {
-  project: RadioProject;
-  secret: string;
-}
 
 export interface RadioEvent {
   id: string;

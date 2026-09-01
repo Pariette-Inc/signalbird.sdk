@@ -22,7 +22,7 @@ export interface SbResult<T = unknown> {
 export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 export interface TransportConfig {
-  apiKey: string;
+  domainKey: string;
   baseUrl: string;
   timeout: number;
   throwOnError: boolean;
@@ -50,7 +50,7 @@ export class SbTransport {
         method,
         headers: {
           Accept: 'application/json',
-          Authorization: `Bearer ${this.config.apiKey}`,
+          'X-Signalbird-Key': this.config.domainKey,
           ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,

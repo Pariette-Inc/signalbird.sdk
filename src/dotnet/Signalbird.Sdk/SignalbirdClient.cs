@@ -19,8 +19,8 @@ public static class SignalbirdLevel
 
 public sealed class SignalbirdOptions
 {
-    /// <summary>Sunucu anahtarı (<c>sbr_live_…</c>). Tarayıcıya GÖMÜLEMEZ.</summary>
-    public string ApiKey { get; set; } = string.Empty;
+    /// <summary>Sunucu anahtarı (<c>sb_secret_live_…</c>). Tarayıcıya GÖMÜLEMEZ.</summary>
+    public string DomainKey { get; set; } = string.Empty;
 
     public string BaseUrl { get; set; } = "https://live.signalbird.io/api";
 
@@ -36,7 +36,7 @@ public sealed class SignalbirdOptions
 
 public sealed class LogEvent
 {
-    public string Channel { get; set; } = string.Empty;
+    public string Key { get; set; } = string.Empty;
 
     public string Message { get; set; } = string.Empty;
 
@@ -59,28 +59,28 @@ public sealed class SignalbirdClient
 
     public SignalbirdClient(SignalbirdOptions options, HttpClient? http = null)
     {
-        if (string.IsNullOrEmpty(options.ApiKey))
+        if (string.IsNullOrEmpty(options.DomainKey))
         {
-            throw new SignalbirdException("Signalbird: ApiKey zorunlu.", 0, "NO_KEY");
+            throw new SignalbirdException("Signalbird: DomainKey zorunlu.", 0, "NO_KEY");
         }
 
         // Açık anahtarın sunucuda kullanılması sessiz bir güvenlik hatasıdır:
         // çalışır görünür, sonra kanal kısıtına takılır. Baştan söylüyoruz.
-        if (options.ApiKey.StartsWith("sbr_pub_", StringComparison.Ordinal))
+        if (!options.DomainKey.StartsWith("sb_secret_live_", StringComparison.Ordinal))
         {
             throw new SignalbirdException(
-                "Signalbird: sunucu istemcisine tarayıcı anahtarı (sbr_pub_…) verildi. Sunucu anahtarı (sbr_live_…) kullanın.",
+                "Signalbird: sunucu istemcisine AÇIK anahtar (sb_public_live_…) verildi. Gizli anahtarı (sb_secret_live_…) kullanın.",
                 0,
                 "WRONG_KEY_TYPE");
         }
 
         _source = options.Source;
-        _http = new Transport(options.ApiKey, options.BaseUrl, options.Timeout, options.ThrowOnError, http);
+        _http = new Transport(options.DomainKey, options.BaseUrl, options.Timeout, options.ThrowOnError, http);
     }
 
     /// <summary>Seviye verilmezse kanalın kendi varsayılanı geçerlidir.</summary>
     public Task<SbResult> LogAsync(
-        string channel,
+        string key,
         string message,
         string? level = null,
         IDictionary<string, object?>? context = null,
@@ -88,24 +88,24 @@ public sealed class SignalbirdClient
         => _http.RequestAsync(
             HttpMethod.Post,
             "/v1/radio/log",
-            new LogEvent { Channel = channel, Message = message, Level = level, Context = context, Source = _source },
+            new LogEvent { Key = key, Message = message, Level = level, Context = context, Source = _source },
             null,
             cancellationToken);
 
-    public Task<SbResult> DebugAsync(string channel, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
-        => LogAsync(channel, message, SignalbirdLevel.Debug, context, cancellationToken);
+    public Task<SbResult> DebugAsync(string key, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
+        => LogAsync(key, message, SignalbirdLevel.Debug, context, cancellationToken);
 
-    public Task<SbResult> InfoAsync(string channel, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
-        => LogAsync(channel, message, SignalbirdLevel.Info, context, cancellationToken);
+    public Task<SbResult> InfoAsync(string key, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
+        => LogAsync(key, message, SignalbirdLevel.Info, context, cancellationToken);
 
-    public Task<SbResult> WarnAsync(string channel, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
-        => LogAsync(channel, message, SignalbirdLevel.Warn, context, cancellationToken);
+    public Task<SbResult> WarnAsync(string key, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
+        => LogAsync(key, message, SignalbirdLevel.Warn, context, cancellationToken);
 
-    public Task<SbResult> ErrorAsync(string channel, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
-        => LogAsync(channel, message, SignalbirdLevel.Error, context, cancellationToken);
+    public Task<SbResult> ErrorAsync(string key, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
+        => LogAsync(key, message, SignalbirdLevel.Error, context, cancellationToken);
 
-    public Task<SbResult> CriticalAsync(string channel, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
-        => LogAsync(channel, message, SignalbirdLevel.Critical, context, cancellationToken);
+    public Task<SbResult> CriticalAsync(string key, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
+        => LogAsync(key, message, SignalbirdLevel.Critical, context, cancellationToken);
 
     /// <summary>
     /// En fazla 100 kayıt, satır satır sonuç. Kısmi başarı normaldir (kota tam
@@ -116,7 +116,7 @@ public sealed class SignalbirdClient
         var rows = events.Take(100)
             .Select(e => new LogEvent
             {
-                Channel = e.Channel,
+                Key = e.Key,
                 Message = e.Message,
                 Level = e.Level,
                 Context = e.Context,

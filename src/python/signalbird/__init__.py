@@ -4,10 +4,10 @@
 
     from signalbird import SignalbirdClient, SignalbirdMessaging, SignalbirdManagement
 
-    radio = SignalbirdClient(api_key="sbr_live_…")          # log yazma
-    send  = SignalbirdMessaging(api_key="sb_…")             # e-posta/SMS/push
-    admin = SignalbirdManagement(api_key="sb_…")            # proje/sohbet/uygulama
-    partner = SignalbirdPartner(api_key="sbp_live_…")       # yalnız sözleşmeli platformlar
+    radio = SignalbirdClient(domain_key="sb_secret_live_…")          # log yazma
+    send  = SignalbirdMessaging(domain_key="sb_…")             # e-posta/SMS/push
+    admin = SignalbirdManagement(domain_key="sb_…")            # proje/sohbet/uygulama
+    partner = SignalbirdPartner(domain_key="sb_secret_live_…")       # yalnız sözleşmeli platformlar
 
 Ortam değişkeninden kısayol::
 
@@ -25,7 +25,7 @@ from .partner import SignalbirdPartner
 from .messaging import SignalbirdMessaging
 from .webhook import verify_webhook
 
-__version__ = "1.9.2"
+__version__ = "2.0.0"
 
 __all__ = [
     "SignalbirdClient",

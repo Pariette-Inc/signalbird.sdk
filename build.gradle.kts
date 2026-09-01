@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "io.signalbird"
-version = "1.9.2"
+version = "2.0.0"
 
 repositories {
     mavenCentral()

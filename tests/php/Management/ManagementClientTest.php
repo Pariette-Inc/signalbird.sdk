@@ -29,7 +29,7 @@ final class ManagementClientTest extends TestCase
 
     public function testWrongKeyTypeThrows(): void
     {
-        foreach (['sbr_live_abc', 'sbr_pub_abc', 'sbw_pub_abc'] as $key) {
+        foreach (['sb_public_live_abc', 'sbr_live_abc', 'x'] as $key) {
             try {
                 new ManagementClient($key);
                 $this->fail("İstisna beklenirdi: {$key}");
@@ -41,41 +41,53 @@ final class ManagementClientTest extends TestCase
 
     // ── Telsiz ────────────────────────────────────────────────────────────
 
-    public function testCreateRadioProjectPostsToProjects(): void
+    /**
+     * Kanal açmak MODÜL yoluna gider ve anahtar (`key`) yanıtta döner.
+     *
+     * Eskiden burada proje açılıyor ve gizli bir `secret` dönüyordu; proje
+     * kavramı 1 Eyl 2026'da kalktı ve kanalın sırrı yok — sır domain
+     * anahtarındadır (KEY_ARCHITECTURE §2).
+     */
+    public function testCreateModuleKeyPostsToModulePath(): void
     {
         $client = (new FakeManagementClient())
-            ->queueJson(201, ['project' => ['id' => 7, 'name' => 'Ödeme'], 'secret' => 'sbr_live_x']);
+            ->queueJson(201, ['module_key' => ['id' => 7, 'key' => 'kritikApiHatasi']]);
 
-        $result = $client->createRadioProject(['name' => 'Ödeme']);
+        $result = $client->createModuleKey('logger', ['title' => 'Kritik API hatası']);
 
         $this->assertTrue($result['ok']);
         $this->assertSame(201, $result['status']);
-        $this->assertSame('sbr_live_x', $result['data']['secret']);
+        $this->assertSame('kritikApiHatasi', $result['data']['module_key']['key']);
         $this->assertSame('POST', $client->lastCall()['method']);
-        $this->assertSame('/v1/radio/projects', $client->lastCall()['path']);
+        $this->assertSame('/v1/modules/logger/keys', $client->lastCall()['path']);
     }
 
-    public function testChannelPathCarriesBothIds(): void
+    /**
+     * Ad DEĞİŞTİRİLEBİLİR: eski ad 30 gün daha kabul edilir, böylece
+     * üretimdeki kod bir sonraki deploya kadar kayıt kaybetmez.
+     */
+    public function testModuleKeyRenameKeepsPreviousName(): void
     {
-        $client = (new FakeManagementClient())->queueJson(200, ['channel' => ['id' => 3]]);
+        $client = (new FakeManagementClient())
+            ->queueJson(200, ['module_key' => ['id' => 3, 'key' => 'yeniAd', 'previous_key' => 'eskiAd']]);
 
-        $client->updateRadioChannel(7, 3, ['level' => 'error']);
+        $client->updateModuleKey('logger', 3, ['key' => 'yeniAd']);
 
         $this->assertSame('PATCH', $client->lastCall()['method']);
-        $this->assertSame('/v1/radio/projects/7/channels/3', $client->lastCall()['path']);
-        $this->assertSame(['level' => 'error'], $client->lastCall()['body']);
+        $this->assertSame('/v1/modules/logger/keys/3', $client->lastCall()['path']);
+        $this->assertSame(['key' => 'yeniAd'], $client->lastCall()['body']);
     }
 
     public function testEventQueryIsEncoded(): void
     {
         $client = (new FakeManagementClient())->queueJson(200, ['data' => []]);
 
-        $client->radioEvents(['level' => 'critical', 'project_id' => 7, 'q' => 'ödeme hatası', 'page' => null]);
+        $client->radioEvents(['level' => 'critical', 'module_key_id' => 7, 'q' => 'ödeme hatası', 'page' => null]);
 
         $path = $client->lastCall()['path'];
 
         $this->assertStringContainsString('level=critical', $path);
-        $this->assertStringContainsString('project_id=7', $path);
+        $this->assertStringContainsString('module_key_id=7', $path);
         // `null` alan atlanır: "gönderilmedi" ile "boş" aynı şey değil.
         $this->assertStringNotContainsString('page=', $path);
         $this->assertStringContainsString('q=%C3%B6deme+hatas%C4%B1', $path);
@@ -117,17 +129,15 @@ final class ManagementClientTest extends TestCase
         $this->assertStringContainsString('include_internal=true', $path);
     }
 
-    // ── Uygulamalar ───────────────────────────────────────────────────────
-
-    public function testRotateAppKeyHitsRotateEndpoint(): void
+    /** Push kanalının cihaz listesi modül yolundan okunur. */
+    public function testModuleKeyDevicesPathCarriesModuleAndId(): void
     {
-        $client = (new FakeManagementClient())->queueJson(200, ['public_key' => 'sbw_pub_yeni']);
+        $client = (new FakeManagementClient())->queueJson(200, ['data' => []]);
 
-        $result = $client->rotateAppKey(12);
+        $client->listModuleKeyDevices('push', 12);
 
-        $this->assertSame('POST', $client->lastCall()['method']);
-        $this->assertSame('/v1/apps/12/rotate-key', $client->lastCall()['path']);
-        $this->assertSame('sbw_pub_yeni', $result['data']['public_key']);
+        $this->assertSame('GET', $client->lastCall()['method']);
+        $this->assertSame('/v1/modules/push/keys/12/devices', $client->lastCall()['path']);
     }
 
     // ── Hata eşlemesi ─────────────────────────────────────────────────────
@@ -135,12 +145,12 @@ final class ManagementClientTest extends TestCase
     public function testScopeErrorKeepsServerCode(): void
     {
         $client = (new FakeManagementClient())
-            ->queueJson(403, ['message' => 'Yetki kapsamında değil', 'code' => 'API_KEY_SCOPE']);
+            ->queueJson(403, ['message' => 'Bu uç gizli anahtar ister', 'code' => 'SECRET_KEY_REQUIRED']);
 
-        $result = $client->listRadioProjects();
+        $result = $client->listModuleKeys('logger');
 
         $this->assertFalse($result['ok']);
-        $this->assertSame('API_KEY_SCOPE', $result['code']);
+        $this->assertSame('SECRET_KEY_REQUIRED', $result['code']);
         $this->assertSame(403, $result['status']);
     }
 
@@ -149,7 +159,7 @@ final class ManagementClientTest extends TestCase
         $client = (new FakeManagementClient())
             ->queueJson(422, ['message' => 'The name field is required.', 'errors' => ['name' => ['zorunlu']]]);
 
-        $result = $client->createRadioProject([]);
+        $result = $client->createModuleKey('logger', []);
 
         $this->assertSame('VALIDATION_ERROR', $result['code']);
     }
@@ -167,11 +177,11 @@ final class ManagementClientTest extends TestCase
 
     public function testThrowOnErrorRaisesWithCodeAndStatus(): void
     {
-        $client = (new FakeManagementClient('sb_test_key', null, throwOnError: true))
+        $client = (new FakeManagementClient('sb_secret_live_test', null, throwOnError: true))
             ->queueJson(404, ['message' => 'Bulunamadı']);
 
         try {
-            $client->getApp(99);
+            $client->getModuleKey('chat', 99);
             $this->fail('İstisna beklenirdi');
         } catch (SignalbirdException $e) {
             $this->assertSame('HTTP_404', $e->getErrorCode());

@@ -87,8 +87,8 @@ def _stringify(value: Any) -> str:
 class Transport:
     """Anahtarlı istemcilerin ortak HTTP katmanı."""
 
-    def __init__(self, api_key: str, base_url: str, timeout: float, throw_on_error: bool, debug: bool):
-        self.api_key = api_key
+    def __init__(self, domain_key: str, base_url: str, timeout: float, throw_on_error: bool, debug: bool):
+        self.domain_key = domain_key
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.throw_on_error = throw_on_error
@@ -107,7 +107,7 @@ class Transport:
         payload = None
         headers = {
             "Accept": "application/json",
-            auth_header: f"{auth_prefix}{self.api_key}",
+            auth_header: f"{auth_prefix}{self.domain_key}",
         }
 
         if body is not None:

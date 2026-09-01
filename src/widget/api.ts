@@ -1,7 +1,7 @@
 /**
  * Widget'ın HTTP katmanı.
  *
- * Her istek uygulama anahtarını (`X-Signalbird-App-Key`) ve varsa ziyaretçi
+ * Her istek uygulama anahtarını (`X-Signalbird-Key`) ve varsa ziyaretçi
  * sırrını (`X-Signalbird-Visitor`) taşır. Sır localStorage'dadır; kimlik
  * doğrulama yoktur — anahtar uygulamayı, sır ziyaretçiyi tanır.
  *
@@ -14,7 +14,9 @@ import type { ApiResult } from './types';
 export class Api {
   constructor(
     private readonly baseUrl: string,
-    private readonly appKey: string,
+    private readonly publicKey: string,
+    /** Sohbet kanalı — sunucu hangi widget ayarını uygulayacağını bundan bilir. */
+    private readonly chatKey: string | undefined,
     private readonly secret: () => string | null,
     private readonly log: (...args: unknown[]) => void
   ) {}
@@ -50,7 +52,8 @@ export class Api {
   ): Promise<ApiResult<T>> {
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      'X-Signalbird-App-Key': this.appKey,
+      'X-Signalbird-Key': this.publicKey,
+      ...(this.chatKey ? { 'X-Signalbird-Module-Key': this.chatKey } : {}),
     };
     const secret = this.secret();
     if (secret) headers['X-Signalbird-Visitor'] = secret;

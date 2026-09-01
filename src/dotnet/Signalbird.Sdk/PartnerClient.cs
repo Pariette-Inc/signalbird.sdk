@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 namespace Signalbird.Sdk;
 
 /// <summary>
-/// Partner istemcisinin kurulumu. Anahtar <c>sbp_live_…</c>'dir; takım
+/// Partner istemcisinin kurulumu. Anahtar <c>sb_secret_live_…</c>'dir; takım
 /// anahtarı (<c>sb_…</c>) burada çalışmaz.
 /// </summary>
 public sealed class SignalbirdPartnerOptions
 {
-    /// <summary>Sözleşmeli partner anahtarı (<c>sbp_live_…</c>). Tarayıcıya İNMEZ.</summary>
-    public string ApiKey { get; set; } = string.Empty;
+    /// <summary>Sözleşmeli partner anahtarı (<c>sb_secret_live_…</c>). Tarayıcıya İNMEZ.</summary>
+    public string DomainKey { get; set; } = string.Empty;
 
     public string BaseUrl { get; set; } = "https://live.signalbird.io/api";
 
@@ -49,21 +49,21 @@ public sealed class PartnerClient
 
     public PartnerClient(SignalbirdPartnerOptions options, HttpClient? http = null)
     {
-        if (string.IsNullOrEmpty(options.ApiKey))
+        if (string.IsNullOrEmpty(options.DomainKey))
         {
-            throw new SignalbirdException("Signalbird: ApiKey zorunlu.", 0, "NO_KEY");
+            throw new SignalbirdException("Signalbird: DomainKey zorunlu.", 0, "NO_KEY");
         }
 
-        if (!options.ApiKey.StartsWith("sbp_live_", StringComparison.Ordinal))
+        if (!options.DomainKey.StartsWith("sb_secret_live_", StringComparison.Ordinal))
         {
             throw new SignalbirdException(
-                "Signalbird: partner istemcisi partner anahtarı ister (sbp_live_…). "
-                + "Takım (sb_…), Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.",
+                "Signalbird: partner istemcisi GİZLİ domain anahtarı ister (sb_secret_live_…). "
+                + "Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.",
                 0,
                 "WRONG_KEY_TYPE");
         }
 
-        _http = new Transport(options.ApiKey, options.BaseUrl, options.Timeout, options.ThrowOnError, http);
+        _http = new Transport(options.DomainKey, options.BaseUrl, options.Timeout, options.ThrowOnError, http);
     }
 
     // ── Müşteri ───────────────────────────────────────────────────────────

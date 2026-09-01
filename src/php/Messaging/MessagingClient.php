@@ -34,21 +34,23 @@ class MessagingClient
     private string $baseUrl;
 
     public function __construct(
-        private string $apiKey,
+        private string $domainKey,
         ?string $baseUrl = null,
         private int $timeout = 15,
         private bool $throwOnError = false,
     ) {
-        if ($apiKey === '') {
-            throw new SignalbirdException('Signalbird: apiKey zorunlu.', 'NO_KEY', 0);
+        if ($domainKey === '') {
+            throw new SignalbirdException('Signalbird: domainKey zorunlu.', 'NO_KEY', 0);
         }
 
-        // Telsiz (`sbr_`) ya da uygulama (`sbw_pub_`) anahtarı buraya verilirse
-        // her istek 401 döner; baştan söylemek haftalar sonra bulunacak hatayı önler.
-        if (! str_starts_with($apiKey, 'sb_')) {
+        /*
+         * Açık anahtar buraya verilirse her istek 403 `SECRET_KEY_REQUIRED`
+         * döner. Kurulumda söylemek, haftalar sonra bulunacak hatayı önler.
+         */
+        if (! str_starts_with($domainKey, 'sb_secret_live_')) {
             throw new SignalbirdException(
-                'Signalbird: gönderim istemcisi takım API anahtarı ister (sb_…). '
-                . 'Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.',
+                'Signalbird: gönderim istemcisi GİZLİ domain anahtarı ister (sb_secret_live_…). '
+                . 'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
                 'WRONG_KEY_TYPE',
                 0,
             );
@@ -326,7 +328,7 @@ class MessagingClient
     {
         $headers = [
             'Accept: application/json',
-            'Authorization: Bearer ' . $this->apiKey,
+            'X-Signalbird-Key: ' . $this->domainKey,
         ];
 
         $options = [

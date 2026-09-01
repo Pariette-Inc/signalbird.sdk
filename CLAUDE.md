@@ -9,15 +9,23 @@ npm paketi, bir Composer paketi ve (eklendikçe) bir Go modülü, Swift paketi,
 NuGet ve Maven artefaktıdır. Hepsi aynı etiketten çıkar, aynı sürümü ve aynı
 davranışı taşır. Ayrı SDK reposu, ayna repo veya alt modül YOKTUR.
 
-Paket **beş yüzey** taşır; her birinin anahtarı ve kapısı farklıdır:
+> **v2.0.0 — 1 Eyl 2026.** Dört anahtar ailesi ve 17 elemanlı scope listesi
+> KALDIRILDI. Beş yüzeyin tamamı **tek anahtar** kullanır: alan adının
+> anahtarı. Ayrım yüzeyde değil anahtarın TÜRÜNDEDİR — gizli
+> (`sb_secret_live_`, sunucu) ve açık (`sb_public_live_`, istemci). İkinci ve
+> gizli olmayan kavram: **modül anahtarı**, müşterinin panelde açtığı kanalın
+> adı; koda gömülür. Sözleşme:
+> `../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md`.
+
+Paket **beş yüzey** taşır; hepsi aynı anahtarı kullanır, kapıları farklıdır:
 
 | Yüzey | Anahtar | Uçlar | Kaynak |
 |---|---|---|---|
-| **Telsiz** (Radio) — log/olay | `sbr_live_…` (sunucu, `Authorization: Bearer`) / `sbr_pub_…` (tarayıcı, `X-Signalbird-Key`) | `POST /v1/radio/log`, `POST /v1/radio/log/batch` | `src/{node,browser,python,go,dotnet,swift,kotlin}` |
-| **Gönderim** (Messaging) — e-posta/SMS/push, kişi, liste, kampanya, mesaj, webhook imzası | `sb_…` takım API anahtarı (yalnız sunucu) | `/v1/email/send`, `/v1/sms/*`, `/v1/push/send`, `/v1/contacts*`, `/v1/contact-lists*`, `/v1/campaigns*`, `/v1/messages*` | `src/{node,php,python,go,dotnet}` |
-| **Yönetim** (Management) — Telsiz projesi/kanalı, olay akışı, sohbet gelen kutusu, uygulama ve cihaz | `sb_…` + `radio\|chat\|apps` scope'ları (yalnız sunucu) | `/v1/radio/{summary,events,projects…}`, `/v1/chat/*`, `/v1/apps*` | `src/node/management.ts`, `src/php/Management/`, `src/{python,go,dotnet}` |
-| **Uygulama** (App) — son kullanıcıya canlı sohbet + push cihaz kaydı | `sbw_pub_…` uygulama anahtarı (`X-Signalbird-App-Key`) + ziyaretçi sırrı (`X-Signalbird-Visitor`) | `/v1/sdk/bootstrap`, `/v1/sdk/chat/*`, `/v1/sdk/devices`, `/v1/sdk/identify` | `src/app/`, `src/{react,vue,angular,react-native}`, `src/swift`, `src/kotlin`, `src/widget/` → `dist/signalbird.js` |
-| **Partner** — sözleşmeli platformun müşteri sağlaması, modül yetkisi, gömme jetonu | `sbp_live_…` partner anahtarı (yalnız sunucu) | `/v1/partner/*` | `src/node/partner.ts`, `src/php/Partner/`, `src/{python,go,dotnet}` |
+| **Telsiz** (Radio) — log/olay | `sb_secret_live_…` (sunucu) / `sb_public_live_…` (tarayıcı), başlık `X-Signalbird-Key` | `POST /v1/radio/log`, `POST /v1/radio/log/batch` | `src/{node,browser,python,go,dotnet,swift,kotlin}` |
+| **Gönderim** (Messaging) — e-posta/SMS/push, kişi, liste, kampanya, mesaj, webhook imzası | `sb_secret_live_…` (yalnız sunucu) | `/v1/email/send`, `/v1/sms/*`, `/v1/push/send`, `/v1/contacts*`, `/v1/contact-lists*`, `/v1/campaigns*`, `/v1/messages*` | `src/{node,php,python,go,dotnet}` |
+| **Yönetim** (Management) — olay akışı, MODÜL ANAHTARLARI, sohbet gelen kutusu, cihaz | `sb_secret_live_…` (yalnız sunucu) | `/v1/radio/{summary,events}`, `/v1/modules/{module}/keys*`, `/v1/chat/*` | `src/node/management.ts`, `src/php/Management/`, `src/{python,go,dotnet}` |
+| **Uygulama** (App) — son kullanıcıya canlı sohbet + push cihaz kaydı | `sb_public_live_…` (`X-Signalbird-Key`) + kanal (`X-Signalbird-Module-Key`) + ziyaretçi sırrı (`X-Signalbird-Visitor`) | `/v1/sdk/bootstrap`, `/v1/sdk/chat/*`, `/v1/sdk/devices`, `/v1/sdk/identify` | `src/app/`, `src/{react,vue,angular,react-native}`, `src/swift`, `src/kotlin`, `src/widget/` → `dist/signalbird.js` |
+| **Partner** — sözleşmeli platformun müşteri sağlaması, modül yetkisi, gömme jetonu | `sb_secret_live_…` (yalnız sunucu) | `/v1/partner/*` | `src/node/partner.ts`, `src/php/Partner/`, `src/{python,go,dotnet}` |
 
 **Yönetim ADMIN yüzeyi DEĞİLDİR.** Anahtar tek bir takıma bağlıdır ve yalnız o
 takımın kayıtlarına dokunur. Kullanıcı yönetimi, faturalama, abonelik ve plan
@@ -100,8 +108,13 @@ Widget (`dist/signalbird.js`) npm tarball'ında durur ama müşteri onu CDN'den
    `data-base-url`.
 4. **Tek repo, tek paket.** Yeni dil için ayrı repo AÇILMAZ; manifesti bu
    reponun köküne gelir, kaynağı `src/<dil>/` altına.
-5. **Anahtar türü kurulumda denetlenir.** Gönderim istemcisi `sb_` dışını
-   `WRONG_KEY_TYPE` ile reddeder; Telsiz sunucu istemcisi `sbr_pub_` kabul etmez.
+5. **Anahtar türü kurulumda denetlenir.** Sunucu istemcileri
+   `sb_secret_live_` dışını `WRONG_KEY_TYPE` ile reddeder; istemci yüzeyi
+   `sb_public_live_` ister. Sessizce çalışıp `ORIGIN_REQUIRED` alması,
+   hatanın haftalar sonra fark edilmesi demektir.
+5b. **Modül anahtarı GİZLİ DEĞİLDİR ve denetlenmez.** Kanalın adıdır, kodun
+   içinde durur; domain anahtarı olmadan işe yaramaz. Domain anahtarına
+   referans VERMEZ — anahtar yenilendiğinde müşterinin kodu aynı kalsın diye.
 6. **Widget ev sahibine hata fırlatmaz.** `src/widget/index.ts` içindeki her
    genel çağrı try/catch'lidir; bunu bozacak değişiklik yapma.
 
@@ -156,7 +169,7 @@ docs/CONTRACT.md güncelle
   şirket/takım CRUD. Yönetim yüzeyi müşterinin KENDİ projesi içindir.
   **Tek istisna Partner yüzeyidir** ve ayrı anahtar türü taşır (CONTRACT §12.1)
 - Mobil dillerde (Swift, Kotlin) Gönderim ya da Yönetim istemcisi OLMAYACAK —
-  `sb_` anahtarı telefona gömülmez
+  GİZLİ anahtar (`sb_secret_live_`) telefona gömülmez
 - Anahtar dışında kimlik doğrulama OLMAYACAK (widget'ta ziyaretçi sırrı da bir anahtardır)
 - İstemci içinde otomatik retry OLMAYACAK — kritik alarmı iki kez çaldırır,
   iletiyi iki kez gönderir

@@ -11,8 +11,8 @@ const BulkChunk = 1000
 
 // KeyConfig — takım anahtarıyla çalışan istemcilerin (Gönderim, Yönetim) ayarı.
 type KeyConfig struct {
-	// APIKey, takım API anahtarıdır (sb_…). Telsiz anahtarı burada çalışmaz.
-	APIKey  string
+	// DomainKey, takım API anahtarıdır (sb_…). Telsiz anahtarı burada çalışmaz.
+	DomainKey  string
 	BaseURL string
 	// Timeout boşsa 15 saniye — toplu kişi yükleme uzun sürebilir.
 	Timeout      time.Duration
@@ -37,11 +37,11 @@ func NewMessaging(config KeyConfig) (*Messaging, error) {
 }
 
 func newKeyTransport(config KeyConfig) (*transport, error) {
-	if config.APIKey == "" {
+	if config.DomainKey == "" {
 		return nil, ErrNoKey
 	}
 
-	if !strings.HasPrefix(config.APIKey, "sb_") {
+	if !strings.HasPrefix(config.DomainKey, "sb_secret_live_") {
 		return nil, ErrWrongKeyType
 	}
 
@@ -50,7 +50,7 @@ func newKeyTransport(config KeyConfig) (*transport, error) {
 		timeout = 15 * time.Second
 	}
 
-	return newTransport(config.APIKey, config.BaseURL, timeout, config.ThrowOnError, config.Debug), nil
+	return newTransport(config.DomainKey, config.BaseURL, timeout, config.ThrowOnError, config.Debug), nil
 }
 
 // ── Gönderim ───────────────────────────────────────────────────────────

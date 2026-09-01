@@ -4,7 +4,7 @@ Signalbird'ü kendi ürününün içinde satan sözleşmeli platform (veribenim,
 submitcms) müşterisini bununla sağlar ve yetkilendirir.
 
 Bu, "Admin yüzeyi OLMAYACAK" kuralının BİLİNÇLİ istisnasıdır ve istisna
-olduğu için ayrı anahtar türü taşır (``sbp_live_…``). Kural, müşterinin kendi
+olduğu için ayrı anahtar türü taşır (``sb_secret_live_…``). Kural, müşterinin kendi
 anahtarıyla (``sb_``) şirket açamaması içindi; o kural aynen duruyor.
 
 Partner SÜPER YÖNETİCİ DEĞİLDİR: yalnız kendi açtığı company'lere erişir,
@@ -23,24 +23,24 @@ from ._http import DEFAULT_BASE_URL, Result, SignalbirdError, Transport, seg
 class SignalbirdPartner:
     def __init__(
         self,
-        api_key: str,
+        domain_key: str,
         base_url: Optional[str] = None,
         timeout: float = 15.0,
         throw_on_error: bool = False,
         debug: bool = False,
     ):
-        if not api_key:
-            raise SignalbirdError("Signalbird: api_key zorunlu.", 0, "NO_KEY")
+        if not domain_key:
+            raise SignalbirdError("Signalbird: domain_key zorunlu.", 0, "NO_KEY")
 
-        if not api_key.startswith("sbp_live_"):
+        if not domain_key.startswith("sb_secret_live_"):
             raise SignalbirdError(
-                "Signalbird: partner istemcisi partner anahtarı ister (sbp_live_…). "
-                "Takım (sb_…), Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.",
+                "Signalbird: partner istemcisi GİZLİ domain anahtarı ister (sb_secret_live_…). "
+                "Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.",
                 0,
                 "WRONG_KEY_TYPE",
             )
 
-        self._http = Transport(api_key, base_url or DEFAULT_BASE_URL, timeout, throw_on_error, debug)
+        self._http = Transport(domain_key, base_url or DEFAULT_BASE_URL, timeout, throw_on_error, debug)
 
     # ── Müşteri ──────────────────────────────────────────────────────────
 

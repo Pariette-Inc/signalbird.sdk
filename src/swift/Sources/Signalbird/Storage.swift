@@ -36,14 +36,14 @@ final class VisitorStore: @unchecked Sendable {
     private static let storageKey = "sb_visitor"
 
     private let storage: SignalbirdStorage
-    private let appKey: String
+    private let publicKey: String
     private let lock = NSLock()
     private var cached: (id: String, secret: String)?
     private var loaded = false
 
-    init(storage: SignalbirdStorage, appKey: String) {
+    init(storage: SignalbirdStorage, publicKey: String) {
         self.storage = storage
-        self.appKey = appKey
+        self.publicKey = publicKey
     }
 
     var id: String? { current()?.id }
@@ -57,7 +57,7 @@ final class VisitorStore: @unchecked Sendable {
         cached = (id, secret)
         loaded = true
 
-        let payload: [String: Any] = ["id": id, "secret": secret, "appKey": appKey]
+        let payload: [String: Any] = ["id": id, "secret": secret, "publicKey": publicKey]
 
         if let raw = try? JSONSerialization.data(withJSONObject: payload),
            let text = String(data: raw, encoding: .utf8) {
@@ -89,7 +89,7 @@ final class VisitorStore: @unchecked Sendable {
               let parsed = try? JSONSerialization.jsonObject(with: raw) as? [String: Any],
               let id = parsed["id"] as? String,
               let secret = parsed["secret"] as? String,
-              parsed["appKey"] as? String == appKey
+              parsed["publicKey"] as? String == publicKey
         else {
             return nil
         }

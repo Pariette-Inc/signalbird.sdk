@@ -24,7 +24,7 @@ final class MessagingClientTest extends TestCase
     public function testWrongKeyTypeThrows(): void
     {
         try {
-            new MessagingClient('sbr_live_abc');
+            new MessagingClient('sb_public_live_abc');
             $this->fail('İstisna beklenirdi');
         } catch (SignalbirdException $e) {
             $this->assertSame('WRONG_KEY_TYPE', $e->getErrorCode());

@@ -15,17 +15,17 @@ namespace Signalbird.Sdk;
 /// <code>
 /// builder.Services.AddSignalbird(options =>
 /// {
-///     options.ApiKey = builder.Configuration["Signalbird:RadioKey"]!;
+///     options.DomainKey = builder.Configuration["Signalbird:RadioKey"]!;
 ///     options.Source = "api-01";
 /// });
 ///
 /// builder.Services.AddSignalbirdManagement(options =>
-///     options.ApiKey = builder.Configuration["Signalbird:ApiKey"]!);
+///     options.DomainKey = builder.Configuration["Signalbird:DomainKey"]!);
 /// </code>
 /// </summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>Telsiz istemcisi (<c>sbr_live_…</c>).</summary>
+    /// <summary>Telsiz istemcisi (<c>sb_secret_live_…</c>).</summary>
     public static IServiceCollection AddSignalbird(this IServiceCollection services, Action<SignalbirdOptions> configure)
     {
         var options = new SignalbirdOptions();

@@ -1,5 +1,41 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-01 — v2.0.0: tek anahtar (domain key + module key)
+
+Sözleşme: `docs/CONTRACT.md` §0–2, §10 · platform:
+`../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md`.
+
+**KIRICI SÜRÜM.** Dört anahtar ailesi (`sbr_live_`, `sbr_pub_`, `sb_`,
+`sbw_pub_`, `sbp_live_`) ve 17 elemanlı scope listesi kaldırıldı. Beş yüzeyin
+tamamı tek anahtar kullanır.
+
+| Eski | Yeni |
+|---|---|
+| `apiKey` / `api_key` / `APIKey` | `domainKey` / `domain_key` / `DomainKey` |
+| `appKey` (App, widget, react/vue/angular/RN) | `publicKey` |
+| `SIGNALBIRD_KEY`, `SIGNALBIRD_API_KEY`, `SIGNALBIRD_MESSAGING_KEY`, `SIGNALBIRD_PARTNER_KEY` | `SIGNALBIRD_DOMAIN_KEY` |
+| `Authorization: Bearer` | `X-Signalbird-Key` (Bearer da kabul) |
+| `X-Signalbird-App-Key` | `X-Signalbird-Key` + `X-Signalbird-Module-Key` |
+| Telsiz gövdesinde `channel` | `key` (modül anahtarı) |
+| `data-app-key="sbw_pub_…"` | `data-key="sb_public_live_…" data-channel="destek"` |
+| `config/signalbird.php` → `key`, `api_key`, `messaging_key`, `partner_key` | tek alan: `domain_key` |
+
+**Yönetim yüzeyi 45 → 36 metot.** Telsiz projesi/kanalı (9) ve uygulama (7)
+metotları silindi; yerlerine modül anahtarı metotları (6) geldi:
+`listModuleKeys` · `getModuleKey` · `createModuleKey` · `updateModuleKey` ·
+`deleteModuleKey` · `listModuleKeyDevices`. `module` ∈ logger·email·sms·push·chat.
+
+Davranış değişikliği: modül anahtarının `key` alanı artık **değiştirilebilir**
+(v1'de değişmezdi). Eski ad 30 gün daha kabul edilir, böylece üretimdeki kod
+bir sonraki deploya kadar kayıt kaybetmez.
+
+Anahtar türü denetimi tek kurala indi: sunucu istemcileri `sb_secret_live_`
+ister, istemci yüzeyi `sb_public_live_`. Yanlış tür KURULUMDA yakalanır —
+açık anahtar sunucuda `ORIGIN_REQUIRED` alır ve sebebi log'da görünmez.
+
+Node · PHP · Python · Go · .NET · Swift · Kotlin · tarayıcı · widget · React ·
+Vue · Angular · React Native: hepsi güncellendi, parite korundu.
+
 ## 2026-08-31 — Ön-form kararı ziyaretçi KAYDINA değil, BİLİNİYOR OLMASINA bakıyor
 
 Widget'ın ön-formu (ad/e-posta) `!this.store.visitor` koşuluyla kapanıyordu:

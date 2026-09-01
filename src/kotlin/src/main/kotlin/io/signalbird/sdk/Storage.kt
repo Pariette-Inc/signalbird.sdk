@@ -34,7 +34,7 @@ class MemoryStorage : SignalbirdStorage {
  */
 internal class VisitorStore(
     private val storage: SignalbirdStorage,
-    private val appKey: String,
+    private val publicKey: String,
 ) {
     private val lock = ReentrantLock()
     private var cached: Pair<String, String>? = null
@@ -49,7 +49,7 @@ internal class VisitorStore(
 
         storage.set(
             STORAGE_KEY,
-            JSONObject(mapOf("id" to id, "secret" to secret, "appKey" to appKey)).toString(),
+            JSONObject(mapOf("id" to id, "secret" to secret, "publicKey" to publicKey)).toString(),
         )
     }
 
@@ -75,7 +75,7 @@ internal class VisitorStore(
             val id = parsed.optString("id")
             val secret = parsed.optString("secret")
 
-            if (id.isEmpty() || secret.isEmpty() || parsed.optString("appKey") != appKey) {
+            if (id.isEmpty() || secret.isEmpty() || parsed.optString("publicKey") != publicKey) {
                 null
             } else {
                 id to secret

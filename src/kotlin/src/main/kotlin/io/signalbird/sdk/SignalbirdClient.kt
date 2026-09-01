@@ -11,14 +11,14 @@ enum class SignalbirdLevel(val value: String) {
 
 data class SignalbirdConfig(
     /**
-     * Sunucu anahtarı (`sbr_live_…`).
+     * Sunucu anahtarı (`sb_secret_live_…`).
      *
      * Bu anahtar GİZLİDİR ve Android uygulamasına gömülmemelidir — APK
      * çözülebilir. Mobil taraf sohbeti ve push kaydını [SignalbirdApp] ile
      * (açık anahtarla) yapar; bu istemci sunucu tarafı Kotlin servisleri
      * (Ktor, Spring) içindir.
      */
-    val apiKey: String,
+    val domainKey: String,
     val baseUrl: String = SIGNALBIRD_DEFAULT_BASE_URL,
     /** Her olaya eklenen köken adı (sunucu ya da servis adı). */
     val source: String? = null,
@@ -37,22 +37,22 @@ class SignalbirdClient(private val config: SignalbirdConfig) {
     private val http: Transport
 
     init {
-        require(config.apiKey.isNotEmpty()) { "Signalbird: apiKey zorunlu." }
+        require(config.domainKey.isNotEmpty()) { "Signalbird: domainKey zorunlu." }
 
         // Açık anahtarın sunucuda kullanılması sessiz bir güvenlik hatasıdır:
         // çalışır görünür, sonra kanal kısıtına takılır. Baştan söylüyoruz.
-        require(!config.apiKey.startsWith("sbr_pub_")) {
-            "Signalbird: sunucu istemcisine tarayıcı anahtarı verildi. sbr_live_… kullanın."
+        require(config.domainKey.startsWith("sb_secret_live_")) {
+            "Signalbird: sunucu istemcisine tarayıcı anahtarı verildi. sb_secret_live_… kullanın."
         }
 
         http = Transport(config.baseUrl, config.timeoutMs, config.throwOnError) {
-            mapOf("Authorization" to "Bearer ${config.apiKey}")
+            mapOf("Authorization" to "Bearer ${config.domainKey}")
         }
     }
 
     /** Seviye verilmezse kanalın kendi varsayılanı geçerlidir. */
     suspend fun log(
-        channel: String,
+        key: String,
         message: String,
         level: SignalbirdLevel? = null,
         context: Map<String, Any?>? = null,
@@ -60,7 +60,7 @@ class SignalbirdClient(private val config: SignalbirdConfig) {
         "POST",
         "/v1/radio/log",
         mapOf(
-            "channel" to channel,
+            "key" to key,
             "message" to message,
             "level" to level?.value,
             "context" to context,
@@ -68,20 +68,20 @@ class SignalbirdClient(private val config: SignalbirdConfig) {
         ),
     )
 
-    suspend fun debug(channel: String, message: String, context: Map<String, Any?>? = null): SbResult =
-        log(channel, message, SignalbirdLevel.DEBUG, context)
+    suspend fun debug(key: String, message: String, context: Map<String, Any?>? = null): SbResult =
+        log(key, message, SignalbirdLevel.DEBUG, context)
 
-    suspend fun info(channel: String, message: String, context: Map<String, Any?>? = null): SbResult =
-        log(channel, message, SignalbirdLevel.INFO, context)
+    suspend fun info(key: String, message: String, context: Map<String, Any?>? = null): SbResult =
+        log(key, message, SignalbirdLevel.INFO, context)
 
-    suspend fun warn(channel: String, message: String, context: Map<String, Any?>? = null): SbResult =
-        log(channel, message, SignalbirdLevel.WARN, context)
+    suspend fun warn(key: String, message: String, context: Map<String, Any?>? = null): SbResult =
+        log(key, message, SignalbirdLevel.WARN, context)
 
-    suspend fun error(channel: String, message: String, context: Map<String, Any?>? = null): SbResult =
-        log(channel, message, SignalbirdLevel.ERROR, context)
+    suspend fun error(key: String, message: String, context: Map<String, Any?>? = null): SbResult =
+        log(key, message, SignalbirdLevel.ERROR, context)
 
-    suspend fun critical(channel: String, message: String, context: Map<String, Any?>? = null): SbResult =
-        log(channel, message, SignalbirdLevel.CRITICAL, context)
+    suspend fun critical(key: String, message: String, context: Map<String, Any?>? = null): SbResult =
+        log(key, message, SignalbirdLevel.CRITICAL, context)
 
     /**
      * En fazla 100 kayıt, satır satır sonuç.

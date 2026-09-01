@@ -10,13 +10,18 @@
 type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 interface SignalbirdConfig {
     /**
-     * Sunucu anahtarı (`sbr_live_…`).
+     * Gizli domain anahtarı (`sb_secret_live_…`) — `SIGNALBIRD_DOMAIN_KEY`.
      *
      * Bu anahtar GİZLİDİR ve tarayıcıya gömülemez: sunucu `Origin` başlığı taşıyan
-     * istekleri reddeder. Tarayıcı için `signalbird/browser` ve açık anahtar
-     * (`sbr_pub_…`) kullanılır.
+     * istekleri reddeder (401 `SECRET_KEY_IN_BROWSER`). Tarayıcı için
+     * `signalbird/browser` ve açık anahtar (`sb_public_live_…`) kullanılır.
+     *
+     * v2 (1 Eyl 2026): eskiden `apiKey` idi ve yüzey başına ayrı bir anahtar
+     * ailesi vardı (`sbr_live_`, `sb_`, `sbw_pub_`, `sbp_live_`). Hepsi tek
+     * anahtara indi — sözleşme:
+     * ../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md
      */
-    apiKey: string;
+    domainKey: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
     /** Her olaya eklenen köken adı (sunucu adı, servis adı). */
@@ -35,7 +40,14 @@ interface SignalbirdConfig {
     debug?: boolean;
 }
 interface LogInput {
-    channel: string;
+    /**
+     * Modül anahtarı — panelde açtığınız kanalın adı (`penyuSatisBildirimi`).
+     *
+     * Gizli DEĞİLDİR ve kodun içinde durur: domain anahtarı olmadan hiçbir işe
+     * yaramaz. Tanımsız bir ad gönderirseniz kanal SESSİZ olarak açılır — kayıt
+     * düşmez, ama bildirim de gitmez; kuralı panelden siz koyarsınız.
+     */
+    key: string;
     message: string;
     level?: Level;
     context?: Record<string, unknown>;
@@ -95,11 +107,11 @@ declare class SignalbirdClient {
      * durum değil satır satır döner.
      */
     batch(events: LogInput[]): Promise<BatchResult>;
-    debugLog(channel: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
-    info(channel: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
-    warn(channel: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
-    error(channel: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
-    critical(channel: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
+    debugLog(key: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
+    info(key: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
+    warn(key: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
+    error(key: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
+    critical(key: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
     /**
      * Yakalanmamış hataları Telsiz'e bağlar.
      *
@@ -107,7 +119,7 @@ declare class SignalbirdClient {
      * süreci ayakta tutmak, bozuk durumdaki bir uygulamayı çalıştırmaya devam
      * etmek demektir — log göndermek bunu meşrulaştırmaz.
      */
-    captureUncaught(channel?: string): () => void;
+    captureUncaught(key?: string): () => void;
     private send;
     private request;
 }
@@ -121,7 +133,7 @@ declare class SignalbirdClient {
  */
 interface MessagingConfig {
     /** Takım API anahtarı (`sb_…`). GİZLİDİR, yalnız sunucuda kullanılır. */
-    apiKey: string;
+    domainKey: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
     /** İstek zaman aşımı (ms). Varsayılan 15000 — toplu kişi yükleme uzun sürebilir. */
@@ -335,7 +347,7 @@ interface Paginated$1<T> {
 type MessagingErrorCode = 'API_KEY_MISSING' | 'API_KEY_INVALID' | 'API_KEY_SCOPE' | 'API_KEY_IP_BLOCKED' | 'API_KEY_NO_TEAM' | 'MODULE_DISABLED' | 'LIMIT_REACHED' | 'OVERAGE_CEILING_REACHED' | 'SUPPRESSED' | 'NO_CONSENT' | 'NO_SENDING_DOMAIN' | 'INVALID_PHONE' | 'LIST_NOT_FOUND' | 'NO_RECIPIENTS' | 'ALREADY_FINISHED' | 'NETWORK_ERROR' | 'TIMEOUT' | 'VALIDATION_ERROR' | (string & {});
 
 declare class SignalbirdMessaging {
-    private readonly apiKey;
+    private readonly domainKey;
     private readonly baseUrl;
     private readonly timeout;
     private readonly throwOnError;
@@ -421,7 +433,7 @@ interface SbResult<T = unknown> {
 
 interface PartnerConfig {
     /** `sbp_live_…` — sözleşmeli partner anahtarı. Tarayıcıya İNMEZ. */
-    apiKey: string;
+    domainKey: string;
     baseUrl?: string;
     timeout?: number;
     throwOnError?: boolean;
@@ -572,7 +584,7 @@ interface EmbedToken {
 
 interface ManagementConfig {
     /** Takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
-    apiKey: string;
+    domainKey: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
     /** İstek zaman aşımı (ms). Varsayılan 15000. */
@@ -590,63 +602,63 @@ interface Paginated<T> {
     total?: number;
 }
 type RadioLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
-interface RadioProject {
+/** Modül anahtarı taşıyan modüller (`monitoring`/`servers` taşımaz). */
+type KeyedModule = 'logger' | 'email' | 'sms' | 'push' | 'chat';
+type ModuleKeyLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
+/** Bildirim kanalı — seçim KANAL düzeyindedir, kişi başına değil. */
+type NotifyChannel = 'push' | 'email';
+/**
+ * Modül anahtarı — kodun içine gömülen kanal adı.
+ *
+ * Gizli DEĞİLDİR: domain anahtarı olmadan hiçbir işe yaramaz. Domain
+ * anahtarına referans da VERMEZ — anahtar yenilendiğinde bu kayıtlar
+ * bozulmasın diye (KEY_ARCHITECTURE §2).
+ */
+interface ModuleKey {
     id: number;
-    name: string;
-    slug?: string;
-    description?: string | null;
-    /** Gizli anahtarın tanınacak kadarı; tamamı yalnız oluşturmada döner. */
-    secret_hint?: string | null;
-    public_key?: string | null;
-    is_active?: boolean;
-    channels_count?: number;
-    events_count?: number;
-    last_event_at?: string | null;
-    channels?: RadioChannel[];
-}
-interface RadioChannel {
-    id: number;
+    module: KeyedModule;
     key: string;
-    name: string;
-    description?: string | null;
-    level?: RadioLevel;
-    notify_push?: boolean;
-    notify_email?: boolean;
-    recipient_user_ids?: number[] | null;
+    title: string;
+    /** Ad değiştiyse eskisi bu tarihe kadar kabul edilir. */
+    previous_key: string | null;
+    previous_key_until: string | null;
+    domain_id: number | null;
+    level: ModuleKeyLevel;
+    icon: string | null;
+    color: string | null;
+    notify: NotifyChannel[];
+    /** Boş = takımın tamamı. */
+    recipient_user_ids: number[];
+    quiet_from: number | null;
+    quiet_to: number | null;
+    dedupe_seconds: number;
+    config: Record<string, unknown> | null;
+    /** İlk çağrıda kendiliğinden açıldıysa işaretlidir ve SESSİZDİR. */
+    is_auto: boolean;
+    is_active: boolean;
+    last_used_at: string | null;
+    usage_count: number;
+    conversations_count?: number | null;
+    devices_count?: number | null;
+    created_at: string;
+}
+interface ModuleKeyInput {
+    title?: string;
+    /** Verilmezse başlıktan üretilir; çakışırsa sonuna sayı eklenir. */
+    key?: string | null;
+    /** Ad değişiminde eski adı 30 gün kabul et (varsayılan `true`). */
+    keep_previous?: boolean;
+    domain_id?: number | null;
+    level?: ModuleKeyLevel;
+    icon?: string | null;
+    color?: string | null;
+    notify?: NotifyChannel[];
+    recipient_user_ids?: number[];
     quiet_from?: number | null;
     quiet_to?: number | null;
     dedupe_seconds?: number;
+    config?: Record<string, unknown> | null;
     is_active?: boolean;
-    is_auto?: boolean;
-}
-interface CreateRadioProjectInput {
-    name: string;
-}
-interface UpdateRadioProjectInput {
-    name?: string;
-    description?: string | null;
-    is_active?: boolean;
-    /** Tarayıcıdan yazılabilen kanallar ve izinli kökenler. */
-    browser_channels?: string[] | null;
-    allowed_origins?: string[] | null;
-}
-interface RadioChannelInput {
-    key?: string;
-    name?: string;
-    description?: string | null;
-    level?: RadioLevel;
-    notify_push?: boolean;
-    notify_email?: boolean;
-    recipient_user_ids?: number[] | null;
-    quiet_from?: number | null;
-    quiet_to?: number | null;
-    dedupe_seconds?: number;
-    is_active?: boolean;
-}
-/** Proje açılışı: gizli anahtar YALNIZ burada döner, bir daha okunamaz. */
-interface RadioProjectCreated {
-    project: RadioProject;
-    secret: string;
 }
 interface RadioEvent {
     id: string;
@@ -758,29 +770,6 @@ interface CannedReplyInput {
     body?: string;
 }
 type AppPlatform = 'web' | 'ios' | 'android' | 'other';
-interface AppRecord {
-    id: number;
-    name: string;
-    platform: AppPlatform;
-    /** `sbw_pub_…` — açık anahtar, zaten istemciye gömülür. */
-    public_key: string;
-    allowed_origins?: string[] | null;
-    chat_enabled?: boolean;
-    push_enabled?: boolean;
-    is_active?: boolean;
-    settings?: Record<string, unknown> | null;
-    devices_count?: number;
-    conversations_count?: number;
-}
-interface AppInput {
-    name?: string;
-    platform?: AppPlatform;
-    allowed_origins?: string[] | null;
-    chat_enabled?: boolean;
-    push_enabled?: boolean;
-    is_active?: boolean;
-    settings?: Record<string, unknown> | null;
-}
 interface AppDevice {
     id: number;
     /** Maskeli token — tamamı hiçbir zaman dönmez. */
@@ -922,38 +911,35 @@ declare class SignalbirdManagement {
     radioSummary(): Promise<SbResult<Record<string, unknown>>>;
     /** Olay akışı — kanal, seviye ve tarihe göre süzülür. */
     radioEvents(query?: ListRadioEventsQuery): Promise<SbResult<Paginated<RadioEvent>>>;
-    listRadioProjects(): Promise<SbResult<{
-        data: RadioProject[];
+    listModuleKeys(module: KeyedModule, query?: {
+        domain_id?: number;
+    }): Promise<SbResult<{
+        data: ModuleKey[];
+    }>>;
+    getModuleKey(module: KeyedModule, id: number | string): Promise<SbResult<{
+        module_key: ModuleKey;
     }>>;
     /**
-     * Proje açar.
+     * Kanal açar.
      *
-     * Dönen `secret` (`sbr_live_…`) YALNIZ BURADA görünür: sunucuda yalnız
-     * SHA-256 özeti saklanır. Kaybedilirse `rotateRadioSecret` ile yenilenir.
+     * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir —
+     * "bu ad alınmış" hatasıyla geri dönmek, CI'da kanal açan bir betiği
+     * durdururdu.
      */
-    createRadioProject(input: CreateRadioProjectInput): Promise<SbResult<RadioProjectCreated>>;
-    getRadioProject(id: number | string): Promise<SbResult<{
-        project: RadioProject;
-    }>>;
-    updateRadioProject(id: number | string, input: UpdateRadioProjectInput): Promise<SbResult<{
-        project: RadioProject;
-    }>>;
-    deleteRadioProject(id: number | string): Promise<SbResult<unknown>>;
-    /** Gizli anahtarı yeniler; eski anahtar ANINDA geçersizleşir. */
-    rotateRadioSecret(id: number | string): Promise<SbResult<{
-        secret: string;
-    }>>;
-    createRadioChannel(projectId: number | string, input: RadioChannelInput): Promise<SbResult<{
-        channel: RadioChannel;
+    createModuleKey(module: KeyedModule, input: ModuleKeyInput): Promise<SbResult<{
+        module_key: ModuleKey;
     }>>;
     /**
-     * Kanalı günceller. `key` DEĞİŞMEZ — müşterinin kodundaki `log('critical', …)`
-     * çağrısı ona bağlıdır; sunucu gönderilse de yok sayar.
+     * Kanalı günceller.
+     *
+     * `key` DEĞİŞTİRİLEBİLİR (eskiden değişmezdi): eski ad 30 gün daha kabul
+     * edilir, böylece üretimdeki kod bir sonraki deploya kadar kayıt kaybetmez.
+     * `keep_previous: false` ile eski ad anında kapatılır.
      */
-    updateRadioChannel(projectId: number | string, channelId: number | string, input: RadioChannelInput): Promise<SbResult<{
-        channel: RadioChannel;
+    updateModuleKey(module: KeyedModule, id: number | string, input: ModuleKeyInput): Promise<SbResult<{
+        module_key: ModuleKey;
     }>>;
-    deleteRadioChannel(projectId: number | string, channelId: number | string): Promise<SbResult<unknown>>;
+    deleteModuleKey(module: KeyedModule, id: number | string): Promise<SbResult<unknown>>;
     chatSummary(): Promise<SbResult<Record<string, unknown>>>;
     /** Kısa aralıklı yoklama için: yalnız değişenler + çevrimiçi ajanlar. */
     chatUpdates(): Promise<SbResult<Record<string, unknown>>>;
@@ -1030,22 +1016,17 @@ declare class SignalbirdManagement {
      * Veri yoksa süreler `null` döner — 0 DEĞİL.
      */
     chatReport(range?: ChatReportRange): Promise<SbResult<ChatReport>>;
-    listApps(): Promise<SbResult<AppRecord[]>>;
-    /** Yanıttaki `public_key` (`sbw_pub_…`) istemciye gömülür; gizli değildir. */
-    createApp(input: AppInput): Promise<SbResult<AppRecord>>;
-    getApp(id: number | string): Promise<SbResult<AppRecord>>;
-    updateApp(id: number | string, input: AppInput): Promise<SbResult<AppRecord>>;
-    deleteApp(id: number | string): Promise<SbResult<unknown>>;
-    /** Açık anahtarı yeniler; siteye gömülü eski anahtar ANINDA çalışmaz olur. */
-    rotateAppKey(id: number | string): Promise<SbResult<AppRecord>>;
     /**
      * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
      *
      * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
-     * iframe'e verin, saklamayın. Anahtar `embed:issue` kapsamı ister.
+     * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR —
+     * scope sisteminden geriye kalan tek kapı, çünkü jeton 60 dakikalık bir
+     * panel oturumuna çevriliyor.
      */
     embedToken(input: TeamEmbedTokenInput): Promise<SbResult<EmbedToken>>;
-    listAppDevices(id: number | string, query?: ListAppDevicesQuery): Promise<SbResult<Paginated<AppDevice>>>;
+    /** Push kanalına kayıtlı son kullanıcı cihazları (token MASKELİ döner). */
+    listModuleKeyDevices(module: KeyedModule, id: number | string, query?: ListAppDevicesQuery): Promise<SbResult<Paginated<AppDevice>>>;
 }
 
 /**
@@ -1181,11 +1162,11 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
 /**
  * Ortam değişkeninden kurulan paylaşımlı istemci.
  *
- * `SIGNALBIRD_KEY` okunur. Uygulamanın her köşesinde istemci kurup anahtarı
- * elden ele taşımak yerine tek çağrı yeter:
+ * `SIGNALBIRD_DOMAIN_KEY` okunur. Uygulamanın her köşesinde istemci kurup
+ * anahtarı elden ele taşımak yerine tek çağrı yeter:
  *
  *   import { signalbird } from 'signalbird'
- *   await signalbird().critical('critical', 'ödeme servisi öldü')
+ *   await signalbird().critical('kritikApiHatasi', 'ödeme servisi öldü')
  */
 declare function signalbird(config?: Partial<SignalbirdConfig>): SignalbirdClient;
 /** Test ve sıcak yeniden yükleme için tekil istemciyi sıfırlar. */
@@ -1193,14 +1174,14 @@ declare function resetSignalbird(): void;
 /**
  * Ortam değişkeninden kurulan paylaşımlı yönetim istemcisi.
  *
- * `SIGNALBIRD_API_KEY` okunur (yoksa `SIGNALBIRD_MESSAGING_KEY` — ikisi de aynı
+ * `SIGNALBIRD_DOMAIN_KEY` okunur (yoksa `SIGNALBIRD_DOMAIN_KEY` — ikisi de aynı
  * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
  *
  *   import { management } from 'signalbird'
- *   await management().createRadioProject({ name: 'ödeme-servisi' })
+ *   await management().createModuleKey('logger', { title: 'Kritik API hatası' })
  */
 declare function management(config?: Partial<ManagementConfig>): SignalbirdManagement;
 /** Test ve sıcak yeniden yükleme için yönetim istemcisini sıfırlar. */
 declare function resetManagement(): void;
 
-export { type AddDomainInput, type AddDomainResult, type AppDevice, type AppInput, type AppPlatform, type AppRecord, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateCompanyInput, type CreateCompanyResult, type CreateContactListInput, type CreateRadioProjectInput, DEFAULT_BASE_URL, type DnsRecord, type EmbedModule, type EmbedToken, type EmbedTokenInput, type GrantModuleInput, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type ModuleEntitlement, type Paginated$1 as Paginated, type PartnerCompany, type PartnerConfig, type PartnerDomain, type PartnerOwnerInput, type PartnerUser, type PartnerUserInput, type RadioChannel, type RadioChannelInput, type RadioEvent, type RadioLevel, type RadioProject, type RadioProjectCreated, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, SignalbirdPartner, type SmsPreview, type StartConversationInput, type TeamEmbedTokenInput, type UpdateConversationInput, type UpdateRadioProjectInput, type UpdateVisitorInput, type UptimeIncident, type UptimeRange, type UptimeReport, type VerifyDomainResult, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };
+export { type AddDomainInput, type AddDomainResult, type AppDevice, type AppPlatform, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateCompanyInput, type CreateCompanyResult, type CreateContactListInput, DEFAULT_BASE_URL, type DnsRecord, type EmbedModule, type EmbedToken, type EmbedTokenInput, type GrantModuleInput, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type ModuleEntitlement, type Paginated$1 as Paginated, type PartnerCompany, type PartnerConfig, type PartnerDomain, type PartnerOwnerInput, type PartnerUser, type PartnerUserInput, type RadioEvent, type RadioLevel, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, SignalbirdPartner, type SmsPreview, type StartConversationInput, type TeamEmbedTokenInput, type UpdateConversationInput, type UpdateVisitorInput, type UptimeIncident, type UptimeRange, type UptimeReport, type VerifyDomainResult, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };

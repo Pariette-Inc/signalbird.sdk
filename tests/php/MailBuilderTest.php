@@ -20,7 +20,7 @@ class MailBuilderTest extends TestCase
     /** İstek atmayan istemci: yalnız gövdenin şeklini sınıyoruz. */
     private function builder(): MailBuilder
     {
-        return new MailBuilder(new MessagingClient('sb_'.str_repeat('x', 32)));
+        return new MailBuilder(new MessagingClient('sb_secret_live_'.str_repeat('x', 32)));
     }
 
     public function test_sinif_zorunlu(): void

@@ -29,7 +29,7 @@ final class PartnerClientTest extends TestCase
     /** Takım anahtarı partner yüzeyinde çalışmaz; kurulumda söylenir. */
     public function testWrongKeyTypeThrows(): void
     {
-        foreach (['sb_abc', 'sbr_live_abc', 'sbr_pub_abc', 'sbw_pub_abc'] as $key) {
+        foreach (['sb_public_live_abc', 'sb_abc', 'x'] as $key) {
             try {
                 new PartnerClient($key);
                 $this->fail("İstisna beklenirdi: {$key}");

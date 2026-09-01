@@ -11,7 +11,7 @@ use Signalbird\Sdk\SignalbirdException;
  * submitcms) müşterisini bununla sağlar ve yetkilendirir.
  *
  * **CLAUDE.md'deki "Admin yüzeyi OLMAYACAK" kuralının bilinçli istisnasıdır**
- * ve istisna olduğu için ayrı anahtar türü taşır (`sbp_live_…`). Kural,
+ * ve istisna olduğu için ayrı bir yüzeydir ve gizli domain anahtarı ister. Kural,
  * müşterinin kendi anahtarıyla (`sb_`) şirket açamaması içindi; o kural aynen
  * duruyor.
  *
@@ -25,19 +25,23 @@ class PartnerClient
     private string $baseUrl;
 
     public function __construct(
-        private string $apiKey,
+        private string $domainKey,
         ?string $baseUrl = null,
         private int $timeout = 15,
         private bool $throwOnError = false,
     ) {
-        if ($apiKey === '') {
-            throw new SignalbirdException('Signalbird: apiKey zorunlu.', 'NO_KEY', 0);
+        if ($domainKey === '') {
+            throw new SignalbirdException('Signalbird: domainKey zorunlu.', 'NO_KEY', 0);
         }
 
-        if (! str_starts_with($apiKey, 'sbp_live_')) {
+        /*
+         * Açık anahtar buraya verilirse her istek 403 `SECRET_KEY_REQUIRED`
+         * döner. Kurulumda söylemek, haftalar sonra bulunacak hatayı önler.
+         */
+        if (! str_starts_with($domainKey, 'sb_secret_live_')) {
             throw new SignalbirdException(
-                'Signalbird: partner istemcisi partner anahtarı ister (sbp_live_…). '
-                . 'Takım (sb_…), Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.',
+                'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). '
+                . 'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
                 'WRONG_KEY_TYPE',
                 0,
             );
@@ -316,7 +320,7 @@ class PartnerClient
     {
         $headers = [
             'Accept: application/json',
-            'Authorization: Bearer ' . $this->apiKey,
+            'X-Signalbird-Key: ' . $this->domainKey,
         ];
 
         $options = [

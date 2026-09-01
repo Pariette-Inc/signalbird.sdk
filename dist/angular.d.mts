@@ -46,7 +46,7 @@ declare class SignalbirdService {
     destroy(): void;
 }
 /**
- * `bootstrapApplication(App, { providers: [provideSignalbird({ appKey })] })`
+ * `bootstrapApplication(App, { providers: [provideSignalbird({ publicKey })] })`
  *
  * Dönen nesne Angular'ın `Provider` biçimindedir ama tipi buraya gömülmez —
  * paket Angular'a derleme zamanı bağımlılık taşımaz.

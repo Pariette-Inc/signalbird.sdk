@@ -6,7 +6,10 @@
  */
 
 export interface InitOptions {
-  appKey: string;
+  /** Açık domain anahtarı (`sb_public_live_…`) — kimliği doğrular. */
+  publicKey: string;
+  /** Sohbet kanalı (`chat` modül anahtarı) — hangi widget, hangi gelen kutusu. */
+  chatKey?: string;
   /** Varsayılan https://live.signalbird.io/api */
   baseUrl?: string;
   /** 'tr' | 'en' — verilmezse uygulama ayarı → navigator.language */

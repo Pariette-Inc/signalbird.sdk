@@ -20,23 +20,23 @@ from ._http import DEFAULT_BASE_URL, Result, SignalbirdError, Transport, seg
 class SignalbirdManagement:
     def __init__(
         self,
-        api_key: str,
+        domain_key: str,
         base_url: Optional[str] = None,
         timeout: float = 15.0,
         throw_on_error: bool = False,
         debug: bool = False,
     ):
-        if not api_key:
-            raise SignalbirdError("Signalbird: api_key zorunlu.", 0, "NO_KEY")
+        if not domain_key:
+            raise SignalbirdError("Signalbird: domain_key zorunlu.", 0, "NO_KEY")
 
-        if not api_key.startswith("sb_"):
+        if not domain_key.startswith("sb_secret_live_"):
             raise SignalbirdError(
-                "Signalbird: yönetim istemcisi takım API anahtarı ister (sb_…).",
+                "Signalbird: yönetim istemcisi GİZLİ domain anahtarı ister (sb_secret_live_…).",
                 0,
                 "WRONG_KEY_TYPE",
             )
 
-        self._http = Transport(api_key, base_url or DEFAULT_BASE_URL, timeout, throw_on_error, debug)
+        self._http = Transport(domain_key, base_url or DEFAULT_BASE_URL, timeout, throw_on_error, debug)
 
     # ── Telsiz: projeler ─────────────────────────────────────────────────
 
@@ -46,41 +46,32 @@ class SignalbirdManagement:
     def radio_events(self, query: Optional[Mapping[str, Any]] = None) -> Result:
         return self._http.request("GET", "/v1/radio/events", None, query)
 
-    def list_radio_projects(self) -> Result:
-        return self._http.request("GET", "/v1/radio/projects")
+    # ── Modül anahtarları ────────────────────────────────────────────────
+    #
+    # Telsiz projesi/kanalı ve uygulama kaydı 1 Eyl 2026'da kaldırıldı
+    # (../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md §3). Beş modülün
+    # (logger, email, sms, push, chat) hepsi aynı gövdeyi kullanır.
 
-    def create_radio_project(self, input: Mapping[str, Any]) -> Result:
-        """Dönen ``secret`` (``sbr_live_…``) YALNIZ burada görünür; saklayın."""
-        return self._http.request("POST", "/v1/radio/projects", input)
+    def list_module_keys(self, module: str, query: Optional[Mapping[str, Any]] = None) -> Result:
+        return self._http.request("GET", f"/v1/modules/{seg(module)}/keys", None, query)
 
-    def get_radio_project(self, id: Any) -> Result:
-        return self._http.request("GET", f"/v1/radio/projects/{seg(id)}")
+    def get_module_key(self, module: str, id: Any) -> Result:
+        return self._http.request("GET", f"/v1/modules/{seg(module)}/keys/{seg(id)}")
 
-    def update_radio_project(self, id: Any, input: Mapping[str, Any]) -> Result:
-        return self._http.request("PATCH", f"/v1/radio/projects/{seg(id)}", input)
+    def create_module_key(self, module: str, input: Mapping[str, Any]) -> Result:
+        """``key`` verilmezse başlıktan üretilir; çakışırsa sonuna sayı eklenir."""
+        return self._http.request("POST", f"/v1/modules/{seg(module)}/keys", input)
 
-    def delete_radio_project(self, id: Any) -> Result:
-        return self._http.request("DELETE", f"/v1/radio/projects/{seg(id)}")
+    def update_module_key(self, module: str, id: Any, input: Mapping[str, Any]) -> Result:
+        """``key`` DEĞİŞTİRİLEBİLİR: eski ad 30 gün daha kabul edilir."""
+        return self._http.request("PATCH", f"/v1/modules/{seg(module)}/keys/{seg(id)}", input)
 
-    def rotate_radio_secret(self, id: Any) -> Result:
-        """Gizli anahtarı yeniler; eski anahtar ANINDA geçersizleşir."""
-        return self._http.request("POST", f"/v1/radio/projects/{seg(id)}/rotate")
+    def delete_module_key(self, module: str, id: Any) -> Result:
+        return self._http.request("DELETE", f"/v1/modules/{seg(module)}/keys/{seg(id)}")
 
-    # ── Telsiz: kanallar ─────────────────────────────────────────────────
-
-    def create_radio_channel(self, project_id: Any, input: Mapping[str, Any]) -> Result:
-        return self._http.request("POST", f"/v1/radio/projects/{seg(project_id)}/channels", input)
-
-    def update_radio_channel(self, project_id: Any, channel_id: Any, input: Mapping[str, Any]) -> Result:
-        """``key`` DEĞİŞMEZ — müşterinin kodundaki kanal adı ona bağlıdır."""
-        return self._http.request(
-            "PATCH", f"/v1/radio/projects/{seg(project_id)}/channels/{seg(channel_id)}", input
-        )
-
-    def delete_radio_channel(self, project_id: Any, channel_id: Any) -> Result:
-        return self._http.request(
-            "DELETE", f"/v1/radio/projects/{seg(project_id)}/channels/{seg(channel_id)}"
-        )
+    def list_module_key_devices(self, module: str, id: Any, query: Optional[Mapping[str, Any]] = None) -> Result:
+        """Push kanalına kayıtlı cihazlar; token MASKELİ döner."""
+        return self._http.request("GET", f"/v1/modules/{seg(module)}/keys/{seg(id)}/devices", None, query)
 
     # ── Sohbet: gelen kutusu ─────────────────────────────────────────────
 
@@ -192,25 +183,8 @@ class SignalbirdManagement:
 
     # ── Uygulamalar ──────────────────────────────────────────────────────
 
-    def list_apps(self) -> Result:
-        return self._http.request("GET", "/v1/apps")
-
-    def create_app(self, input: Mapping[str, Any]) -> Result:
-        """Yanıttaki ``public_key`` (``sbw_pub_…``) istemciye gömülür."""
-        return self._http.request("POST", "/v1/apps", input)
-
-    def get_app(self, id: Any) -> Result:
-        return self._http.request("GET", f"/v1/apps/{seg(id)}")
-
-    def update_app(self, id: Any, input: Mapping[str, Any]) -> Result:
-        return self._http.request("PATCH", f"/v1/apps/{seg(id)}", input)
-
-    def delete_app(self, id: Any) -> Result:
-        return self._http.request("DELETE", f"/v1/apps/{seg(id)}")
-
-    def rotate_app_key(self, id: Any) -> Result:
-        """Siteye gömülü eski anahtar ANINDA çalışmaz olur."""
-        return self._http.request("POST", f"/v1/apps/{seg(id)}/rotate-key")
+    # Uygulama uçları KALDIRILDI (1 Eyl 2026): sohbet ve push birer modül
+    # anahtarıdır — list_module_keys('chat'), list_module_keys('push').
 
     def embed_token(self, input: Mapping[str, Any]) -> Result:
         """Gömme jetonu — Signalbird ekranını kendi panelinizde göstermek için.
@@ -219,5 +193,3 @@ class SignalbirdManagement:
         """
         return self._http.request("POST", "/v1/embed/tokens", dict(input))
 
-    def list_app_devices(self, id: Any, query: Optional[Mapping[str, Any]] = None) -> Result:
-        return self._http.request("GET", f"/v1/apps/{seg(id)}/devices", None, query)

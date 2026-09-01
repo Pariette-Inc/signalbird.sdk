@@ -2,7 +2,7 @@
 //
 // Üç sunucu yüzeyi vardır ve anahtarları farklıdır:
 //
-//	Client     → Telsiz (log yazma),  sbr_live_…
+//	Client     → Telsiz (log yazma),  sb_secret_live_…
 //	Messaging  → Gönderim,            sb_…
 //	Management → Yönetim,             sb_… + radio|chat|apps scope'ları
 //
@@ -70,7 +70,7 @@ var ErrWrongKeyType = errors.New("signalbird: yanlış anahtar türü")
 var ErrNoKey = errors.New("signalbird: anahtar zorunlu")
 
 type transport struct {
-	apiKey       string
+	domainKey       string
 	baseURL      string
 	authHeader   string
 	authPrefix   string
@@ -79,13 +79,13 @@ type transport struct {
 	debug        bool
 }
 
-func newTransport(apiKey, baseURL string, timeout time.Duration, throwOnError, debug bool) *transport {
+func newTransport(domainKey, baseURL string, timeout time.Duration, throwOnError, debug bool) *transport {
 	if baseURL == "" {
 		baseURL = DefaultBaseURL
 	}
 
 	return &transport{
-		apiKey:       apiKey,
+		domainKey:       domainKey,
 		baseURL:      strings.TrimRight(baseURL, "/"),
 		authHeader:   "Authorization",
 		authPrefix:   "Bearer ",
@@ -120,7 +120,7 @@ func (t *transport) request(ctx context.Context, method, path string, body any, 
 	}
 
 	request.Header.Set("Accept", "application/json")
-	request.Header.Set(t.authHeader, t.authPrefix+t.apiKey)
+	request.Header.Set(t.authHeader, t.authPrefix+t.domainKey)
 
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")

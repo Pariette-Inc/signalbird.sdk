@@ -1,8 +1,8 @@
 /**
  * Widget durumu: ziyaretçi, konuşma, mesajlar, okunmamış sayısı.
  *
- * Ziyaretçi sırrı `localStorage['sb_visitor']` içinde `{id, secret, appKey}`
- * olarak durur. `appKey` de saklanır ki aynı alan adında iki farklı uygulama
+ * Ziyaretçi sırrı `localStorage['sb_visitor']` içinde `{id, secret, publicKey}`
+ * olarak durur. `publicKey` de saklanır ki aynı alan adında iki farklı uygulama
  * anahtarı birbirinin ziyaretçisini kapmasın.
  *
  * Basit bir yayıncıdır: `on(event, fn)` — arayüz ve dış API buna abone olur.
@@ -14,7 +14,7 @@ const KEY = 'sb_visitor';
 export interface StoredVisitor {
   id: string;
   secret: string;
-  appKey: string;
+  publicKey: string;
   name?: string | null;
   email?: string | null;
 }
@@ -35,7 +35,7 @@ export class Store {
   private rated = new Set<string>();
   private listeners: Record<string, Listener[]> = {};
 
-  constructor(private readonly appKey: string) {
+  constructor(private readonly publicKey: string) {
     this.visitor = this.readVisitor();
   }
 
@@ -68,7 +68,7 @@ export class Store {
       const raw = localStorage.getItem(KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw) as StoredVisitor;
-      if (!parsed || !parsed.secret || parsed.appKey !== this.appKey) return null;
+      if (!parsed || !parsed.secret || parsed.publicKey !== this.publicKey) return null;
       return parsed;
     } catch {
       return null;
@@ -81,7 +81,7 @@ export class Store {
     this.visitor = {
       id: visitor.id,
       secret,
-      appKey: this.appKey,
+      publicKey: this.publicKey,
       name: visitor.name ?? this.visitor?.name ?? null,
       email: visitor.email ?? this.visitor?.email ?? null,
     };
@@ -208,7 +208,7 @@ export class Store {
   }
 
   private get dismissKey(): string {
-    return `sb_dismissed_${this.appKey}`;
+    return `sb_dismissed_${this.publicKey}`;
   }
 
   wasRated(id: string): boolean {

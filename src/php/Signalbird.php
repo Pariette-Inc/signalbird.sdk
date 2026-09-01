@@ -27,17 +27,17 @@ class Signalbird
     private static ?PartnerClient $partner = null;
 
     public static function configure(
-        string $apiKey,
+        string $domainKey,
         ?string $baseUrl = null,
         ?string $source = null,
     ): void {
-        self::$client = new SignalbirdClient($apiKey, $baseUrl, $source);
+        self::$client = new SignalbirdClient($domainKey, $baseUrl, $source);
     }
 
     public static function client(): SignalbirdClient
     {
         if (! self::$client) {
-            $key = getenv('SIGNALBIRD_KEY') ?: '';
+            $key = getenv('SIGNALBIRD_DOMAIN_KEY') ?: '';
             self::$client = new SignalbirdClient(
                 $key,
                 getenv('SIGNALBIRD_URL') ?: null,
@@ -48,21 +48,21 @@ class Signalbird
         return self::$client;
     }
 
-    /** Gönderim istemcisini elle yapılandırır (`sb_…` takım anahtarı). */
-    public static function configureMessaging(string $apiKey, ?string $baseUrl = null): void
+    /** Gönderim istemcisini elle yapılandırır (gizli domain anahtarı). */
+    public static function configureMessaging(string $domainKey, ?string $baseUrl = null): void
     {
-        self::$messaging = new MessagingClient($apiKey, $baseUrl);
+        self::$messaging = new MessagingClient($domainKey, $baseUrl);
     }
 
     /**
-     * Gönderim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_MESSAGING_KEY` ve
+     * Gönderim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_DOMAIN_KEY` ve
      * `SIGNALBIRD_MESSAGING_URL` (yoksa `SIGNALBIRD_URL`) ortam değişkenlerinden okunur.
      */
     public static function messaging(): MessagingClient
     {
         if (! self::$messaging) {
             self::$messaging = new MessagingClient(
-                getenv('SIGNALBIRD_MESSAGING_KEY') ?: '',
+                getenv('SIGNALBIRD_DOMAIN_KEY') ?: '',
                 (getenv('SIGNALBIRD_MESSAGING_URL') ?: null) ?: (getenv('SIGNALBIRD_URL') ?: null),
             );
         }
@@ -71,21 +71,21 @@ class Signalbird
     }
 
     /** Yönetim istemcisini elle yapılandırır (`sb_…` takım anahtarı). */
-    public static function configureManagement(string $apiKey, ?string $baseUrl = null): void
+    public static function configureManagement(string $domainKey, ?string $baseUrl = null): void
     {
-        self::$management = new ManagementClient($apiKey, $baseUrl);
+        self::$management = new ManagementClient($domainKey, $baseUrl);
     }
 
     /**
-     * Yönetim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_API_KEY` (yoksa
-     * `SIGNALBIRD_MESSAGING_KEY` — çoğu kurulumda tek takım anahtarı vardır)
+     * Yönetim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_DOMAIN_KEY` (yoksa
+     * `SIGNALBIRD_DOMAIN_KEY` — çoğu kurulumda tek takım anahtarı vardır)
      * ortam değişkeninden okunur.
      */
     public static function management(): ManagementClient
     {
         if (! self::$management) {
             self::$management = new ManagementClient(
-                (getenv('SIGNALBIRD_API_KEY') ?: null) ?: (getenv('SIGNALBIRD_MESSAGING_KEY') ?: ''),
+                (getenv('SIGNALBIRD_DOMAIN_KEY') ?: null) ?: (getenv('SIGNALBIRD_DOMAIN_KEY') ?: ''),
                 (getenv('SIGNALBIRD_MESSAGING_URL') ?: null) ?: (getenv('SIGNALBIRD_URL') ?: null),
             );
         }
@@ -99,21 +99,21 @@ class Signalbird
         return self::client()->{$method}(...$arguments);
     }
 
-    /** Partner istemcisini elle yapılandırır (`sbp_live_…`). */
-    public static function configurePartner(string $apiKey, ?string $baseUrl = null): void
+    /** Partner istemcisini elle yapılandırır (gizli domain anahtarı). */
+    public static function configurePartner(string $domainKey, ?string $baseUrl = null): void
     {
-        self::$partner = new PartnerClient($apiKey, $baseUrl);
+        self::$partner = new PartnerClient($domainKey, $baseUrl);
     }
 
     /**
      * Partner istemcisi — YALNIZ sözleşmeli platformlar için. Yapılandırılmadıysa
-     * `SIGNALBIRD_PARTNER_KEY` okunur.
+     * `SIGNALBIRD_DOMAIN_KEY` okunur.
      */
     public static function partner(): PartnerClient
     {
         if (! self::$partner) {
             self::$partner = new PartnerClient(
-                getenv('SIGNALBIRD_PARTNER_KEY') ?: '',
+                getenv('SIGNALBIRD_DOMAIN_KEY') ?: '',
                 (getenv('SIGNALBIRD_MESSAGING_URL') ?: null) ?: (getenv('SIGNALBIRD_URL') ?: null),
             );
         }

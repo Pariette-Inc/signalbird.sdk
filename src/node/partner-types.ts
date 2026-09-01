@@ -12,7 +12,7 @@ export type { SbResult };
 
 export interface PartnerConfig {
   /** `sbp_live_…` — sözleşmeli partner anahtarı. Tarayıcıya İNMEZ. */
-  apiKey: string;
+  domainKey: string;
   baseUrl?: string;
   timeout?: number;
   throwOnError?: boolean;

@@ -3,9 +3,9 @@
  *
  * Ayrı bir giriş noktası olmasının sebebi teknik değil, GÜVENLİKTİR: sunucu
  * anahtarı istemciye gömülemez ve sunucu `Origin` başlığı taşıyan bir istekte
- * onu zaten reddeder. Tarayıcı, açık anahtarı (`sbr_pub_…`) kullanır ve
- * güvenliği gizlilikten değil kısıttan gelir — yalnız izinli alan adlarından
- * ve yalnız izin verilen kanallara yazabilir.
+ * onu zaten reddeder. Tarayıcı, açık anahtarı (`sb_public_live_…`) kullanır ve
+ * güvenliği gizlilikten değil kısıttan gelir: yalnız izinli alan adlarından
+ * çalışır ve Origin taşımayan istekte reddedilir (`ORIGIN_REQUIRED`).
  *
  * React, Vue, Angular ve düz JS aynı istemciyi kullanır; çatıya özel sarmalayıcı
  * yoktur çünkü gereken tek şey bir fonksiyon çağrısıdır.
@@ -13,7 +13,7 @@
 export type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 
 export interface BrowserConfig {
-  /** Açık anahtar (`sbr_pub_…`). Gizli anahtar BURAYA YAZILMAZ. */
+  /** Açık anahtar (`sb_public_live_…`). Gizli anahtar BURAYA YAZILMAZ. */
   publicKey: string;
   baseUrl?: string;
   source?: string;
@@ -27,7 +27,7 @@ export interface BrowserConfig {
 }
 
 interface QueuedEvent {
-  channel: string;
+  key: string;
   message: string;
   level?: Level;
   context?: Record<string, unknown>;
@@ -43,10 +43,10 @@ export class SignalbirdBrowser {
   private readonly maxQueue: number;
 
   constructor(private readonly config: BrowserConfig) {
-    if (!config.publicKey?.startsWith('sbr_pub_')) {
+    if (!config.publicKey?.startsWith('sb_public_live_')) {
       throw new Error(
-        'Signalbird: tarayıcı istemcisi açık anahtar ister (sbr_pub_…). ' +
-          'Gizli anahtarı (sbr_live_…) istemci koduna KOYMAYIN.'
+        'Signalbird: tarayıcı istemcisi açık anahtar ister (sb_public_live_…). ' +
+          'Gizli anahtarı (sb_secret_live_…) istemci koduna KOYMAYIN.'
       );
     }
 
@@ -62,8 +62,8 @@ export class SignalbirdBrowser {
     }
   }
 
-  log(channel: string, message: string, level?: Level, context?: Record<string, unknown>): void {
-    this.queue.push({ channel, message, level, context, source: this.config.source });
+  log(key: string, message: string, level?: Level, context?: Record<string, unknown>): void {
+    this.queue.push({ key, message, level, context, source: this.config.source });
 
     // Kuyruk dolduysa beklemeden gönder: bellekte sonsuza kadar biriktirmek,
     // logu hiç göndermemekten kötüdür.
@@ -72,28 +72,29 @@ export class SignalbirdBrowser {
     }
   }
 
-  info(channel: string, message: string, context?: Record<string, unknown>) {
-    this.log(channel, message, 'info', context);
+  info(key: string, message: string, context?: Record<string, unknown>) {
+    this.log(key, message, 'info', context);
   }
 
-  warn(channel: string, message: string, context?: Record<string, unknown>) {
-    this.log(channel, message, 'warn', context);
+  warn(key: string, message: string, context?: Record<string, unknown>) {
+    this.log(key, message, 'warn', context);
   }
 
-  error(channel: string, message: string, context?: Record<string, unknown>) {
-    this.log(channel, message, 'error', context);
+  error(key: string, message: string, context?: Record<string, unknown>) {
+    this.log(key, message, 'error', context);
   }
 
   /**
    * Tarayıcıdaki yakalanmamış hataları bağlar.
    *
-   * Kritik kanala YAZMAZ: istemci tarafı kod herkesin elindedir, oradan
-   * kritik alarm tetiklemek kötü niyetli birine ekibin telefonunu çaldırma
-   * imkânı verirdi. Sunucu zaten `browser_channels` ile bunu kısıtlar.
+   * Varsayılan anahtar `browser`dır ve KRİTİK DEĞİLDİR: istemci tarafı kod
+   * herkesin elindedir, oradan kritik alarm tetiklemek kötü niyetli birine
+   * ekibin telefonunu çaldırma imkânı verirdi. Hangi kanalın kime bildirim
+   * göndereceği panelde durur; oradan sessiz bırakılabilir.
    */
-  captureErrors(channel = 'browser'): () => void {
+  captureErrors(key = 'browser'): () => void {
     const onError = (event: ErrorEvent) => {
-      this.error(channel, event.message, {
+      this.error(key, event.message, {
         file: event.filename,
         line: event.lineno,
         column: event.colno,
@@ -102,7 +103,7 @@ export class SignalbirdBrowser {
     };
 
     const onRejection = (event: PromiseRejectionEvent) => {
-      this.error(channel, String(event.reason), { url: window.location.href });
+      this.error(key, String(event.reason), { url: window.location.href });
     };
 
     window.addEventListener('error', onError);
@@ -150,7 +151,7 @@ export class SignalbirdBrowser {
 
     // sendBeacon özel başlık taşıyamaz; anahtar sorgu dizesinden gider.
     navigator.sendBeacon?.(
-      `${this.baseUrl}/v1/radio/log/batch?key=${encodeURIComponent(this.config.publicKey)}`,
+      `${this.baseUrl}/v1/radio/log/batch?k=${encodeURIComponent(this.config.publicKey)}`,
       blob
     );
   }

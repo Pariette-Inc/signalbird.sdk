@@ -19,21 +19,25 @@ class SignalbirdClient
     private string $baseUrl;
 
     public function __construct(
-        private string $apiKey,
+        private string $domainKey,
         ?string $baseUrl = null,
         private ?string $source = null,
         private int $timeout = 5,
         private bool $throwOnError = false,
     ) {
-        if ($apiKey === '') {
+        if ($domainKey === '') {
             throw new SignalbirdException('Signalbird: anahtar boş.');
         }
 
-        // Açık anahtarın sunucuda kullanılması sessiz bir hatadır: çalışır
-        // görünür, sonra kanal kısıtına takılır. Baştan söylüyoruz.
-        if (str_starts_with($apiKey, 'sbr_pub_')) {
+        /*
+         * Yanlış anahtar türü KURULUMDA yakalanır, ilk istekte değil.
+         * Açık anahtar sunucuda `ORIGIN_REQUIRED` alır ve sebebi log'da
+         * görünmez; haftalar sonra fark etmektense burada durmak yeğdir.
+         */
+        if (! str_starts_with($domainKey, 'sb_secret_live_')) {
             throw new SignalbirdException(
-                'Signalbird: sunucu istemcisine tarayıcı anahtarı verildi. sbr_live_… kullanın.'
+                'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). '
+                . 'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.'
             );
         }
 
@@ -46,10 +50,10 @@ class SignalbirdClient
      * @param  array<string, mixed>|null  $context
      * @return array{ok: bool, event_id?: string, code?: string}
      */
-    public function log(string $channel, string $message, ?string $level = null, ?array $context = null): array
+    public function log(string $key, string $message, ?string $level = null, ?array $context = null): array
     {
         return $this->post('/v1/radio/log', array_filter([
-            'channel' => $channel,
+            'key' => $key,
             'message' => $message,
             'level' => $level,
             'context' => $context,
@@ -60,14 +64,14 @@ class SignalbirdClient
     /**
      * Toplu gönderim (en fazla 100).
      *
-     * @param  array<int, array{channel: string, message: string, level?: string, context?: array}>  $events
+     * @param  array<int, array{key: string, message: string, level?: string, context?: array}>  $events
      * @return array{accepted: int, total: int, results: array}
      */
     public function batch(array $events): array
     {
         $payload = array_map(function (array $event) {
             return array_filter([
-                'channel' => $event['channel'],
+                'key' => $event['key'],
                 'message' => $event['message'],
                 'level' => $event['level'] ?? null,
                 'context' => $event['context'] ?? null,
@@ -84,29 +88,29 @@ class SignalbirdClient
         ];
     }
 
-    public function debug(string $channel, string $message, ?array $context = null): array
+    public function debug(string $key, string $message, ?array $context = null): array
     {
-        return $this->log($channel, $message, 'debug', $context);
+        return $this->log($key, $message, 'debug', $context);
     }
 
-    public function info(string $channel, string $message, ?array $context = null): array
+    public function info(string $key, string $message, ?array $context = null): array
     {
-        return $this->log($channel, $message, 'info', $context);
+        return $this->log($key, $message, 'info', $context);
     }
 
-    public function warn(string $channel, string $message, ?array $context = null): array
+    public function warn(string $key, string $message, ?array $context = null): array
     {
-        return $this->log($channel, $message, 'warn', $context);
+        return $this->log($key, $message, 'warn', $context);
     }
 
-    public function error(string $channel, string $message, ?array $context = null): array
+    public function error(string $key, string $message, ?array $context = null): array
     {
-        return $this->log($channel, $message, 'error', $context);
+        return $this->log($key, $message, 'error', $context);
     }
 
-    public function critical(string $channel, string $message, ?array $context = null): array
+    public function critical(string $key, string $message, ?array $context = null): array
     {
-        return $this->log($channel, $message, 'critical', $context);
+        return $this->log($key, $message, 'critical', $context);
     }
 
     /**
@@ -126,7 +130,7 @@ class SignalbirdClient
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Accept: application/json',
-                'Authorization: Bearer ' . $this->apiKey,
+                'X-Signalbird-Key: ' . $this->domainKey,
             ],
         ]);
 

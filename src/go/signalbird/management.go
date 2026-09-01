@@ -36,46 +36,37 @@ func (m *Management) RadioEvents(ctx context.Context, query Query) (Result, erro
 	return m.http.request(ctx, "GET", "/v1/radio/events", nil, query)
 }
 
-func (m *Management) ListRadioProjects(ctx context.Context) (Result, error) {
-	return m.http.request(ctx, "GET", "/v1/radio/projects", nil, nil)
+// ── Modül anahtarları ──────────────────────────────────────────────────
+//
+// Telsiz projesi/kanalı ve uygulama kaydı 1 Eyl 2026'da kaldırıldı
+// (../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md §3). Beş modül
+// (logger, email, sms, push, chat) aynı gövdeyi kullanır.
+
+func (m *Management) ListModuleKeys(ctx context.Context, module string, query Query) (Result, error) {
+	return m.http.Request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys", nil, query)
 }
 
-// CreateRadioProject — dönen secret (sbr_live_…) YALNIZ burada görünür;
-// sunucuda yalnız SHA-256 özeti saklanır.
-func (m *Management) CreateRadioProject(ctx context.Context, input map[string]any) (Result, error) {
-	return m.http.request(ctx, "POST", "/v1/radio/projects", input, nil)
+func (m *Management) GetModuleKey(ctx context.Context, module string, id any) (Result, error) {
+	return m.http.Request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys/"+seg(id), nil, nil)
 }
 
-func (m *Management) GetRadioProject(ctx context.Context, id any) (Result, error) {
-	return m.http.request(ctx, "GET", "/v1/radio/projects/"+seg(id), nil, nil)
+// CreateModuleKey — `key` verilmezse başlıktan üretilir; çakışırsa sayı eklenir.
+func (m *Management) CreateModuleKey(ctx context.Context, module string, input any) (Result, error) {
+	return m.http.Request(ctx, "POST", "/v1/modules/"+seg(module)+"/keys", input, nil)
 }
 
-func (m *Management) UpdateRadioProject(ctx context.Context, id any, input map[string]any) (Result, error) {
-	return m.http.request(ctx, "PATCH", "/v1/radio/projects/"+seg(id), input, nil)
+// UpdateModuleKey — `key` DEĞİŞTİRİLEBİLİR: eski ad 30 gün daha kabul edilir.
+func (m *Management) UpdateModuleKey(ctx context.Context, module string, id any, input any) (Result, error) {
+	return m.http.Request(ctx, "PATCH", "/v1/modules/"+seg(module)+"/keys/"+seg(id), input, nil)
 }
 
-func (m *Management) DeleteRadioProject(ctx context.Context, id any) (Result, error) {
-	return m.http.request(ctx, "DELETE", "/v1/radio/projects/"+seg(id), nil, nil)
+func (m *Management) DeleteModuleKey(ctx context.Context, module string, id any) (Result, error) {
+	return m.http.Request(ctx, "DELETE", "/v1/modules/"+seg(module)+"/keys/"+seg(id), nil, nil)
 }
 
-// RotateRadioSecret — eski anahtar ANINDA geçersizleşir.
-func (m *Management) RotateRadioSecret(ctx context.Context, id any) (Result, error) {
-	return m.http.request(ctx, "POST", "/v1/radio/projects/"+seg(id)+"/rotate", nil, nil)
-}
-
-// ── Telsiz: kanallar ───────────────────────────────────────────────────
-
-func (m *Management) CreateRadioChannel(ctx context.Context, projectID any, input map[string]any) (Result, error) {
-	return m.http.request(ctx, "POST", "/v1/radio/projects/"+seg(projectID)+"/channels", input, nil)
-}
-
-// UpdateRadioChannel — key DEĞİŞMEZ: müşterinin kodundaki kanal adı ona bağlıdır.
-func (m *Management) UpdateRadioChannel(ctx context.Context, projectID, channelID any, input map[string]any) (Result, error) {
-	return m.http.request(ctx, "PATCH", "/v1/radio/projects/"+seg(projectID)+"/channels/"+seg(channelID), input, nil)
-}
-
-func (m *Management) DeleteRadioChannel(ctx context.Context, projectID, channelID any) (Result, error) {
-	return m.http.request(ctx, "DELETE", "/v1/radio/projects/"+seg(projectID)+"/channels/"+seg(channelID), nil, nil)
+// ListModuleKeyDevices — push kanalının cihazları; token MASKELİ döner.
+func (m *Management) ListModuleKeyDevices(ctx context.Context, module string, id any, query Query) (Result, error) {
+	return m.http.Request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys/"+seg(id)+"/devices", nil, query)
 }
 
 // ── Sohbet: gelen kutusu ───────────────────────────────────────────────
@@ -212,40 +203,10 @@ func (m *Management) ChatReport(ctx context.Context, rng string) (Result, error)
 	return m.http.request(ctx, "GET", "/v1/chat/reports", nil, map[string]any{"range": rng})
 }
 
-// ── Uygulamalar ────────────────────────────────────────────────────────
+// Uygulama uçları KALDIRILDI (1 Eyl 2026): sohbet ve push birer modül
+// anahtarıdır — ListModuleKeys(ctx, "chat", nil).
 
-func (m *Management) ListApps(ctx context.Context) (Result, error) {
-	return m.http.request(ctx, "GET", "/v1/apps", nil, nil)
-}
-
-// CreateApp — yanıttaki public_key (sbw_pub_…) istemciye gömülür; gizli değildir.
-func (m *Management) CreateApp(ctx context.Context, input map[string]any) (Result, error) {
-	return m.http.request(ctx, "POST", "/v1/apps", input, nil)
-}
-
-func (m *Management) GetApp(ctx context.Context, id any) (Result, error) {
-	return m.http.request(ctx, "GET", "/v1/apps/"+seg(id), nil, nil)
-}
-
-func (m *Management) UpdateApp(ctx context.Context, id any, input map[string]any) (Result, error) {
-	return m.http.request(ctx, "PATCH", "/v1/apps/"+seg(id), input, nil)
-}
-
-func (m *Management) DeleteApp(ctx context.Context, id any) (Result, error) {
-	return m.http.request(ctx, "DELETE", "/v1/apps/"+seg(id), nil, nil)
-}
-
-// RotateAppKey — siteye gömülü eski anahtar ANINDA çalışmaz olur.
-func (m *Management) RotateAppKey(ctx context.Context, id any) (Result, error) {
-	return m.http.request(ctx, "POST", "/v1/apps/"+seg(id)+"/rotate-key", nil, nil)
-}
-
-// EmbedToken — Signalbird ekranını kendi panelinizde göstermek için jeton.
-// 120 saniye yaşar ve tek kullanımlıktır; anahtar `embed:issue` kapsamı ister.
 func (m *Management) EmbedToken(ctx context.Context, input map[string]any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/embed/tokens", input, nil)
 }
 
-func (m *Management) ListAppDevices(ctx context.Context, id any, query Query) (Result, error) {
-	return m.http.request(ctx, "GET", "/v1/apps/"+seg(id)+"/devices", nil, query)
-}

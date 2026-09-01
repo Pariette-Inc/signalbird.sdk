@@ -18,9 +18,12 @@
 import { SbTransport, seg, type SbResult } from './http';
 import { DEFAULT_BASE_URL, SignalbirdError } from './types';
 import type {
+  KeyedModule,
+  ModuleKey,
+  ModuleKeyInput,
+  ModuleKeyLevel,
+  NotifyChannel,
   AppDevice,
-  AppInput,
-  AppRecord,
   CannedReply,
   CannedReplyInput,
   ChatConversation,
@@ -31,22 +34,16 @@ import type {
   ChatTriggerInput,
   ChatVisitor,
   ConversationStatus,
-  CreateRadioProjectInput,
   ListAppDevicesQuery,
   ListChatMessagesQuery,
   ListConversationsQuery,
   ListRadioEventsQuery,
   ManagementConfig,
   Paginated,
-  RadioChannel,
-  RadioChannelInput,
   RadioEvent,
-  RadioProject,
-  RadioProjectCreated,
   ReplyInput,
   StartConversationInput,
   UpdateConversationInput,
-  UpdateRadioProjectInput,
   UpdateVisitorInput,
   TeamEmbedTokenInput,
 } from './management-types';
@@ -56,23 +53,25 @@ export class SignalbirdManagement {
   private readonly http: SbTransport;
 
   constructor(config: ManagementConfig) {
-    if (!config.apiKey) {
-      throw new SignalbirdError('Signalbird: apiKey zorunlu.', 0, 'NO_KEY');
+    if (!config.domainKey) {
+      throw new SignalbirdError('Signalbird: domainKey zorunlu.', 0, 'NO_KEY');
     }
-
-    // Telsiz (`sbr_`) ya da uygulama (`sbw_pub_`) anahtarı buraya verilirse her
-    // istek 401 döner; kurulum anında söylemek haftalar sonra bulunacak hatayı önler.
-    if (!config.apiKey.startsWith('sb_')) {
+    /*
+     * Açık anahtar (`sb_public_live_…`) buraya verilirse her istek 403 döner
+     * (`SECRET_KEY_REQUIRED`). Kurulumda söylemek, haftalar sonra bulunacak
+     * bir hatayı önler.
+     */
+    if (!config.domainKey.startsWith('sb_secret_live_')) {
       throw new SignalbirdError(
-        'Signalbird: yönetim istemcisi takım API anahtarı ister (sb_…). ' +
-          'Telsiz (sbr_…) ve uygulama (sbw_pub_…) anahtarları burada çalışmaz.',
+        'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). ' +
+          'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
         0,
         'WRONG_KEY_TYPE'
       );
     }
 
     this.http = new SbTransport({
-      apiKey: config.apiKey,
+      domainKey: config.domainKey,
       baseUrl: (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, ''),
       timeout: config.timeout ?? 15000,
       throwOnError: config.throwOnError ?? false,
@@ -92,73 +91,53 @@ export class SignalbirdManagement {
     return this.http.request('GET', '/v1/radio/events', undefined, query);
   }
 
-  listRadioProjects(): Promise<SbResult<{ data: RadioProject[] }>> {
-    return this.http.request('GET', '/v1/radio/projects');
+  // ── Modül anahtarları ─────────────────────────────────────────────────
+  //
+  // Telsiz projesi/kanalı ve uygulama kaydı 1 Eyl 2026'da kaldırıldı
+  // (../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md §3). Yerlerini TEK
+  // bir uç ailesi aldı: modül anahtarları. Beş modülün (logger, email, sms,
+  // push, chat) hepsi aynı gövdeyi kullanır — beş ayrı metot kümesi yazmak,
+  // altıncı modül geldiğinde altıncısını yazmak demekti.
+
+  listModuleKeys(
+    module: KeyedModule,
+    query?: { domain_id?: number }
+  ): Promise<SbResult<{ data: ModuleKey[] }>> {
+    return this.http.request('GET', `/v1/modules/${seg(module)}/keys`, undefined, query);
+  }
+
+  getModuleKey(module: KeyedModule, id: number | string): Promise<SbResult<{ module_key: ModuleKey }>> {
+    return this.http.request('GET', `/v1/modules/${seg(module)}/keys/${seg(id)}`);
   }
 
   /**
-   * Proje açar.
+   * Kanal açar.
    *
-   * Dönen `secret` (`sbr_live_…`) YALNIZ BURADA görünür: sunucuda yalnız
-   * SHA-256 özeti saklanır. Kaybedilirse `rotateRadioSecret` ile yenilenir.
+   * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir —
+   * "bu ad alınmış" hatasıyla geri dönmek, CI'da kanal açan bir betiği
+   * durdururdu.
    */
-  createRadioProject(input: CreateRadioProjectInput): Promise<SbResult<RadioProjectCreated>> {
-    return this.http.request('POST', '/v1/radio/projects', input);
-  }
-
-  getRadioProject(id: number | string): Promise<SbResult<{ project: RadioProject }>> {
-    return this.http.request('GET', `/v1/radio/projects/${seg(id)}`);
-  }
-
-  updateRadioProject(
-    id: number | string,
-    input: UpdateRadioProjectInput
-  ): Promise<SbResult<{ project: RadioProject }>> {
-    return this.http.request('PATCH', `/v1/radio/projects/${seg(id)}`, input);
-  }
-
-  deleteRadioProject(id: number | string): Promise<SbResult<unknown>> {
-    return this.http.request('DELETE', `/v1/radio/projects/${seg(id)}`);
-  }
-
-  /** Gizli anahtarı yeniler; eski anahtar ANINDA geçersizleşir. */
-  rotateRadioSecret(id: number | string): Promise<SbResult<{ secret: string }>> {
-    return this.http.request('POST', `/v1/radio/projects/${seg(id)}/rotate`);
-  }
-
-  // ── Telsiz: kanallar ──────────────────────────────────────────────────
-
-  createRadioChannel(
-    projectId: number | string,
-    input: RadioChannelInput
-  ): Promise<SbResult<{ channel: RadioChannel }>> {
-    return this.http.request('POST', `/v1/radio/projects/${seg(projectId)}/channels`, input);
+  createModuleKey(module: KeyedModule, input: ModuleKeyInput): Promise<SbResult<{ module_key: ModuleKey }>> {
+    return this.http.request('POST', `/v1/modules/${seg(module)}/keys`, input);
   }
 
   /**
-   * Kanalı günceller. `key` DEĞİŞMEZ — müşterinin kodundaki `log('critical', …)`
-   * çağrısı ona bağlıdır; sunucu gönderilse de yok sayar.
+   * Kanalı günceller.
+   *
+   * `key` DEĞİŞTİRİLEBİLİR (eskiden değişmezdi): eski ad 30 gün daha kabul
+   * edilir, böylece üretimdeki kod bir sonraki deploya kadar kayıt kaybetmez.
+   * `keep_previous: false` ile eski ad anında kapatılır.
    */
-  updateRadioChannel(
-    projectId: number | string,
-    channelId: number | string,
-    input: RadioChannelInput
-  ): Promise<SbResult<{ channel: RadioChannel }>> {
-    return this.http.request(
-      'PATCH',
-      `/v1/radio/projects/${seg(projectId)}/channels/${seg(channelId)}`,
-      input
-    );
+  updateModuleKey(
+    module: KeyedModule,
+    id: number | string,
+    input: ModuleKeyInput
+  ): Promise<SbResult<{ module_key: ModuleKey }>> {
+    return this.http.request('PATCH', `/v1/modules/${seg(module)}/keys/${seg(id)}`, input);
   }
 
-  deleteRadioChannel(
-    projectId: number | string,
-    channelId: number | string
-  ): Promise<SbResult<unknown>> {
-    return this.http.request(
-      'DELETE',
-      `/v1/radio/projects/${seg(projectId)}/channels/${seg(channelId)}`
-    );
+  deleteModuleKey(module: KeyedModule, id: number | string): Promise<SbResult<unknown>> {
+    return this.http.request('DELETE', `/v1/modules/${seg(module)}/keys/${seg(id)}`);
   }
 
   // ── Sohbet: gelen kutusu ──────────────────────────────────────────────
@@ -331,48 +310,29 @@ export class SignalbirdManagement {
     return this.http.request('GET', '/v1/chat/reports', undefined, { range });
   }
 
-  // ── Uygulamalar ───────────────────────────────────────────────────────
-
-  listApps(): Promise<SbResult<AppRecord[]>> {
-    return this.http.request('GET', '/v1/apps');
-  }
-
-  /** Yanıttaki `public_key` (`sbw_pub_…`) istemciye gömülür; gizli değildir. */
-  createApp(input: AppInput): Promise<SbResult<AppRecord>> {
-    return this.http.request('POST', '/v1/apps', input);
-  }
-
-  getApp(id: number | string): Promise<SbResult<AppRecord>> {
-    return this.http.request('GET', `/v1/apps/${seg(id)}`);
-  }
-
-  updateApp(id: number | string, input: AppInput): Promise<SbResult<AppRecord>> {
-    return this.http.request('PATCH', `/v1/apps/${seg(id)}`, input);
-  }
-
-  deleteApp(id: number | string): Promise<SbResult<unknown>> {
-    return this.http.request('DELETE', `/v1/apps/${seg(id)}`);
-  }
-
-  /** Açık anahtarı yeniler; siteye gömülü eski anahtar ANINDA çalışmaz olur. */
-  rotateAppKey(id: number | string): Promise<SbResult<AppRecord>> {
-    return this.http.request('POST', `/v1/apps/${seg(id)}/rotate-key`);
-  }
+  // Uygulama uçları KALDIRILDI (1 Eyl 2026): "uygulama" ayrı bir kayıt
+  // değil. Sohbet widget'ı ve push kanalı birer modül anahtarıdır —
+  // `listModuleKeys('chat')`, `listModuleKeys('push')`. Anahtar döndürme de
+  // yok: döndürülen şey DOMAIN anahtarıdır ve o panelden yönetilir.
 
   /**
    * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
    *
    * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
-   * iframe'e verin, saklamayın. Anahtar `embed:issue` kapsamı ister.
+   * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR —
+   * scope sisteminden geriye kalan tek kapı, çünkü jeton 60 dakikalık bir
+   * panel oturumuna çevriliyor.
    */
   embedToken(input: TeamEmbedTokenInput): Promise<SbResult<EmbedToken>> {
     return this.http.request('POST', '/v1/embed/tokens', input);
   }
 
-  listAppDevices(
+  /** Push kanalına kayıtlı son kullanıcı cihazları (token MASKELİ döner). */
+  listModuleKeyDevices(
+    module: KeyedModule,
     id: number | string,
     query?: ListAppDevicesQuery
   ): Promise<SbResult<Paginated<AppDevice>>> {
-    return this.http.request('GET', `/v1/apps/${seg(id)}/devices`, undefined, query);
+    return this.http.request('GET', `/v1/modules/${seg(module)}/keys/${seg(id)}/devices`, undefined, query);
   }
 }

@@ -3,6 +3,8 @@
 var crypto = require('crypto');
 
 // src/node/types.ts
+var SECRET_PREFIX = "sb_secret_live_";
+var PUBLIC_PREFIX = "sb_public_live_";
 var SignalbirdError = class extends Error {
   constructor(message, status, code, body) {
     super(message);
@@ -18,12 +20,19 @@ var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 var SignalbirdClient = class {
   constructor(config) {
     this.config = config;
-    if (!config.apiKey) {
-      throw new SignalbirdError("Signalbird: apiKey zorunlu.", 0, "NO_KEY");
+    if (!config.domainKey) {
+      throw new SignalbirdError("Signalbird: domainKey zorunlu.", 0, "NO_KEY");
     }
-    if (config.apiKey.startsWith("sbr_pub_")) {
+    if (config.domainKey.startsWith(PUBLIC_PREFIX)) {
       throw new SignalbirdError(
-        "Signalbird: sunucu istemcisine taray\u0131c\u0131 anahtar\u0131 (sbr_pub_\u2026) verildi. Sunucu anahtar\u0131 (sbr_live_\u2026) kullan\u0131n.",
+        "Signalbird: sunucu istemcisine A\xC7IK anahtar (sb_public_live_\u2026) verildi. Gizli anahtar\u0131 (sb_secret_live_\u2026) kullan\u0131n; a\xE7\u0131k anahtar taray\u0131c\u0131 i\xE7indir.",
+        0,
+        "WRONG_KEY_TYPE"
+      );
+    }
+    if (!config.domainKey.startsWith(SECRET_PREFIX)) {
+      throw new SignalbirdError(
+        "Signalbird: anahtar bi\xE7imi tan\u0131nmad\u0131. Gizli domain anahtar\u0131 `sb_secret_live_` ile ba\u015Flar (Panel \u2192 Alan adlar\u0131 \u2192 Anahtarlar).",
         0,
         "WRONG_KEY_TYPE"
       );
@@ -37,7 +46,7 @@ var SignalbirdClient = class {
   /** Tek kayıt gönderir. */
   async log(input) {
     return this.send("/v1/radio/log", {
-      channel: input.channel,
+      key: input.key,
       message: input.message,
       level: input.level,
       context: input.context,
@@ -53,7 +62,7 @@ var SignalbirdClient = class {
   async batch(events) {
     const payload = {
       events: events.slice(0, 100).map((event) => ({
-        channel: event.channel,
+        key: event.key,
         message: event.message,
         level: event.level,
         context: event.context,
@@ -76,22 +85,22 @@ var SignalbirdClient = class {
     };
   }
   // ── Seviye kısayolları ────────────────────────────────────────────────
-  // `log('critical', …)` yerine `critical(…)`: kanal adı ile seviye çoğu
-  // projede aynıdır, ikisini ayrı ayrı yazdırmak gereksiz tekrar olurdu.
-  debugLog(channel, message, context) {
-    return this.log({ channel, message, level: "debug", context });
+  // İlk argüman MODÜL ANAHTARIDIR (panelde açtığınız kanalın adı), seviye
+  // değil: `sb.error('kritikApiHatasi', '…')`.
+  debugLog(key, message, context) {
+    return this.log({ key, message, level: "debug", context });
   }
-  info(channel, message, context) {
-    return this.log({ channel, message, level: "info", context });
+  info(key, message, context) {
+    return this.log({ key, message, level: "info", context });
   }
-  warn(channel, message, context) {
-    return this.log({ channel, message, level: "warn", context });
+  warn(key, message, context) {
+    return this.log({ key, message, level: "warn", context });
   }
-  error(channel, message, context) {
-    return this.log({ channel, message, level: "error", context });
+  error(key, message, context) {
+    return this.log({ key, message, level: "error", context });
   }
-  critical(channel, message, context) {
-    return this.log({ channel, message, level: "critical", context });
+  critical(key, message, context) {
+    return this.log({ key, message, level: "critical", context });
   }
   /**
    * Yakalanmamış hataları Telsiz'e bağlar.
@@ -100,10 +109,10 @@ var SignalbirdClient = class {
    * süreci ayakta tutmak, bozuk durumdaki bir uygulamayı çalıştırmaya devam
    * etmek demektir — log göndermek bunu meşrulaştırmaz.
    */
-  captureUncaught(channel = "critical") {
+  captureUncaught(key = "critical") {
     const onError = (error) => {
       void this.log({
-        channel,
+        key,
         message: error.message,
         level: "critical",
         context: { stack: error.stack?.split("\n").slice(0, 20).join("\n") }
@@ -111,7 +120,7 @@ var SignalbirdClient = class {
     };
     const onRejection = (reason) => {
       void this.log({
-        channel,
+        key,
         message: reason instanceof Error ? reason.message : String(reason),
         level: "error",
         context: reason instanceof Error ? { stack: reason.stack } : void 0
@@ -150,7 +159,9 @@ var SignalbirdClient = class {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${this.config.apiKey}`
+          // Kanonik başlık `X-Signalbird-Key`; `Authorization: Bearer` de
+          // kabul edilir ama anahtarın bir OAuth jetonu olmadığı açık olsun.
+          "X-Signalbird-Key": this.config.domainKey
         },
         body: JSON.stringify(payload),
         signal: controller.signal
@@ -179,17 +190,17 @@ var SignalbirdClient = class {
 var BULK_CHUNK = 1e3;
 var SignalbirdMessaging = class {
   constructor(config) {
-    if (!config.apiKey) {
-      throw new SignalbirdError("Signalbird: apiKey zorunlu.", 0, "NO_KEY");
+    if (!config.domainKey) {
+      throw new SignalbirdError("Signalbird: domainKey zorunlu.", 0, "NO_KEY");
     }
-    if (!config.apiKey.startsWith("sb_")) {
+    if (!config.domainKey.startsWith("sb_secret_live_")) {
       throw new SignalbirdError(
-        "Signalbird: g\xF6nderim istemcisi tak\u0131m API anahtar\u0131 ister (sb_\u2026). Telsiz (sbr_\u2026) ve uygulama (sbw_pub_\u2026) anahtarlar\u0131 burada \xE7al\u0131\u015Fmaz.",
+        "Signalbird: bu istemci G\u0130ZL\u0130 domain anahtar\u0131 ister (sb_secret_live_\u2026). A\xE7\u0131k anahtar (sb_public_live_\u2026) yaln\u0131z taray\u0131c\u0131 ve mobil i\xE7indir.",
         0,
         "WRONG_KEY_TYPE"
       );
     }
-    this.apiKey = config.apiKey;
+    this.domainKey = config.domainKey;
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
     this.timeout = config.timeout ?? 15e3;
     this.throwOnError = config.throwOnError ?? false;
@@ -331,7 +342,7 @@ var SignalbirdMessaging = class {
         method,
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
+          "X-Signalbird-Key": this.domainKey,
           ...body !== void 0 ? { "Content-Type": "application/json" } : {}
         },
         body: body !== void 0 ? JSON.stringify(body) : void 0,
@@ -400,7 +411,7 @@ var SbTransport = class {
         method,
         headers: {
           Accept: "application/json",
-          Authorization: `Bearer ${this.config.apiKey}`,
+          "X-Signalbird-Key": this.config.domainKey,
           ...body !== void 0 ? { "Content-Type": "application/json" } : {}
         },
         body: body !== void 0 ? JSON.stringify(body) : void 0,
@@ -462,18 +473,18 @@ function seg(value) {
 // src/node/management.ts
 var SignalbirdManagement = class {
   constructor(config) {
-    if (!config.apiKey) {
-      throw new SignalbirdError("Signalbird: apiKey zorunlu.", 0, "NO_KEY");
+    if (!config.domainKey) {
+      throw new SignalbirdError("Signalbird: domainKey zorunlu.", 0, "NO_KEY");
     }
-    if (!config.apiKey.startsWith("sb_")) {
+    if (!config.domainKey.startsWith("sb_secret_live_")) {
       throw new SignalbirdError(
-        "Signalbird: y\xF6netim istemcisi tak\u0131m API anahtar\u0131 ister (sb_\u2026). Telsiz (sbr_\u2026) ve uygulama (sbw_pub_\u2026) anahtarlar\u0131 burada \xE7al\u0131\u015Fmaz.",
+        "Signalbird: bu istemci G\u0130ZL\u0130 domain anahtar\u0131 ister (sb_secret_live_\u2026). A\xE7\u0131k anahtar (sb_public_live_\u2026) yaln\u0131z taray\u0131c\u0131 ve mobil i\xE7indir.",
         0,
         "WRONG_KEY_TYPE"
       );
     }
     this.http = new SbTransport({
-      apiKey: config.apiKey,
+      domainKey: config.domainKey,
       baseUrl: (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, ""),
       timeout: config.timeout ?? 15e3,
       throwOnError: config.throwOnError ?? false,
@@ -489,51 +500,41 @@ var SignalbirdManagement = class {
   radioEvents(query) {
     return this.http.request("GET", "/v1/radio/events", void 0, query);
   }
-  listRadioProjects() {
-    return this.http.request("GET", "/v1/radio/projects");
+  // ── Modül anahtarları ─────────────────────────────────────────────────
+  //
+  // Telsiz projesi/kanalı ve uygulama kaydı 1 Eyl 2026'da kaldırıldı
+  // (../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md §3). Yerlerini TEK
+  // bir uç ailesi aldı: modül anahtarları. Beş modülün (logger, email, sms,
+  // push, chat) hepsi aynı gövdeyi kullanır — beş ayrı metot kümesi yazmak,
+  // altıncı modül geldiğinde altıncısını yazmak demekti.
+  listModuleKeys(module, query) {
+    return this.http.request("GET", `/v1/modules/${seg(module)}/keys`, void 0, query);
+  }
+  getModuleKey(module, id) {
+    return this.http.request("GET", `/v1/modules/${seg(module)}/keys/${seg(id)}`);
   }
   /**
-   * Proje açar.
+   * Kanal açar.
    *
-   * Dönen `secret` (`sbr_live_…`) YALNIZ BURADA görünür: sunucuda yalnız
-   * SHA-256 özeti saklanır. Kaybedilirse `rotateRadioSecret` ile yenilenir.
+   * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir —
+   * "bu ad alınmış" hatasıyla geri dönmek, CI'da kanal açan bir betiği
+   * durdururdu.
    */
-  createRadioProject(input) {
-    return this.http.request("POST", "/v1/radio/projects", input);
-  }
-  getRadioProject(id) {
-    return this.http.request("GET", `/v1/radio/projects/${seg(id)}`);
-  }
-  updateRadioProject(id, input) {
-    return this.http.request("PATCH", `/v1/radio/projects/${seg(id)}`, input);
-  }
-  deleteRadioProject(id) {
-    return this.http.request("DELETE", `/v1/radio/projects/${seg(id)}`);
-  }
-  /** Gizli anahtarı yeniler; eski anahtar ANINDA geçersizleşir. */
-  rotateRadioSecret(id) {
-    return this.http.request("POST", `/v1/radio/projects/${seg(id)}/rotate`);
-  }
-  // ── Telsiz: kanallar ──────────────────────────────────────────────────
-  createRadioChannel(projectId, input) {
-    return this.http.request("POST", `/v1/radio/projects/${seg(projectId)}/channels`, input);
+  createModuleKey(module, input) {
+    return this.http.request("POST", `/v1/modules/${seg(module)}/keys`, input);
   }
   /**
-   * Kanalı günceller. `key` DEĞİŞMEZ — müşterinin kodundaki `log('critical', …)`
-   * çağrısı ona bağlıdır; sunucu gönderilse de yok sayar.
+   * Kanalı günceller.
+   *
+   * `key` DEĞİŞTİRİLEBİLİR (eskiden değişmezdi): eski ad 30 gün daha kabul
+   * edilir, böylece üretimdeki kod bir sonraki deploya kadar kayıt kaybetmez.
+   * `keep_previous: false` ile eski ad anında kapatılır.
    */
-  updateRadioChannel(projectId, channelId, input) {
-    return this.http.request(
-      "PATCH",
-      `/v1/radio/projects/${seg(projectId)}/channels/${seg(channelId)}`,
-      input
-    );
+  updateModuleKey(module, id, input) {
+    return this.http.request("PATCH", `/v1/modules/${seg(module)}/keys/${seg(id)}`, input);
   }
-  deleteRadioChannel(projectId, channelId) {
-    return this.http.request(
-      "DELETE",
-      `/v1/radio/projects/${seg(projectId)}/channels/${seg(channelId)}`
-    );
+  deleteModuleKey(module, id) {
+    return this.http.request("DELETE", `/v1/modules/${seg(module)}/keys/${seg(id)}`);
   }
   // ── Sohbet: gelen kutusu ──────────────────────────────────────────────
   chatSummary() {
@@ -649,56 +650,42 @@ var SignalbirdManagement = class {
   chatReport(range = "30d") {
     return this.http.request("GET", "/v1/chat/reports", void 0, { range });
   }
-  // ── Uygulamalar ───────────────────────────────────────────────────────
-  listApps() {
-    return this.http.request("GET", "/v1/apps");
-  }
-  /** Yanıttaki `public_key` (`sbw_pub_…`) istemciye gömülür; gizli değildir. */
-  createApp(input) {
-    return this.http.request("POST", "/v1/apps", input);
-  }
-  getApp(id) {
-    return this.http.request("GET", `/v1/apps/${seg(id)}`);
-  }
-  updateApp(id, input) {
-    return this.http.request("PATCH", `/v1/apps/${seg(id)}`, input);
-  }
-  deleteApp(id) {
-    return this.http.request("DELETE", `/v1/apps/${seg(id)}`);
-  }
-  /** Açık anahtarı yeniler; siteye gömülü eski anahtar ANINDA çalışmaz olur. */
-  rotateAppKey(id) {
-    return this.http.request("POST", `/v1/apps/${seg(id)}/rotate-key`);
-  }
+  // Uygulama uçları KALDIRILDI (1 Eyl 2026): "uygulama" ayrı bir kayıt
+  // değil. Sohbet widget'ı ve push kanalı birer modül anahtarıdır —
+  // `listModuleKeys('chat')`, `listModuleKeys('push')`. Anahtar döndürme de
+  // yok: döndürülen şey DOMAIN anahtarıdır ve o panelden yönetilir.
   /**
    * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
    *
    * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
-   * iframe'e verin, saklamayın. Anahtar `embed:issue` kapsamı ister.
+   * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR —
+   * scope sisteminden geriye kalan tek kapı, çünkü jeton 60 dakikalık bir
+   * panel oturumuna çevriliyor.
    */
   embedToken(input) {
     return this.http.request("POST", "/v1/embed/tokens", input);
   }
-  listAppDevices(id, query) {
-    return this.http.request("GET", `/v1/apps/${seg(id)}/devices`, void 0, query);
+  /** Push kanalına kayıtlı son kullanıcı cihazları (token MASKELİ döner). */
+  listModuleKeyDevices(module, id, query) {
+    return this.http.request("GET", `/v1/modules/${seg(module)}/keys/${seg(id)}/devices`, void 0, query);
   }
 };
 
 // src/node/partner.ts
 var SignalbirdPartner = class {
   constructor(config) {
-    if (!config.apiKey) {
-      throw new SignalbirdError("Signalbird: apiKey zorunlu.", 0, "NO_KEY");
+    if (!config.domainKey) {
+      throw new SignalbirdError("Signalbird: domainKey zorunlu.", 0, "NO_KEY");
     }
-    if (!config.apiKey.startsWith("sbp_live_")) {
+    if (!config.domainKey.startsWith("sb_secret_live_")) {
       throw new SignalbirdError(
-        "Signalbird: partner istemcisi partner anahtar\u0131 ister (sbp_live_\u2026). Tak\u0131m (sb_\u2026), Telsiz (sbr_\u2026) ve uygulama (sbw_pub_\u2026) anahtarlar\u0131 burada \xE7al\u0131\u015Fmaz.",
+        "Signalbird: bu istemci G\u0130ZL\u0130 domain anahtar\u0131 ister (sb_secret_live_\u2026). A\xE7\u0131k anahtar (sb_public_live_\u2026) yaln\u0131z taray\u0131c\u0131 ve mobil i\xE7indir.",
         0,
         "WRONG_KEY_TYPE"
       );
     }
     this.http = new SbTransport({
-      apiKey: config.apiKey,
+      domainKey: config.domainKey,
       baseUrl: (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, ""),
       timeout: config.timeout ?? 15e3,
       throwOnError: config.throwOnError ?? false,
@@ -845,9 +832,9 @@ function signalbird(config) {
   if (singleton && !config) {
     return singleton;
   }
-  const apiKey = config?.apiKey ?? process.env.SIGNALBIRD_KEY ?? "";
+  const domainKey = config?.domainKey ?? process.env.SIGNALBIRD_DOMAIN_KEY ?? "";
   const client = new SignalbirdClient({
-    apiKey,
+    domainKey,
     baseUrl: config?.baseUrl ?? process.env.SIGNALBIRD_URL,
     source: config?.source ?? process.env.SIGNALBIRD_SOURCE,
     ...config
@@ -866,7 +853,7 @@ function management(config) {
     return managementSingleton;
   }
   const client = new SignalbirdManagement({
-    apiKey: config?.apiKey ?? process.env.SIGNALBIRD_API_KEY ?? process.env.SIGNALBIRD_MESSAGING_KEY ?? "",
+    domainKey: config?.domainKey ?? process.env.SIGNALBIRD_DOMAIN_KEY ?? process.env.SIGNALBIRD_DOMAIN_KEY ?? "",
     baseUrl: config?.baseUrl ?? process.env.SIGNALBIRD_URL,
     ...config
   });
