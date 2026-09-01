@@ -1,5 +1,17 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-01 — v2.1.1: `RadioChannel` sahtelenebilir oldu
+
+`final class RadioChannel` idi ve Mockery final sınıfı sahteleyemiyor. Sonuç:
+`Signalbird::radio('x')->error(…)` çağıran HER müşterinin testi kırılıyordu —
+"sahtele" diyemedikleri için ya gerçek HTTP isteği atacaklar ya da o kod yolunu
+hiç test etmeyeceklerdi. penyu.api'de `SignalDualWriteTest` tam olarak buna
+takıldı (`Mockery\Exception: … is marked final and its methods cannot be
+replaced`).
+
+`final` kaldırıldı. Bir kütüphanenin kendisini test edilemez yapması,
+kapatılmasından daha pahalıya mal olur.
+
 ## 2026-09-01 — v2.1.0: `radio()` kanal bağlama
 
 Sözleşme: `docs/CONTRACT.md` § 1.1.

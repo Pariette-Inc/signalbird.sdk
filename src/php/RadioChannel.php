@@ -15,8 +15,14 @@ namespace Signalbird\Sdk;
  * SÖZDİZİMİ ŞEKERİDİR, yeni bir yüzey değil: her metot `SignalbirdClient`
  * üzerindeki karşılığına gider. Bu yüzden diller arası parite denetiminden
  * muaftır (bkz. docs/CONTRACT.md § 4).
+ *
+ * `final` DEĞİLDİR ve bu bilinçlidir: Mockery final sınıfı sahteleyemez, o
+ * yüzden `final` bırakmak `Signalbird::radio('x')->error(…)` çağıran HER
+ * müşterinin testini kırardı — "sahtele" diyemedikleri için gerçek HTTP
+ * isteği atmak zorunda kalırlardı. Bir kütüphanenin kendisini test edilemez
+ * yapması, kapatılmasından daha pahalıya mal olur.
  */
-final class RadioChannel
+class RadioChannel
 {
     public function __construct(
         private readonly SignalbirdClient $client,
