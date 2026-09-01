@@ -11,7 +11,7 @@
  * müşterinin kendi anahtarıyla (`sb_`) şirket açamaması içindi; o kural aynen
  * duruyor. Sözleşmeli partner farklı bir taraftır.
  *
- * Anahtar `sbp_live_…` **asla tarayıcıya inmez**: gömme jetonunu partner'ın
+ * Gizli anahtar **asla tarayıcıya inmez**: gömme jetonunu partner'ın
  * kendi sunucusu üretir, tarayıcı yalnız o kısa ömürlü jetonu görür.
  *
  * Sözleşme: docs/CONTRACT.md § 12

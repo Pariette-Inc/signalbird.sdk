@@ -173,13 +173,13 @@ jobs:
           python -m compileall -q src/python/signalbird
           PYTHONPATH=src/python python -c "
           import signalbird
-          radio = signalbird.SignalbirdClient(api_key='sbr_live_test')
-          send = signalbird.SignalbirdMessaging(api_key='sb_test')
-          admin = signalbird.SignalbirdManagement(api_key='sb_test')
-          # Yanlış aileden anahtar kurulum anında reddedilmeli
-          for cls, key in ((signalbird.SignalbirdMessaging, 'sbr_live_x'), (signalbird.SignalbirdClient, 'sbr_pub_x')):
+          radio = signalbird.SignalbirdClient(domain_key='sb_secret_live_test')
+          send = signalbird.SignalbirdMessaging(domain_key='sb_secret_live_test')
+          admin = signalbird.SignalbirdManagement(domain_key='sb_secret_live_test')
+          # Açık anahtar sunucu istemcisinde kurulum anında reddedilmeli
+          for cls in (signalbird.SignalbirdMessaging, signalbird.SignalbirdClient, signalbird.SignalbirdManagement):
               try:
-                  cls(api_key=key); raise SystemExit('WRONG_KEY_TYPE bekleniyordu')
+                  cls(domain_key='sb_public_live_x'); raise SystemExit('WRONG_KEY_TYPE bekleniyordu')
               except signalbird.SignalbirdError:
                   pass
           print('python paketi tamam', signalbird.__version__)

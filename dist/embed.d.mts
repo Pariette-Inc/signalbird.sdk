@@ -14,7 +14,7 @@
 type EmbedModule = 'chat' | 'monitoring' | 'campaigns' | 'contacts' | 'radio' | 'messages';
 type EmbedTheme = 'light' | 'dark' | 'auto';
 /**
- * Jeton üretimi EV SAHİBİNİN SUNUCUSUNDA olur; partner anahtarı (`sbp_live_…`)
+ * Jeton üretimi EV SAHİBİNİN SUNUCUSUNDA olur; gizli domain anahtarı (`sb_secret_live_…`)
  * tarayıcıya asla inmez. SDK yalnızca sonucu ister.
  *
  * Dönüş: Signalbird'ün `POST /v1/partner/companies/{ext}/embed` yanıtındaki

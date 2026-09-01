@@ -233,7 +233,7 @@ export interface AppRecord {
   id: number;
   name: string;
   platform: AppPlatform;
-  /** `sbw_pub_…` — açık anahtar, zaten istemciye gömülür. */
+  /** `sb_public_live_…` — açık anahtar, zaten istemciye gömülür. */
   public_key: string;
   allowed_origins?: string[] | null;
   chat_enabled?: boolean;

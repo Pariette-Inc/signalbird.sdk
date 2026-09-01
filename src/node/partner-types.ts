@@ -11,7 +11,7 @@ import type { SbResult } from './http';
 export type { SbResult };
 
 export interface PartnerConfig {
-  /** `sbp_live_…` — sözleşmeli partner anahtarı. Tarayıcıya İNMEZ. */
+  /** `sb_secret_live_…` — gizli domain anahtarı. Tarayıcıya İNMEZ. */
   domainKey: string;
   baseUrl?: string;
   timeout?: number;

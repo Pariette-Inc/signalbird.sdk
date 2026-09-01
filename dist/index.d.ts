@@ -432,7 +432,7 @@ interface SbResult<T = unknown> {
  */
 
 interface PartnerConfig {
-    /** `sbp_live_…` — sözleşmeli partner anahtarı. Tarayıcıya İNMEZ. */
+    /** `sb_secret_live_…` — gizli domain anahtarı. Tarayıcıya İNMEZ. */
     domainKey: string;
     baseUrl?: string;
     timeout?: number;
@@ -1042,7 +1042,7 @@ declare class SignalbirdManagement {
  * müşterinin kendi anahtarıyla (`sb_`) şirket açamaması içindi; o kural aynen
  * duruyor. Sözleşmeli partner farklı bir taraftır.
  *
- * Anahtar `sbp_live_…` **asla tarayıcıya inmez**: gömme jetonunu partner'ın
+ * Gizli anahtar **asla tarayıcıya inmez**: gömme jetonunu partner'ın
  * kendi sunucusu üretir, tarayıcı yalnız o kısa ömürlü jetonu görür.
  *
  * Sözleşme: docs/CONTRACT.md § 12
@@ -1147,12 +1147,12 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
  * kullanılır — gizli anahtar istemciye inmez.
  *
  * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
- *  - `SignalbirdClient`     → Telsiz (log yazma), `sbr_live_…`
+ *  - `SignalbirdClient`     → Telsiz (log yazma), `sb_secret_live_…`
  *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
  *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
  *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
  *  - `SignalbirdPartner`    → Partner (müşteri sağlama, modül yetkisi, gömme),
- *                             `sbp_live_…` — yalnız sözleşmeli platformlar
+ *                             gizli anahtar — yalnız sözleşmeli platformlar
  *
  * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
  * `signalbird/app` — ve onun çatı uyarlamaları `/react`, `/vue`,

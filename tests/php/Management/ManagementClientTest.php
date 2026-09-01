@@ -29,7 +29,7 @@ final class ManagementClientTest extends TestCase
 
     public function testWrongKeyTypeThrows(): void
     {
-        foreach (['sb_public_live_abc', 'sbr_live_abc', 'x'] as $key) {
+        foreach (['sb_public_live_abc', 'sb_abc', 'x'] as $key) {
             try {
                 new ManagementClient($key);
                 $this->fail("İstisna beklenirdi: {$key}");

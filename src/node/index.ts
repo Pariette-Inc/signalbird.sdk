@@ -6,12 +6,12 @@
  * kullanılır — gizli anahtar istemciye inmez.
  *
  * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
- *  - `SignalbirdClient`     → Telsiz (log yazma), `sbr_live_…`
+ *  - `SignalbirdClient`     → Telsiz (log yazma), `sb_secret_live_…`
  *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
  *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
  *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
  *  - `SignalbirdPartner`    → Partner (müşteri sağlama, modül yetkisi, gömme),
- *                             `sbp_live_…` — yalnız sözleşmeli platformlar
+ *                             gizli anahtar — yalnız sözleşmeli platformlar
  *
  * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
  * `signalbird/app` — ve onun çatı uyarlamaları `/react`, `/vue`,

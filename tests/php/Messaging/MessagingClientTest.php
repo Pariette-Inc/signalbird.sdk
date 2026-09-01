@@ -31,7 +31,7 @@ final class MessagingClientTest extends TestCase
         }
 
         try {
-            new MessagingClient('sbw_pub_abc');
+            new MessagingClient('sb_public_live_abc');
             $this->fail('İstisna beklenirdi');
         } catch (SignalbirdException $e) {
             $this->assertSame('WRONG_KEY_TYPE', $e->getErrorCode());

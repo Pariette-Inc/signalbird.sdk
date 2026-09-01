@@ -52,7 +52,7 @@ struct Transport {
     let session: URLSession
 
     /// Kimlik başlıkları — yüzeye göre değişir (`Authorization` ya da
-    /// `X-Signalbird-App-Key` + ziyaretçi sırrı).
+    /// `X-Signalbird-Key` + `X-Signalbird-Module-Key` + ziyaretçi sırrı).
     var headers: () -> [String: String]
 
     init(
