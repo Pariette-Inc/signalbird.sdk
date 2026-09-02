@@ -41,12 +41,16 @@ const tr = {
   rateTitle: 'Bu sohbeti nasıl buldunuz?',
   rateComment: 'Eklemek istediğiniz bir şey var mı? (isteğe bağlı)',
   rateSend: 'Gönder',
-  rateThanks: 'Teşekkürler! Geri bildiriminiz alındı.',
+  rateThanks: 'Geri bildiriminiz bize ulaştı.',
+  rateThanksTitle: 'Teşekkürler!',
+  /** Yıldız sayısının karşılığı — puan verilince altında görünür. */
+  rateScale: ['Hiç iyi değildi', 'Beklediğim gibi olmadı', 'İdare eder', 'İyiydi', 'Harikaydı'],
   reviewIntro: 'Yardımcı olabildiysek bizi yorumlar mısınız?',
   reviewCta: 'Değerlendir',
   failed: 'Gönderilemedi — tekrar dene',
   fileTooLarge: 'Dosya çok büyük (en fazla {mb} MB)',
-  fileNotAllowed: 'Yalnızca fotoğraf yükleyebilirsiniz',
+  fileNotAllowed: 'Bu dosya türünü yükleyemezsiniz',
+  tooLong: 'Mesaj en fazla {max} karakter olabilir',
   unavailable: 'Sohbet şu an kullanılamıyor. Lütfen daha sonra tekrar deneyin.',
   close: 'Kapat',
   dismiss: 'Sohbet balonunu gizle',
@@ -57,6 +61,11 @@ const tr = {
   attachment: 'Ek',
   poweredBy: 'Signalbird ile',
   resize: 'Boyutlandır',
+  emoji: 'Emoji ekle',
+  jump: 'En alta in',
+  newMessage: 'Yeni mesaj',
+  /** Boş ekranda karşılamanın altında duran yanıt süresi vaadi. */
+  replyFast: 'Şu an buradayız — genelde birkaç dakika içinde yanıtlıyoruz.',
 };
 
 const en: typeof tr = {
@@ -98,12 +107,15 @@ const en: typeof tr = {
   rateTitle: 'How was this conversation?',
   rateComment: 'Anything to add? (optional)',
   rateSend: 'Send',
-  rateThanks: 'Thanks! Your feedback was received.',
+  rateThanks: 'Your feedback reached us.',
+  rateThanksTitle: 'Thank you!',
+  rateScale: ['Not good at all', 'Not what I expected', 'It was okay', 'Good', 'Excellent'],
   reviewIntro: 'If we were helpful, would you leave us a review?',
   reviewCta: 'Leave a review',
   failed: 'Not sent — tap to retry',
   fileTooLarge: 'File is too large (max {mb} MB)',
-  fileNotAllowed: 'Only photos can be uploaded',
+  fileNotAllowed: 'That file type cannot be uploaded',
+  tooLong: 'A message may be at most {max} characters',
   unavailable: 'Chat is unavailable right now. Please try again later.',
   close: 'Close',
   dismiss: 'Hide the chat bubble',
@@ -114,6 +126,10 @@ const en: typeof tr = {
   attachment: 'Attachment',
   poweredBy: 'Powered by Signalbird',
   resize: 'Resize',
+  emoji: 'Add emoji',
+  jump: 'Jump to latest',
+  newMessage: 'New message',
+  replyFast: "We're here right now — we usually reply within a few minutes.",
 };
 
 export type Strings = typeof tr;

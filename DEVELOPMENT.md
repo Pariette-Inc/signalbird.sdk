@@ -1,5 +1,80 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-02 — v2.2.2: mesaj uzunluğu tavanı ve dosya türleri
+
+Sözleşme: `docs/CONTRACT.md` § 9.4.
+
+**Ahmet:** "420 karakter limiti (sms x 3 = 140x3)… milyon satırlık mesaj
+gönderipte tokenlarımızı yemesin müşteriler… dosya yüklemelerinde pdf,
+image.*, txt dosyalarına izin verelim. başka bir şey istemiyorum, güvenli
+olmalı her şey."
+
+- **Tavan sunucudan gelir** (`channel.chat.max_message_chars`, varsayılan 420).
+  Widget'a sayı gömülmedi: iki yerde tutulan bir sınır, birini değiştirip
+  diğerini unutmak demekti — ziyaretçi yazabildiğini sanıp 422 alırdı.
+  `maxlength` yazmayı ve yapıştırmayı kırpar, son 60 karakterde sayaç belirir,
+  sınır aşılıysa gönder düğmesi kapanır (değer programatik atanmış olabilir).
+- **İzinli türler de sunucudan gelir** (`channel.chat.attachment_mimes`).
+  Dosya seçicinin `accept`'i ve yerel ön kontrol o listeden kurulur; sabit
+  regex kaldırıldı.
+
+## 2026-09-02 — v2.2.1: ziyaretçinin GERÇEK tarayıcı dili
+
+Sözleşme: `docs/CONTRACT.md` § 9.4.
+
+`POST /v1/sdk/chat/session` ve `POST /v1/sdk/devices` çağrılarında `locale`
+alanına `this.locale` yazılıyordu. O değer widget METİNLERİ için `tr`/`en`e
+daraltılmış arayüz dilidir (`resolveLocale`). Sonuç: Almanca bir tarayıcı
+sunucuya `en` olarak düşüyor, `chat_visitors.locale` hiçbir zaman `de`
+olamıyor ve sunucudaki çeviri (14 dil) o dili hiç göremiyordu.
+
+Artık ham etiket gidiyor (`navigator.languages[0]` → `de-DE`); sunucu
+`substr(0,2)` ile normalleştiriyor ve desteklemediği dili zaten eliyor.
+Arayüz dili değişmedi — o hâlâ iki dil.
+
+Karşılığı `signalbird.api` tarafındaki `users.chat_language` /
+`users.browser_language` çalışmasıdır (bkz. o reponun DEVELOPMENT.md'si).
+
+## 2026-09-02 — v2.2.0: widget arayüzü sıfırdan ("Aurora")
+
+Sözleşme: `docs/CONTRACT.md` § 9.4.
+
+Ahmet: *"mevcut canlı destek sistemimiz çok kötü. hem tasarımı hem mobil
+uyumluluğu hem bildirimleri hem de web sitesinde kullanıcıya kendini fark
+ettirebilmesi konusunda çok kötü… modern ve kimsenin görmediği bilmediği kadar
+harika bişey istiyorum."*
+
+**Değişen yalnız `src/widget/ui/`.** Çekirdek (`api.ts`, `store.ts`,
+`poller.ts`, `chat.ts`, `socket`, `i18n`) korundu — iyimser gönderim, imleçli
+polling, çeviri, ek dosya ve puanlama akışları yeniden yazılmadı. `chat.ts`'te
+tek satırlık bir değişiklik var: `ui.attention()` artık mesaj önizlemesini de
+taşıyor (özet listesi `last_message_preview`'i zaten getiriyordu, ek istek yok).
+
+**1. Tasarım dili.** Tek marka renginden `color-mix` ile türeyen bütün bir
+palet (eğim, halka, yumuşak zemin); üç derinlikli yüzeyler; üç katmanlı gölge;
+tek yay eğrisi. Başlık artık renk bloğu değil, tepeden sönen bir aydınlanma.
+
+**2. Fark ettirme.** Üç ayrı sinyal eklendi ve üçü ayrı işe bakıyor:
+karşılama kartı (11 sn, bir kez, `sb_teaser`), mesaj önizlemesi (panel
+kapalıyken 9 sn) ve balonun sessiz nabzı. Rozet "bir şey var" der; açılma
+oranını belirleyen, mesajın kendisini görmektir.
+
+**3. Boş ekran.** Form duvarı yerine davet: marka avatarı, karşılama, yanıt
+süresi ve `topics`ten türeyen hazır başlangıç çipleri. Çip dokunuşu doğrudan
+mesaj gönderir.
+
+**4. Mobil.** `100dvh`, `env(safe-area-inset-*)`, `visualViewport` ile klavye
+takibi (kompozitör artık klavyenin altında kalmıyor — şikâyetin en somut hâli),
+sayfa kaydırma kilidi, tepedeki tutamakla aşağı sürükleyerek kapatma, 16px
+yazı alanı (iOS yakınlaştırmasın).
+
+**5. Sohbet.** Mesaj gruplama (aynı gönderen, 5 dk), emoji seçici, "en alta in"
+düğmesi, bağlantıların tıklanır olması (`innerHTML` KULLANILMADAN — gövde
+serbest metindir ve widget müşterinin sayfasında çalışır), gönder düğmesinin
+boş mesajda pasif olması.
+
+Boyut: 30.4 KB gzip (hedef < 40 KB).
+
 ## 2026-09-01 — v2.1.1: `RadioChannel` sahtelenebilir oldu
 
 `final class RadioChannel` idi ve Mockery final sınıfı sahteleyemiyor. Sonuç:

@@ -140,6 +140,7 @@ export class ChatController {
     this.ui = new UI({
       t: this.t,
       locale: this.locale,
+      publicKey: this.opts.publicKey,
       settings: this.settings,
       appName: this.appName,
       maxMb,
@@ -403,7 +404,7 @@ export class ChatController {
     await this.ready;
     return this.api.post('/v1/sdk/devices', {
       provider: input.platform === 'ios' ? 'apns' : 'fcm',
-      locale: this.locale,
+      locale: browserLanguage(),
       ...input,
     });
   }
@@ -563,7 +564,19 @@ export class ChatController {
     const r = await this.api.post<{ visitor: Visitor }>('/v1/sdk/chat/session', {
       ...known,
       ...identity,
-      locale: this.locale,
+      /*
+       * ZİYARETÇİNİN GERÇEK TARAYICI DİLİ — arayüz dili DEĞİL (2 Eyl 2026).
+       *
+       * Buraya `this.locale` yazılıyordu ve o, widget metinleri için `tr`/`en`e
+       * DARALTILMIŞ değerdir (bkz. `resolveLocale`). Sonuç: Almanca bir
+       * tarayıcı sunucuya `en` olarak düşüyor, `chat_visitors.locale` hiçbir
+       * zaman `de` olmuyor ve çeviri o dili hiç göremiyordu. Sunucu 14 dil
+       * çeviriyor; kaynağı daraltmak bilgiyi kapıda çöpe atmaktı.
+       *
+       * `browserLanguage()` ham etiketi verir (`de-DE`); sunucu `substr(0,2)`
+       * ile normalleştirir ve desteklemediği dili zaten eler.
+       */
+      locale: browserLanguage(),
       page_url: location.href,
       user_agent: navigator.userAgent,
     });
@@ -738,7 +751,17 @@ export class ChatController {
         // proaktif mesaj müşterinin fark etmediği bir rozet olarak kalırsa
         // gönderilmemiş sayılır.
         if (this.settings?.sound) beep();
-        this.ui?.attention();
+        /*
+         * Önizleme İLE haber ver (2 Eyl 2026). Rozet "bir şey var" der; ne
+         * geldiğini söyleyen tek şey mesajın kendisidir ve paneli açtıran da
+         * odur. Özet listesi zaten `last_message_preview` getiriyor — ek bir
+         * istek yok.
+         */
+        this.ui?.attention({
+          name: open?.agent?.name || this.store.agent?.name || this.t.agent,
+          avatar: open?.agent?.avatar || this.store.agent?.avatar || null,
+          body: open?.last_message_sender === 'agent' ? open?.last_message_preview || null : null,
+        });
 
         /*
          * AJANIN BAŞLATTIĞI KONUŞMA PANELİ KENDİLİĞİNDEN AÇAR - BİR KEZ.
@@ -940,5 +963,20 @@ export class ChatController {
       this.store.clearVisitor();
       if (this.store.isOpen) this.decideView();
     }
+  }
+}
+
+/**
+ * Tarayıcının bildirdiği ham dil etiketi (`de-DE`, `pt-BR`…).
+ *
+ * Widget'ın ARAYÜZ dili (`resolveLocale`) ile karıştırılmamalı: o, çevirisi
+ * olan iki dile daraltılır; bu, ziyaretçinin gerçekte hangi dili okuduğudur ve
+ * sunucudaki çeviri yönü buna bakar.
+ */
+function browserLanguage(): string | undefined {
+  try {
+    return navigator.languages?.[0] || navigator.language || undefined;
+  } catch {
+    return undefined;
   }
 }

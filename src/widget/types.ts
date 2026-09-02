@@ -61,6 +61,20 @@ export interface ChatSettings {
   max_attachment_mb?: number;
 
   /**
+   * Tek mesajda en fazla karakter (2 Eyl 2026). SUNUCUDAN gelir; widget'a
+   * gömülmez. Aynı sayıyı iki yerde tutmak, birini değiştirip diğerini unutmak
+   * demekti: ziyaretçi yazabildiğini sanıp gönderdiğinde 422 alırdı.
+   */
+  max_message_chars?: number;
+
+  /**
+   * Ziyaretçinin yükleyebileceği MIME türleri — sunucudaki listenin aynısı.
+   * Joker YOKTUR ve bu güvenlik kararıdır: `image/*` betik çalıştırabilen
+   * `image/svg+xml`'i de içine alırdı.
+   */
+  attachment_mimes?: string[];
+
+  /**
    * Marka — panelden yönetilir (29 Ağu 2026).
    *
    * `logo_url` başlık avatarında ve (seçilmişse) balonda kullanılır;

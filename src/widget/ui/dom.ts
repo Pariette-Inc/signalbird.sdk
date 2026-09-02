@@ -107,7 +107,38 @@ const ICONS = {
   chevron: '<path d="m6 9 6 6 6-6"/>',
   smile: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/>',
   done: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10-3-3"/>',
+  down: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="m21 15-4.5-4.5L9 18"/>',
+  heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z"/>',
 };
+
+/** Ada göre baş harfler — fotoğrafı olmayan ajanın avatarı. */
+export function initials(name: string | null | undefined): string {
+  return (name || '?')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0] || '')
+    .join('')
+    .toUpperCase();
+}
+
+/**
+ * Avatar içeriği: fotoğraf varsa fotoğraf, yoksa baş harfler.
+ *
+ * Adres `safeUrl`den geçer — `javascript:` bir avatar değildir; ajan adı
+ * sunucudan gelse de widget müşterinin sayfasında çalışıyor.
+ */
+export function avatarNode(src: string | null | undefined, name: string): Node {
+  const url = safeUrl(src);
+
+  return url ? h('img', { src: url, alt: '', loading: 'lazy' }) : document.createTextNode(initials(name));
+}
+
+/** Yalnız https ya da gömülü veri adresine izin verilir. */
+export function safeUrl(url: unknown): string | null {
+  return typeof url === 'string' && /^(https:\/\/|data:image\/)/i.test(url) ? url : null;
+}
 
 export function fileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

@@ -415,24 +415,57 @@ fırlatmaz**; hata konsola yazılır ve yutulur. `init` öncesi kaydedilen
 - **İyimser gönderim.** Mesaj `client_id` (UUID) ile anında listeye düşer;
   sunucu aynı `client_id` ile var olanı dönerse (200) yerel kopya onunla
   değiştirilir. Başarısızsa kabarcık kırmızıya döner, tıklayınca yeniden dener.
+- **Uzunluk tavanı (2 Eyl 2026).** Tek mesaj en fazla
+  `channel.chat.max_message_chars` karakter (varsayılan **420**) — iki taraf
+  için de. Widget `maxlength` ile kırpar, son 60 karakterde sayaç gösterir ve
+  tavan aşılıysa göndermez; sunucu da aynı tavanı uygular (422
+  `MESSAGE_TOO_LONG`). Sayı SUNUCUDAN gelir, widget'a gömülü değildir.
 - **Ekler** önce `POST …/{id}/attachments` (multipart `file`) ile yüklenir,
-  sonra mesajla gönderilir. Tür süzgeci: `image/*`, pdf, doc/docx, xls/xlsx,
-  txt, zip; boyut `app.chat.max_attachment_mb` (varsayılan 10). Sürükle-bırak
-  ve panoya yapıştırma desteklenir; en fazla 5 dosya.
+  sonra mesajla gönderilir. İzinli türler `channel.chat.attachment_mimes`
+  ile gelir; varsayılan küme jpeg/png/gif/webp/avif + pdf + düz metin.
+  **Joker `image/*` YOKTUR ve bu bir güvenlik kararıdır:** `image/svg+xml`
+  betik çalıştırabilen bir belgedir, görsel değil. Boyut
+  `app.chat.max_attachment_mb` (varsayılan 10). Sürükle-bırak ve panoya
+  yapıştırma desteklenir; en fazla 5 dosya. MIME sunucuda dosyanın
+  İÇERİĞİNDEN okunur — uzantı ya da istemci beyanı yetmez.
 - **Yazıyor**: ilk tuşta `is_typing:true`, 2.5 s hareketsizlikte `false`;
   aynı yönde 4 s'den sık gönderilmez. Ajanın yazıyor durumu `agent_typing`
   alanından okunur.
 - **Okundu**: panel açık ve sekme görünürken gelen mesajlar için
   `POST …/read {last_message_id}`; ✓ = gönderildi, ✓✓ = teslim/okundu (mavi).
-- **Okunmamış**: balon rozeti + sekme gizliyken `document.title` yanıp söner
-  + (`app.chat.sound`) WebAudio bip.
+- **Okunmamış**: balon rozeti + balonda sessiz nabız + sekme gizliyken
+  `document.title` yanıp söner + (`app.chat.sound`) WebAudio bip.
+- **Fark ettirme (2 Eyl 2026).** Üç ayrı sinyal, üç ayrı iş:
+  *karşılama kartı* (`sb_teaser`) — ziyaretçi paneli bu tarayıcıda hiç
+  açmadıysa 11 sn sonra bir kez, kapatılırsa bir daha çıkmaz;
+  *mesaj önizlemesi* — panel kapalıyken gelen ajan mesajının gövdesi balonun
+  üstünde 9 sn görünür (rozet "bir şey var" der, önizleme NE olduğunu söyler);
+  *yaylanma* — yeni mesajda balon iki kez zıplar. `launcher_mode:'manual'`
+  ise karşılama kartı hiç çizilmez.
 - **Düzenle/sil** yalnız kendi mesajı ve 15 dk içinde; **tepki** emoji ile
   toggle; **yanıtla** alıntı gösterir.
 - **Puanlama**: "Sohbeti bitir" → 1–5 yıldız + yorum → `rate` + `close`. Ajan
   çözdüyse (`resolved`) panel kapatılırken bir kez sorulur; aynı konuşma için
   tekrar sorulmaz (`localStorage['sb_rated_<id>']`).
 - **Çalışma saatleri**: `within_hours=false` ise `offline_message` bandı.
-- **Mobil**: ≤640 px'de panel tam ekran. **Dil**: `locale` → `app.chat.locale`
+- **Boş ekran**: form değil davet — marka avatarı, karşılama cümlesi, yanıt
+  süresi vaadi ve `topics`ten türeyen hazır başlangıç çipleri (en fazla 4).
+  Çipe dokunmak o metni MESAJ olarak gönderir ve konuşmayı açar.
+- **Gruplama**: aynı gönderenin 5 dakika içindeki ardışık mesajları tek öbek —
+  avatar ve saat yalnız öbeğin son satırında.
+- **Dil iki ayrı şeydir (2 Eyl 2026).** `locale` alanında sunucuya ziyaretçinin
+  HAM tarayıcı etiketi gider (`navigator.languages[0]`, örn. `de-DE`);
+  widget'ın ARAYÜZ dili (`resolveLocale` → `tr`/`en`) bundan bağımsızdır ve
+  sunucuya hiç gitmez. Daraltılmış değeri göndermek, Almanca bir tarayıcıyı
+  sunucuya `en` diye tanıtıyor ve çeviri o dili hiç göremiyordu.
+- **Bağlantılar**: gövdedeki `http(s)://` adresleri tıklanır yapılır. `innerHTML`
+  KULLANILMAZ; parçalar düğüm olarak eklenir, yazılan hiçbir şey biçimlendirme
+  olarak yorumlanmaz.
+- **Mobil**: ≤640 px'de panel tam ekran (`100dvh`), güvenli alan boşlukları
+  (`env(safe-area-inset-*)`), klavye açılınca panel `visualViewport` ile kısalır
+  (kompozitör klavyenin üstünde kalır), arkadaki sayfa kaydırma kilidi altında,
+  tepedeki tutamak aşağı sürüklenerek panel kapatılır, yazı alanı 16px
+  (iOS altında sayfayı yakınlaştırır). **Dil**: `locale` → `app.chat.locale`
   → `navigator.language`; `tr` dışı her şey `en`.
 - **Boyut**: < 40 KB gzip (ölçüm: `gzip -c dist/signalbird.js | wc -c`).
 

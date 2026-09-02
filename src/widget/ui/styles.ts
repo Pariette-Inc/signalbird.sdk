@@ -1,309 +1,532 @@
 /**
  * Widget CSS'i — Shadow DOM içinde yaşar, sayfa CSS'inden izole.
  *
- * ── TASARIM KARARLARI (29 Ağu 2026) ──────────────────────────────────────
+ * ══ TASARIM DİLİ: "AURORA" (2 Eyl 2026) ══════════════════════════════════
  *
- * Ahmet: "çok basit gözüküyor… font ve tasarım beğenmedim ama gerçekten,
- * lütfen güzel bişey yap."
+ * Ahmet: "her şey. çok kötü. modern ve kimsenin görmediği bilmediği kadar
+ * harika bişey istiyorum."
  *
- * 1. BAŞLIK ARTIK RENK BLOĞU DEĞİL. Eski hâlde marka rengi tepeye dolu bir
- *    şerit olarak basılıyordu — 2015'in canlı destek görüntüsü. Şimdi başlık
- *    panelin yüzeyiyle aynı; marka rengi üstteki 3 piksellik hat, avatar
- *    halkası, gönder düğmesi ve ziyaretçi balonunda görünür. Renk AZ yerde
- *    ama HER ZAMAN aynı anlamda: "bu senin markan".
+ * Arayüz katmanı sıfırdan yazıldı. Çekirdek (api/store/poller/chat) aynen
+ * duruyor; değişen yalnız ziyaretçinin gördüğü yüzey. Kurallar:
  *
- * 2. NÖTRLER SOĞUK EĞİMLİ. Saf gri (#808080 ailesi) ekranda ölüdür; buradaki
- *    griler maviye çalar (#697084, #e6e8ec) ve marka rengi ne olursa olsun
- *    yanında oturur.
+ * 1. TEK RENKTEN BÜTÜN BİR PALET. Müşteri panelden tek bir marka rengi
+ *    veriyor (`--sb-c`). Buradaki her vurgu ondan TÜRETİLİR (`color-mix`):
+ *    eğim (`--sb-grad`), halka (`--sb-ring`), yumuşak zemin (`--sb-tint`).
+ *    Böylece lacivert de turuncu da veren müşteride widget aynı kalitede
+ *    duruyor — ikinci bir renk sormuyoruz, çünkü sorulan her ayar
+ *    doldurulmayan bir ayardır.
  *
- * 3. YAZI TİPİ DIŞARIDAN YÜKLENMEZ. Widget müşterinin sayfasında çalışır;
- *    Google Fonts çağırmak hem onun CSP'sine takılır hem de sayfaya bizim
- *    gecikmemizi ekler. Bunun yerine işletim sistemlerinin KENDİ arayüz
- *    yazı tipleri (SF, Segoe UI Variable, Roboto) sırayla denenir — hepsi
- *    zaten ekran için çizilmiş yüzlerdir. Kazanç: 0 bayt, 0 istek, 0 FOUT.
+ * 2. YÜZEYLER KATMANLI. Tek düz beyaz kutu yerine üç derinlik var: zemin
+ *    (`--sb-bg`), yükselti (`--sb-el` — başlık, kompozitör, kartlar) ve
+ *    girinti (`--sb-s` — baloncuk, alan). Gölge tek parça değil üç katman:
+ *    temas (1px), yayılma ve derinlik. Ekranda "duruyor" değil "yüzüyor".
  *
- * 4. İKİ TEMA. `theme: dark` gövdeye `.dark` sınıfı koyar, `auto` sayfanın
- *    tercihini okur. Renkler yalnız token seviyesinde değişir; hiçbir bileşen
- *    kendi içinde koyu/açık bilmez.
+ * 3. HAREKET YAYLI, SÜSLÜ DEĞİL. Tek bir eğri (`--sb-spring`) her yerde.
+ *    Panel balondan doğar (transform-origin balonun köşesi), balon panele
+ *    dönüşür. `prefers-reduced-motion` her animasyonu kapatır — ve kapatınca
+ *    arayüz eksik kalmaz, yalnız sakinleşir.
  *
- * 5. ZİYARETÇİ PANELİ TAŞIYIP BOYUTLANDIRABİLİR (`.pn` üzerindeki inline
- *    genişlik/yükseklik ve `--sb-dx/--sb-dy`). Sohbet bazen okunacak bir
- *    belgedir; 380 pikselin içine sıkıştırmak bizim tercihimizdi, onun değil.
+ * 4. MOBİL BİRİNCİ SINIF. Panel tam ekran, `100dvh`, çentik/ev çubuğu
+ *    boşlukları (`env(safe-area-inset-*)`), klavye açılınca kompozitör
+ *    klavyenin üstünde kalır (`--sb-kb`, visualViewport'tan gelir), tepede
+ *    tutamak ve aşağı sürükleyerek kapatma. Dokunma hedefleri 44px.
+ *
+ * 5. KENDİNİ FARK ETTİRİR AMA RAHATSIZ ETMEZ. Üç ayrı sinyal var ve üçü de
+ *    ayrı işe bakar: `.teaser` (karşılama kartı — ziyaretçi henüz hiç
+ *    konuşmadıysa bir kez), `.toast` (panel kapalıyken gelen yanıtın
+ *    önizlemesi), `.ln-pulse` (okunmamış varken balonun sessiz nabzı).
+ *    Hepsi kapatılabilir ve kapatma kararı tarayıcıda saklanır.
+ *
+ * 6. YAZI TİPİ DIŞARIDAN YÜKLENMEZ. Müşterinin CSP'sine takılmayalım ve
+ *    sayfaya bizim gecikmemiz eklenmesin diye işletim sisteminin kendi
+ *    arayüz yüzü kullanılır. Kazanç: 0 bayt, 0 istek, 0 FOUT.
  */
 export const CSS = `
 :host{all:initial}
 *,*::before,*::after{box-sizing:border-box}
 
 .sb{
-  /* Marka — tek değişken, dışarıdan gelir */
-  --sb-c:#111827;--sb-fg:#fff;
+  /* ── Marka: tek değişken gelir, palet buradan türer ── */
+  --sb-c:#4f46e5;--sb-fg:#fff;
+  --sb-grad:linear-gradient(145deg,color-mix(in srgb,var(--sb-c) 82%,#fff) 0%,var(--sb-c) 48%,color-mix(in srgb,var(--sb-c) 86%,#000) 100%);
+  --sb-ring:color-mix(in srgb,var(--sb-c) 28%,transparent);
+  --sb-tint:color-mix(in srgb,var(--sb-c) 8%,transparent);
+  --sb-edge:color-mix(in srgb,var(--sb-c) 55%,var(--sb-b));
 
-  /* Nötrler: soğuk eğimli, saf gri değil */
-  --sb-bg:#fff;--sb-t:#14171f;--sb-m:#697084;--sb-b:#e6e8ec;--sb-s:#f5f6f8;--sb-s2:#eef0f4;
-  --sb-sh:0 1px 2px rgba(16,20,30,.06),0 12px 32px -8px rgba(16,20,30,.18),0 32px 64px -24px rgba(16,20,30,.22);
-  --sb-r:16px;--sb-rb:14px;
+  /* ── Nötrler: soğuk eğimli. Saf gri ekranda ölüdür. ── */
+  --sb-bg:#fbfbfd;--sb-el:#fff;--sb-t:#12151d;--sb-m:#6b7385;--sb-b:#e4e7ee;
+  --sb-s:#f1f3f7;--sb-s2:#e8ebf1;
 
-  /* Ziyaretçinin taşıdığı miktar; sürüklenmediyse 0 */
-  --sb-dx:0px;--sb-dy:0px;
+  /* ── Gölge: temas + yayılma + derinlik ── */
+  --sb-sh:0 1px 1px rgba(16,20,30,.04),0 8px 24px -6px rgba(16,20,30,.14),0 32px 64px -24px rgba(16,20,30,.26);
+  --sb-sh-s:0 1px 2px rgba(16,20,30,.06),0 6px 18px -6px rgba(16,20,30,.16);
 
-  position:fixed;bottom:20px;z-index:2147483000;
+  --sb-r:22px;--sb-rb:18px;
+  --sb-spring:cubic-bezier(.22,1.12,.36,1);
+  --sb-kb:0px;              /* mobil klavye yüksekliği — visualViewport verir */
+  --sb-dx:0px;--sb-dy:0px;  /* ziyaretçinin taşıdığı miktar */
+
+  position:fixed;bottom:max(20px,env(safe-area-inset-bottom));z-index:2147483000;
   font:400 14px/1.5 ui-sans-serif,system-ui,-apple-system,"SF Pro Text","Segoe UI Variable Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  font-feature-settings:"cv11","ss01";
+  font-feature-settings:"cv11","ss01";font-variant-ligatures:common-ligatures;
   color:var(--sb-t);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   direction:ltr;text-align:left;
 }
-.sb.right{right:20px}.sb.left{left:20px}
+.sb.right{right:max(20px,env(safe-area-inset-right))}
+.sb.left{left:max(20px,env(safe-area-inset-left))}
 
 .sb.dark{
-  --sb-bg:#15171d;--sb-t:#eceef3;--sb-m:#9aa1b2;--sb-b:#2b2f3a;--sb-s:#1f222b;--sb-s2:#262a35;
-  --sb-sh:0 1px 2px rgba(0,0,0,.4),0 16px 40px -8px rgba(0,0,0,.55),0 40px 72px -28px rgba(0,0,0,.6);
+  --sb-bg:#101319;--sb-el:#171b23;--sb-t:#e9ecf3;--sb-m:#98a0b2;--sb-b:#272c37;
+  --sb-s:#1c212a;--sb-s2:#242a35;
+  --sb-tint:color-mix(in srgb,var(--sb-c) 16%,transparent);
+  --sb-sh:0 1px 1px rgba(0,0,0,.5),0 12px 32px -8px rgba(0,0,0,.6),0 40px 80px -28px rgba(0,0,0,.7);
+  --sb-sh-s:0 2px 8px rgba(0,0,0,.4),0 10px 24px -8px rgba(0,0,0,.5);
 }
 
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
-button:disabled{cursor:default;opacity:.45}
-input,textarea{font:inherit;color:inherit}
-svg{display:block}
+button:disabled{cursor:default}
+input,textarea,select{font:inherit;color:inherit}
+svg{display:block;flex:none}
 a{color:inherit}
-:focus-visible{outline:2px solid var(--sb-c);outline-offset:2px}
+:focus-visible{outline:2px solid var(--sb-c);outline-offset:2px;border-radius:6px}
 
-/* ── Balon ───────────────────────────────────────────────────────────── */
-.ln{position:relative;display:flex;align-items:center;gap:9px;height:56px;min-width:56px;padding:0 20px 0 17px;border-radius:28px;
-background:var(--sb-c);color:var(--sb-fg);
-box-shadow:0 2px 6px rgba(16,20,30,.14),0 10px 28px -6px rgba(16,20,30,.32);
-transition:transform .18s cubic-bezier(.2,.7,.3,1),box-shadow .18s}
-.ln:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(16,20,30,.16),0 16px 36px -8px rgba(16,20,30,.38)}
-.ln:active{transform:translateY(0)}
-.ln.icon-only{padding:0;justify-content:center;width:56px}
-.ln .lt{font-weight:600;font-size:14.5px;letter-spacing:-.01em;white-space:nowrap}
-.ln .lg{width:30px;height:30px;border-radius:50%;object-fit:cover;display:block}
-.badge{position:absolute;top:-3px;right:-3px;min-width:21px;height:21px;padding:0 6px;border-radius:11px;background:#ef4444;color:#fff;
-font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;
-border:2px solid var(--sb-bg);box-shadow:0 2px 6px rgba(239,68,68,.4)}
+/* ══ BALON ═══════════════════════════════════════════════════════════════ */
+.ln{position:relative;display:flex;align-items:center;gap:10px;height:60px;min-width:60px;padding:0 22px 0 18px;
+border-radius:30px;background:var(--sb-grad);color:var(--sb-fg);
+box-shadow:0 2px 6px rgba(16,20,30,.16),0 12px 28px -8px var(--sb-ring),0 24px 48px -20px rgba(16,20,30,.32);
+transition:transform .3s var(--sb-spring),box-shadow .3s ease,opacity .2s ease}
+.ln::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 55%)}
+.ln:hover{transform:translateY(-3px) scale(1.03)}
+.ln:active{transform:translateY(-1px) scale(.99)}
+.ln.icon-only{padding:0;justify-content:center;width:60px}
+.ln .lt{position:relative;font-weight:600;font-size:15px;letter-spacing:-.012em;white-space:nowrap}
+.ln .lg{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.ln .lm{position:relative;transition:transform .35s var(--sb-spring)}
+.ln:hover .lm{transform:rotate(-8deg) scale(1.06)}
 
-/* Yeni mesaj dikkat çekmesi: balon iki kez yaylanır ve etrafında bir halka
-   dağılır. Rozet küçük, ses ise tarayıcı etkileşim beklediği için çoğu zaman
-   hiç çalmıyor - sessiz sekmede görülen tek sinyal hareket.
-   Hareketi kapatan kullanıcıda animasyon HİÇ çalışmaz; rozet ve ses kalır. */
-@keyframes sb-attn{0%,100%{transform:scale(1)}15%{transform:scale(1.16)}30%{transform:scale(.96)}
-45%{transform:scale(1.10)}60%{transform:scale(1)}}
-@keyframes sb-attn-ring{0%{box-shadow:0 0 0 0 rgba(99,102,241,.45)}100%{box-shadow:0 0 0 18px rgba(99,102,241,0)}}
-.sb-attn{animation:sb-attn 1.2s ease-in-out 2}
-.sb-attn::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-animation:sb-attn-ring 1.2s ease-out 2}
-@media (prefers-reduced-motion:reduce){.sb-attn,.sb-attn::after{animation:none}}
+/* Ajanın çevrimiçi olduğunu balonda söylüyoruz: sohbete girmeden önce
+   "şu an biri var mı" sorusunun cevabı görünsün. */
+.ln-on{position:absolute;right:-1px;bottom:-1px;width:15px;height:15px;border-radius:50%;background:#22c55e;
+border:3px solid var(--sb-bg);display:none}
+.sb.agent-on .ln.icon-only .ln-on{display:block}
 
-.sb.open .ln{display:none}
+.badge{position:absolute;top:-2px;right:-2px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;
+background:#f43f5e;color:#fff;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;
+display:none;align-items:center;justify-content:center;border:2.5px solid var(--sb-bg);
+box-shadow:0 2px 8px rgba(244,63,94,.45);animation:sbPop .4s var(--sb-spring)}
+.badge.on{display:flex}
+@keyframes sbPop{from{transform:scale(0)}to{transform:scale(1)}}
 
-/* Balonu kapatma — balonun dışında, üst köşede. Masaüstünde yalnız hover'da:
-   sürekli duran bir çarpı, sohbete davetten çok "beni kapat" davetidir. */
-.dm{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:11px;background:var(--sb-bg);color:var(--sb-m);
-box-shadow:0 2px 8px rgba(16,20,30,.24);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;pointer-events:none}
-.sb:hover .dm{opacity:1;pointer-events:auto}
-.dm:hover{color:var(--sb-t)}
-.sb.open .dm,.sb.hidden .dm{display:none}
-@media (hover:none){.dm{opacity:1;pointer-events:auto}}
+/* Okunmamış varken sessiz nabız — hareket, sessiz sekmede görülen tek sinyal.
+   Rozet küçüktür, ses ise tarayıcı etkileşim beklediği için çoğu kez hiç
+   çalmaz (bkz. sound.ts). */
+.ln-pulse{position:absolute;inset:0;border-radius:inherit;pointer-events:none;display:none}
+.sb.pulse .ln-pulse{display:block}
+.ln-pulse::after{content:'';position:absolute;inset:0;border-radius:inherit;
+box-shadow:0 0 0 0 var(--sb-ring);animation:sbRing 2.4s ease-out infinite}
+@keyframes sbRing{0%{box-shadow:0 0 0 0 var(--sb-ring)}70%,100%{box-shadow:0 0 0 20px transparent}}
 
-/* Ziyaretçi balonu kapattı: widget tümden gizlenir. Kaldırılmaz —
-   sayfadaki "destek" düğmesi Signalbird.chat.open() ile onu geri getirir. */
-.sb.hidden .ln{display:none}
+/* Yeni mesaj geldiğinde tek seferlik yaylanma. */
+@keyframes sbAttn{0%,100%{transform:none}18%{transform:scale(1.14) rotate(-3deg)}36%{transform:scale(.97) rotate(2deg)}
+56%{transform:scale(1.07)}78%{transform:scale(.99)}}
+.ln.attn{animation:sbAttn 1.1s var(--sb-spring) 2}
 
-/* launcher_mode:'manual' — balon hiç çizilmez, sohbeti sitenin kendi düğmesi
-   açar. Ziyaretçinin kapatma tercihinden AYRI bir sınıf: biri site sahibinin
-   ayarı, diğeri ziyaretçinin kararı. */
-.sb.no-ln .ln,.sb.no-ln .dm{display:none}
+.sb.open .ln,.sb.hidden .ln,.sb.no-ln .ln{opacity:0;pointer-events:none;transform:scale(.7);position:absolute;bottom:0}
+.sb.right.open .ln,.sb.right.hidden .ln,.sb.right.no-ln .ln{right:0}
+.sb.left.open .ln,.sb.left.hidden .ln,.sb.left.no-ln .ln{left:0}
 
-/* ── Panel ───────────────────────────────────────────────────────────── */
-.pn{position:absolute;bottom:0;width:400px;max-width:calc(100vw - 40px);height:min(660px,calc(100vh - 40px));
-background:var(--sb-bg);border-radius:var(--sb-r);box-shadow:var(--sb-sh);
-display:none;flex-direction:column;overflow:hidden;
-transform-origin:bottom right;animation:sbIn .22s cubic-bezier(.2,.8,.25,1)}
-.sb.dark .pn{border:1px solid var(--sb-b)}
-.sb.left .pn{transform-origin:bottom left;left:0}.sb.right .pn{right:0}
-.sb.open .pn{display:flex}
-/* Ziyaretçinin taşıdığı konum. Sürükleme yoksa ikisi de 0. */
+/* Balonu tamamen kapatma. Ayrı düğmedir, balonun İÇİNDE değil: iç içe düğme
+   HTML'de geçersiz ve dokunmatikte "kapatayım derken açtım" hatasını doğurur. */
+.dm{position:absolute;top:-8px;width:24px;height:24px;border-radius:12px;background:var(--sb-el);color:var(--sb-m);
+box-shadow:var(--sb-sh-s);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;
+transition:opacity .18s,transform .18s var(--sb-spring);transform:scale(.8);z-index:2}
+.sb.right .dm{right:-8px}.sb.left .dm{left:-8px}
+.sb:hover .dm{opacity:1;pointer-events:auto;transform:scale(1)}
+.dm:hover{color:var(--sb-t);background:var(--sb-s)}
+.sb.open .dm,.sb.hidden .dm,.sb.no-ln .dm{display:none}
+@media (hover:none){.dm{opacity:1;pointer-events:auto;transform:scale(1)}}
+
+/* ══ KARŞILAMA KARTI (teaser) ════════════════════════════════════════════
+   Ziyaretçi henüz hiç konuşmadıysa, sayfada bir süre kaldıktan sonra bir
+   KEZ açılır. Kapatılırsa bir daha çıkmaz (karar tarayıcıda saklanır).
+   Sohbeti başlatan şey balonun kendisi değil, bu cümledir. */
+.teaser{position:absolute;bottom:74px;width:296px;max-width:calc(100vw - 40px);display:none;
+background:var(--sb-el);border:1px solid var(--sb-b);border-radius:20px;box-shadow:var(--sb-sh);
+padding:14px 15px;gap:11px;align-items:flex-start;cursor:pointer;text-align:left;
+animation:sbTeaser .5s var(--sb-spring) both}
+.sb.right .teaser{right:0;transform-origin:bottom right}
+.sb.left .teaser{left:0;transform-origin:bottom left}
+.sb.tz .teaser{display:flex}
+.sb.open .teaser,.sb.hidden .teaser{display:none}
+.teaser:hover{border-color:var(--sb-edge)}
+@keyframes sbTeaser{from{opacity:0;transform:translateY(14px) scale(.92)}to{opacity:1;transform:none}}
+.teaser .tv{width:40px;height:40px;border-radius:50%;overflow:hidden;flex:none;background:var(--sb-s2);
+display:flex;align-items:center;justify-content:center;font-weight:650;font-size:14px;color:var(--sb-t)}
+.teaser .tv img{width:100%;height:100%;object-fit:cover}
+.teaser .tc{flex:1;min-width:0}
+.teaser .tn{font-size:12px;font-weight:650;color:var(--sb-m);letter-spacing:.01em;margin-bottom:2px}
+.teaser .tb{font-size:13.5px;line-height:1.45;color:var(--sb-t);
+display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.teaser .tx{width:22px;height:22px;border-radius:11px;color:var(--sb-m);display:flex;align-items:center;justify-content:center;
+flex:none;margin:-4px -4px 0 0}
+.teaser .tx:hover{background:var(--sb-s);color:var(--sb-t)}
+
+/* ══ MESAJ ÖNİZLEMESİ (toast) ════════════════════════════════════════════
+   Panel kapalıyken ajan yazdığında balonun üstünde belirir. Rozet "bir şey
+   var" der; bu kart NE olduğunu söyler — açılma oranını belirleyen fark. */
+.toast{position:absolute;bottom:74px;width:296px;max-width:calc(100vw - 40px);display:none;gap:11px;
+background:var(--sb-el);border:1px solid var(--sb-b);border-radius:20px;box-shadow:var(--sb-sh);
+padding:13px 14px;align-items:flex-start;cursor:pointer;text-align:left;
+animation:sbTeaser .45s var(--sb-spring) both}
+.sb.right .toast{right:0;transform-origin:bottom right}
+.sb.left .toast{left:0;transform-origin:bottom left}
+.sb.tst .toast{display:flex}
+.sb.tst .teaser{display:none}
+.sb.open .toast{display:none}
+.toast .tv{width:36px;height:36px;border-radius:50%;overflow:hidden;flex:none;background:var(--sb-s2);
+display:flex;align-items:center;justify-content:center;font-weight:650;font-size:13px}
+.toast .tv img{width:100%;height:100%;object-fit:cover}
+.toast .tn{font-size:12px;font-weight:650;margin-bottom:2px}
+.toast .tb{font-size:13px;line-height:1.45;color:var(--sb-m);
+display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ══ PANEL ═══════════════════════════════════════════════════════════════ */
+.pn{position:absolute;bottom:0;width:404px;max-width:calc(100vw - 40px);
+height:min(688px,calc(100vh - 40px));background:var(--sb-bg);border-radius:var(--sb-r);
+box-shadow:var(--sb-sh);display:none;flex-direction:column;overflow:hidden;
+border:1px solid color-mix(in srgb,var(--sb-b) 70%,transparent)}
+.sb.right .pn{right:0;transform-origin:bottom right}
+.sb.left .pn{left:0;transform-origin:bottom left}
+.sb.open .pn{display:flex;animation:sbIn .42s var(--sb-spring)}
 .sb.right .pn{translate:calc(-1 * var(--sb-dx)) calc(-1 * var(--sb-dy))}
 .sb.left .pn{translate:var(--sb-dx) calc(-1 * var(--sb-dy))}
-.sb.moving .pn,.sb.sizing .pn{animation:none;transition:none;user-select:none}
-@keyframes sbIn{from{opacity:0;transform:translateY(14px) scale(.975)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.pn{animation:none}.ln{transition:none}}
-/* ── Çekmece (layout:'sidebar') ───────────────────────────────────────────
-   Ekran boyu, kenara yaslı panel. Köşe penceresinin aksine taşınmaz ve
-   boyutlandırılmaz; genişlik sabittir, yükseklik ekranın kendisidir. Mobilde
-   zaten tam ekran açılıyordu, orada iki biçim aynı yere varır. */
-.sb.sidebar{top:0;bottom:0;height:100vh;height:100dvh;display:flex;align-items:flex-end;padding-bottom:20px}
-.sb.sidebar.right{right:20px}.sb.sidebar.left{left:20px}
-.sb.sidebar .pn{position:fixed;top:0;bottom:0;height:100vh;height:100dvh;width:420px;max-width:100vw;
-border-radius:0;translate:none!important;animation:sbSlideR .24s cubic-bezier(.2,.8,.25,1)}
-.sb.sidebar.right .pn{right:0;left:auto}
-.sb.sidebar.left .pn{left:0;right:auto;animation-name:sbSlideL}
-.sb.sidebar .gp{display:none}
-@keyframes sbSlideR{from{opacity:.4;transform:translateX(24px)}to{opacity:1;transform:none}}
-@keyframes sbSlideL{from{opacity:.4;transform:translateX(-24px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.sb.sidebar .pn{animation:none}}
+.sb.moving .pn,.sb.sizing .pn{animation:none!important;transition:none;user-select:none}
+@keyframes sbIn{from{opacity:0;transform:translateY(24px) scale(.9)}to{opacity:1;transform:none}}
 
-@media (max-width:640px){
-  .sb.open{inset:0!important;bottom:0}
-  .sb.sidebar{padding-bottom:0}
-  .pn{position:fixed;inset:0;width:100%!important;max-width:none;height:100%!important;border-radius:0;translate:none!important}
-  .gp{display:none!important}
+/* Marka ışığı: rengin panele değdiği yer. Blok bir başlık şeridi değil —
+   tepeden aşağı sönen bir aydınlanma. Renk AZ yerde, HER ZAMAN aynı anlamda. */
+.glow{position:absolute;top:0;left:0;right:0;height:190px;pointer-events:none;z-index:0;
+background:radial-gradient(120% 100% at 50% 0%,var(--sb-tint) 0%,transparent 72%)}
+
+/* ── Çekmece (layout:'sidebar') ── */
+.sb.sidebar{top:0;bottom:0;height:100vh;height:100dvh;display:flex;align-items:flex-end;padding-bottom:20px}
+.sb.sidebar .pn{position:fixed;top:0;bottom:0;height:100vh;height:100dvh;width:432px;max-width:100vw;
+border-radius:0;border:0;translate:none!important}
+.sb.sidebar.right .pn{right:0;left:auto}
+.sb.sidebar.left .pn{left:0;right:auto}
+.sb.sidebar.open .pn{animation:sbSlide .4s var(--sb-spring)}
+.sb.sidebar.left.open .pn{animation-name:sbSlideL}
+@keyframes sbSlide{from{opacity:.5;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes sbSlideL{from{opacity:.5;transform:translateX(-40px)}to{opacity:1;transform:none}}
+.sb.sidebar .gp,.sb.sidebar .drag{display:none}
+
+@media (prefers-reduced-motion:reduce){
+  .sb *,.sb *::before,.sb *::after{animation:none!important;transition:none!important}
 }
 
-/* Marka hattı — rengin panelde tuttuğu ilk yer */
-.br{height:3px;flex:none;background:var(--sb-c)}
+/* ══ MOBİL ═══════════════════════════════════════════════════════════════
+   Panel tam ekran. Klavye açılınca gövde kısalır (--sb-kb) — kompozitör
+   klavyenin altında kalıp erişilemez olmuyor. Tepedeki tutamak aşağı
+   sürüklenerek kapatılır; mobilde "kapat" düğmesini aramak yerine alışılmış
+   jest çalışır. */
+@media (max-width:640px){
+  .sb.open{inset:0!important;padding:0}
+  .sb.open .pn{position:fixed;inset:0;width:100%!important;max-width:none;
+    height:calc(100dvh - var(--sb-kb))!important;border-radius:0;border:0;translate:none!important;
+    animation:sbUp .34s var(--sb-spring)}
+  @keyframes sbUp{from{opacity:.6;transform:translateY(28px)}to{opacity:1;transform:none}}
+  .gp{display:none!important}
+  /* Taban kural (.drag{display:none}) bu bloktan SONRA geliyor; eşit
+     özgüllükte sonraki kazanırdı. Seçici bilerek daha özgül. */
+  .sb.open .drag{display:flex}
+  .hd{padding-top:calc(6px + env(safe-area-inset-top))}
+  .cp{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .sb.open.kb .cp{padding-bottom:10px}
+  .teaser,.toast{width:calc(100vw - 40px)}
+  .cr textarea{font-size:16px}  /* iOS 16px altında sayfayı yakınlaştırır */
+  .row{max-width:88%}
+}
 
-/* Boyutlandırma tutamağı — panelin dış köşesinde (sağdaysa sol üst) */
-.gp{position:absolute;width:18px;height:18px;z-index:6;opacity:0;transition:opacity .15s}
+/* Aşağı sürükleyerek kapatma tutamağı (yalnız mobil). */
+.drag{display:none;justify-content:center;padding:10px 0 4px;flex:none;position:relative;z-index:2;
+touch-action:none;cursor:grab}
+.drag i{width:42px;height:5px;border-radius:3px;background:var(--sb-m);opacity:.35}
+.drag:active i{opacity:.6}
+.sb.dragging .pn{transition:none}
+
+/* Boyutlandırma tutamağı — panelin DIŞ köşesinde (sağdaysa sol üst); iç köşe
+   tam da kaydırma çubuğuna denk gelirdi. */
+.gp{position:absolute;width:20px;height:20px;z-index:6;opacity:0;transition:opacity .15s}
 .sb.right .gp{top:0;left:0;cursor:nwse-resize}
 .sb.left .gp{top:0;right:0;cursor:nesw-resize}
-.sb.open:hover .gp{opacity:.5}
+.sb.open .pn:hover .gp{opacity:.45}
 .gp:hover{opacity:1!important}
-.gp::after{content:"";position:absolute;top:6px;width:9px;height:9px;border-color:var(--sb-m);border-style:solid}
-.sb.right .gp::after{left:6px;border-width:1.5px 0 0 1.5px;border-radius:3px 0 0 0}
-.sb.left .gp::after{right:6px;border-width:1.5px 1.5px 0 0;border-radius:0 3px 0 0}
+.gp::after{content:"";position:absolute;top:7px;width:9px;height:9px;border-color:var(--sb-m);border-style:solid}
+.sb.right .gp::after{left:7px;border-width:1.5px 0 0 1.5px;border-radius:4px 0 0 0}
+.sb.left .gp::after{right:7px;border-width:1.5px 1.5px 0 0;border-radius:0 4px 0 0}
 
-/* ── Başlık ──────────────────────────────────────────────────────────── */
-.hd{display:flex;align-items:center;gap:11px;padding:13px 10px 13px 15px;flex:none;
-background:var(--sb-bg);border-bottom:1px solid var(--sb-b);cursor:grab;touch-action:none}
+/* ══ BAŞLIK ══════════════════════════════════════════════════════════════ */
+.hd{position:relative;z-index:1;display:flex;align-items:center;gap:12px;padding:14px 12px 14px 16px;flex:none;
+cursor:grab;touch-action:none}
 .sb.moving .hd{cursor:grabbing}
-.hd .av{position:relative;width:38px;height:38px;border-radius:50%;background:var(--sb-s2);color:var(--sb-t);
-display:flex;align-items:center;justify-content:center;font-weight:650;font-size:14px;letter-spacing:-.02em;
-overflow:hidden;flex:none;box-shadow:0 0 0 2px var(--sb-bg),0 0 0 3.5px color-mix(in srgb,var(--sb-c) 55%,transparent)}
+.hd .av{position:relative;width:42px;height:42px;border-radius:50%;flex:none;overflow:visible}
+.hd .av .ph{width:100%;height:100%;border-radius:50%;overflow:hidden;background:var(--sb-s2);color:var(--sb-t);
+display:flex;align-items:center;justify-content:center;font-weight:650;font-size:15px;letter-spacing:-.02em;
+box-shadow:0 0 0 2px var(--sb-bg),0 0 0 3.5px var(--sb-ring)}
 .hd .av img{width:100%;height:100%;object-fit:cover}
+.hd .dot{position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border-radius:50%;background:#9ca3af;
+border:2.5px solid var(--sb-bg);transition:background .2s}
+.hd .dot.on{background:#22c55e}
+.hd .dot.on::after{content:'';position:absolute;inset:-2px;border-radius:50%;
+box-shadow:0 0 0 0 rgba(34,197,94,.5);animation:sbLive 2.6s ease-out infinite}
+@keyframes sbLive{0%{box-shadow:0 0 0 0 rgba(34,197,94,.45)}70%,100%{box-shadow:0 0 0 9px transparent}}
 .hd .hi{flex:1;min-width:0}
-.hd .hn{font-weight:650;font-size:15px;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hd .hs{font-size:12.5px;color:var(--sb-m);display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-.dot{width:7px;height:7px;border-radius:50%;background:#9ca3af;flex:none}
-.dot.on{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
-.hb{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--sb-m);flex:none}
+.hd .hn{font-weight:650;font-size:15.5px;letter-spacing:-.018em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd .hs{font-size:12.5px;color:var(--sb-m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.hd .ha{display:flex;align-items:center;gap:2px;flex:none}
+.hb{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--sb-m);flex:none;
+transition:background .15s,color .15s}
 .hb:hover{background:var(--sb-s);color:var(--sb-t)}
+.hb.hide{display:none}
 
-/* ── Bant ────────────────────────────────────────────────────────────── */
-.bn{padding:9px 16px;font-size:12.5px;background:#fef6e0;color:#8a5a06;flex:none;border-bottom:1px solid var(--sb-b)}
-.bn.err{background:#fdeaea;color:#992b2b}
-.sb.dark .bn{background:#2c2413;color:#e8c37a}
-.sb.dark .bn.err{background:#2e1a1a;color:#f0a6a6}
+/* ══ BANT ════════════════════════════════════════════════════════════════ */
+.bn{position:relative;z-index:1;display:none;align-items:center;gap:8px;margin:0 12px 8px;padding:10px 13px;
+font-size:12.5px;line-height:1.45;border-radius:14px;background:#fff7e6;color:#8a5a06;border:1px solid #f5e2bb}
+.bn.on{display:flex}
+.bn.err{background:#fdecec;color:#9b2c2c;border-color:#f3cdcd}
+.sb.dark .bn{background:#2a2313;color:#e9c47f;border-color:#3b3117}
+.sb.dark .bn.err{background:#2c1919;color:#f0a8a8;border-color:#432020}
 
-/* ── Gövde ───────────────────────────────────────────────────────────── */
-.bd{flex:1;min-height:0;display:flex;flex-direction:column;position:relative;background:var(--sb-bg)}
-.ml{flex:1;overflow-y:auto;padding:18px 16px 10px;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain;scrollbar-width:thin}
-.ml::-webkit-scrollbar{width:8px}
-.ml::-webkit-scrollbar-thumb{background:var(--sb-b);border-radius:4px;border:2px solid var(--sb-bg)}
-.ml::-webkit-scrollbar-thumb:hover{background:var(--sb-m)}
-.day{align-self:center;font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--sb-m);background:var(--sb-s);
-padding:4px 11px;border-radius:11px;margin:12px 0 10px}
-.gr{align-self:flex-start;background:var(--sb-s);padding:11px 14px;border-radius:var(--sb-rb);border-bottom-left-radius:5px;max-width:85%;color:var(--sb-t)}
+/* ══ GÖVDE ═══════════════════════════════════════════════════════════════ */
+.bd{position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column}
+.ml{flex:1;overflow-y:auto;padding:10px 16px 12px;display:flex;flex-direction:column;
+overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--sb-b) transparent}
+/* Mesajlar alta yaslanır. justify-content:flex-end taşma olunca listenin
+   ÜSTÜNÜ kırpıyor; sözde öğeye verilen margin-top:auto ise hem az mesajda
+   alta yaslar hem çok mesajda normal kaydırmayı bozmaz. */
+.ml::before{content:'';margin-top:auto}
+.ml::-webkit-scrollbar{width:10px}
+.ml::-webkit-scrollbar-thumb{background:var(--sb-b);border-radius:5px;border:3px solid transparent;background-clip:content-box}
+.ml::-webkit-scrollbar-thumb:hover{background:var(--sb-m);background-clip:content-box}
 
-/* ── Mesaj satırı ────────────────────────────────────────────────────── */
-.row{display:flex;flex-direction:column;max-width:82%;position:relative;margin-top:2px}
-.row.v{align-self:flex-end;align-items:flex-end}
-.row.a{align-self:flex-start;align-items:flex-start}
-.row.s{align-self:center;max-width:90%}
-.row.s .bb{background:none;color:var(--sb-m);font-size:12px;text-align:center;padding:5px 8px;box-shadow:none}
+/* ── Boş ekran: form duvarı değil, davet ──────────────────────────────────
+   Ziyaretçi paneli açtığında ilk gördüğü şey ya bir form ya boş bir kutuydu.
+   Şimdi: karşılama cümlesi, yanıt süresi ve tek dokunuşla başlatan konu
+   çipleri. "Ne yazacağımı bilmiyorum" en sık terk sebebidir. */
+.hero{margin-top:auto;padding:26px 6px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.hero .hv{display:flex;margin-bottom:12px}
+.hero .hv span{width:44px;height:44px;border-radius:50%;overflow:hidden;background:var(--sb-s2);
+display:flex;align-items:center;justify-content:center;font-weight:650;font-size:15px;color:var(--sb-t);
+box-shadow:0 0 0 3px var(--sb-bg);margin-left:-12px}
+.hero .hv span:first-child{margin-left:0}
+.hero .hv img{width:100%;height:100%;object-fit:cover}
+.hero h4{margin:0;font-size:22px;font-weight:680;letter-spacing:-.028em;line-height:1.25;text-wrap:balance;
+background:var(--sb-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:2px 0 0;color:var(--sb-m);font-size:13.5px;line-height:1.5}
+.qk{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+.qk button{font-size:13px;font-weight:550;padding:9px 14px;border-radius:14px;background:var(--sb-el);
+border:1px solid var(--sb-b);color:var(--sb-t);box-shadow:var(--sb-sh-s);
+transition:transform .2s var(--sb-spring),border-color .15s,background .15s}
+.qk button:hover{transform:translateY(-2px);border-color:var(--sb-edge);background:var(--sb-tint)}
+
+.day{align-self:center;font-size:11px;font-weight:650;letter-spacing:.02em;color:var(--sb-m);
+background:var(--sb-s);padding:5px 12px;border-radius:12px;margin:14px 0 10px}
+
+/* ══ MESAJ SATIRI ════════════════════════════════════════════════════════
+   Aynı kişinin arka arkaya mesajları GRUPLANIR: avatar bir kez, saat bir kez,
+   aradaki boşluk 2px. Her mesaja avatar basmak sohbeti liste gibi gösteriyor;
+   gruplanınca konuşma gibi görünüyor. */
+.row{display:flex;gap:8px;max-width:84%;position:relative;margin-top:2px}
 .row.gap{margin-top:12px}
-.bb{position:relative;padding:9px 13px;border-radius:var(--sb-rb);word-wrap:break-word;overflow-wrap:anywhere;white-space:pre-wrap;line-height:1.48}
-.row.a .bb{background:var(--sb-s);border-bottom-left-radius:5px}
-.row.v .bb{background:var(--sb-c);color:var(--sb-fg);border-bottom-right-radius:5px}
-.row.pend .bb{opacity:.6}
-.row.fail .bb{background:#fdeaea;color:#992b2b;cursor:pointer}
-.bb.del{font-style:italic;opacity:.7}
-.q{display:block;border-left:2.5px solid currentColor;opacity:.72;padding:3px 9px;margin:0 0 7px;font-size:12px;border-radius:4px;
-background:rgba(120,130,150,.12);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px}
-.row.v .q{background:rgba(255,255,255,.16)}
-.mt{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sb-m);margin-top:4px;padding:0 3px;font-variant-numeric:tabular-nums}
+.row.v{align-self:flex-end;flex-direction:row-reverse}
+.row.a{align-self:flex-start}
+.row.s{align-self:center;max-width:92%;margin:8px 0}
+.row .av{width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;align-self:flex-end;background:var(--sb-s2);
+display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:650;color:var(--sb-m)}
+.row .av img{width:100%;height:100%;object-fit:cover}
+.row .av.gh{visibility:hidden}
+/* Öbeğin son satırında baloncuğun ALTINDA saat satırı var; avatar onunla değil
+   baloncukla hizalanmalı — yoksa yüz, mesajın bir satır aşağısına kayıyor. */
+.row.a:not(.mid) .av{margin-bottom:19px}
+.row .cl{display:flex;flex-direction:column;min-width:0}
+.row.v .cl{align-items:flex-end}
+
+.bb{position:relative;padding:10px 14px;border-radius:var(--sb-rb);word-wrap:break-word;overflow-wrap:anywhere;
+white-space:pre-wrap;line-height:1.5;font-size:14px;max-width:100%}
+.row.a .bb{background:var(--sb-el);border:1px solid var(--sb-b);border-bottom-left-radius:6px;box-shadow:var(--sb-sh-s)}
+.row.v .bb{background:var(--sb-grad);color:var(--sb-fg);border-bottom-right-radius:6px;
+box-shadow:0 2px 8px -2px var(--sb-ring),0 8px 20px -10px var(--sb-ring)}
+.row.a.mid .bb{border-bottom-left-radius:var(--sb-rb)}
+.row.v.mid .bb{border-bottom-right-radius:var(--sb-rb)}
+.row.pend .bb{opacity:.65}
+.row.fail .bb{background:#fdecec;color:#9b2c2c;border:1px solid #f3cdcd;cursor:pointer;box-shadow:none}
+.bb.del{font-style:italic;opacity:.65}
+.row.s .bb{background:none;border:0;box-shadow:none;color:var(--sb-m);font-size:12px;text-align:center;padding:4px 10px}
+.bb a{text-decoration:underline;text-underline-offset:2px}
+
+/* Yeni gelen mesaj yerine oturur — liste zıplamaz, mesaj belirir. */
+@keyframes sbMsg{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.row.new .bb{animation:sbMsg .34s var(--sb-spring)}
+
+.q{display:block;border-left:2.5px solid currentColor;opacity:.75;padding:4px 10px;margin:0 0 8px;font-size:12px;
+border-radius:5px;background:rgba(120,130,150,.12);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px}
+.row.v .q{background:rgba(255,255,255,.18)}
+.mt{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sb-m);margin-top:4px;padding:0 4px;
+font-variant-numeric:tabular-nums}
 .mt .tk{display:inline-flex}.mt .tk.rd{color:#3b82f6}
 .mt .ed{font-style:italic}
 .imgs{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0}
-.imgs img{max-width:220px;max-height:200px;border-radius:11px;display:block;cursor:zoom-in;object-fit:cover;background:var(--sb-s2)}
-.fr{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:11px;background:rgba(120,130,150,.12);margin:2px 0;
-text-decoration:none;font-size:13px;max-width:260px}
-.row.v .fr{background:rgba(255,255,255,.15)}
+.imgs img{max-width:216px;max-height:200px;border-radius:13px;display:block;cursor:zoom-in;object-fit:cover;background:var(--sb-s2)}
+.fr{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:13px;background:rgba(120,130,150,.13);
+margin:2px 0;text-decoration:none;font-size:13px;max-width:260px}
+.row.v .fr{background:rgba(255,255,255,.16)}
 .fr .fn{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1}
 .fr .fs{opacity:.7;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.rx{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
-.rx button{font-size:12px;padding:2px 8px;border-radius:11px;background:var(--sb-s);border:1px solid var(--sb-b);line-height:1.5}
-.rx button.me{border-color:var(--sb-c);background:var(--sb-bg)}
+.rx{display:flex;flex-wrap:wrap;gap:4px;margin-top:-6px;padding:0 4px;z-index:1}
+.rx button{font-size:12px;padding:3px 9px;border-radius:12px;background:var(--sb-el);border:1px solid var(--sb-b);
+line-height:1.5;box-shadow:var(--sb-sh-s)}
+.rx button.me{border-color:var(--sb-c);background:var(--sb-tint)}
 .row.v .rx{justify-content:flex-end}
 
-/* Mesaj eylem çubuğu */
-.ac{position:absolute;top:-32px;display:none;align-items:center;gap:2px;background:var(--sb-bg);border:1px solid var(--sb-b);
-border-radius:20px;padding:3px 5px;box-shadow:0 4px 14px rgba(16,20,30,.14);z-index:2}
-.row.a .ac{left:0}.row.v .ac{right:0}
-.row:hover .ac,.row.acts .ac{display:flex}
-.ac button{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--sb-t)}
-.ac button:hover{background:var(--sb-s)}
-.menu{position:absolute;top:0;display:none;flex-direction:column;background:var(--sb-bg);border:1px solid var(--sb-b);border-radius:12px;
-box-shadow:0 10px 28px rgba(16,20,30,.16);z-index:3;min-width:126px;overflow:hidden;padding:4px}
-.row.a .menu{left:0}.row.v .menu{right:0}
-.menu.show{display:flex}
-.menu button{padding:8px 11px;text-align:left;font-size:13px;border-radius:8px}
+/* Mesaj eylem çubuğu — masaüstünde hover, dokunmatikte uzun basış. */
+.ac{position:absolute;top:-34px;display:flex;align-items:center;gap:2px;background:var(--sb-el);
+border:1px solid var(--sb-b);border-radius:20px;padding:3px 5px;box-shadow:var(--sb-sh-s);z-index:3;
+opacity:0;pointer-events:none;transform:translateY(4px) scale(.94);transition:opacity .15s,transform .18s var(--sb-spring)}
+.row.a .ac{left:36px}.row.v .ac{right:36px}
+.row:hover .ac,.row.acts .ac{opacity:1;pointer-events:auto;transform:none}
+.ac button{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+font-size:15px;color:var(--sb-t);transition:background .12s,transform .18s var(--sb-spring)}
+.ac button:hover{background:var(--sb-s);transform:scale(1.18)}
+.menu{position:absolute;top:0;display:none;flex-direction:column;background:var(--sb-el);border:1px solid var(--sb-b);
+border-radius:14px;box-shadow:var(--sb-sh);z-index:4;min-width:140px;overflow:hidden;padding:5px}
+.row.a .menu{left:36px}.row.v .menu{right:36px}
+.menu.show{display:flex;animation:sbTeaser .2s var(--sb-spring)}
+.menu button{padding:9px 12px;text-align:left;font-size:13px;border-radius:9px}
 .menu button:hover{background:var(--sb-s)}
-.menu button.dg{color:#dc2626}
+.menu button.dg{color:#e11d48}
 
-/* Yazıyor */
-.tp{display:none;align-items:center;gap:4px;padding:6px 18px 4px;color:var(--sb-m);font-size:12px}
-.tp.on{display:flex}
-.tp i{width:6px;height:6px;border-radius:50%;background:var(--sb-m);animation:sbDot 1.2s infinite ease-in-out}
-.tp i:nth-child(2){animation-delay:.2s}.tp i:nth-child(3){animation-delay:.4s}
-@keyframes sbDot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+/* Yazıyor — üç nokta, ajanın baloncuğunun yerinde. */
+.tp{display:none;align-items:center;gap:8px;padding:6px 16px 10px}
+.tp.on{display:flex;animation:sbMsg .3s var(--sb-spring)}
+.tp .av{width:28px;height:28px;border-radius:50%;overflow:hidden;background:var(--sb-s2);flex:none;
+display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:650;color:var(--sb-m)}
+.tp .av img{width:100%;height:100%;object-fit:cover}
+.tp .dots{display:flex;align-items:center;gap:4px;background:var(--sb-el);border:1px solid var(--sb-b);
+border-radius:var(--sb-rb);border-bottom-left-radius:6px;padding:12px 14px;box-shadow:var(--sb-sh-s)}
+.tp i{width:6px;height:6px;border-radius:50%;background:var(--sb-m);animation:sbDot 1.3s infinite ease-in-out}
+.tp i:nth-child(2){animation-delay:.18s}.tp i:nth-child(3){animation-delay:.36s}
+@keyframes sbDot{0%,75%,100%{transform:translateY(0);opacity:.35}35%{transform:translateY(-4px);opacity:1}}
 
-/* ── Kompozitör ──────────────────────────────────────────────────────── */
-.cp{border-top:1px solid var(--sb-b);padding:10px 12px 8px;flex:none;background:var(--sb-bg)}
-.rq{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sb-m);padding:5px 9px 6px;border-left:2.5px solid var(--sb-c);
-background:var(--sb-s);border-radius:0 8px 8px 0;margin:0 0 8px}
+/* Aşağı in düğmesi — uzun geçmişte "yeni mesaj aşağıda" kaybolmasın. */
+.jump{position:absolute;left:50%;bottom:8px;transform:translateX(-50%) translateY(8px);opacity:0;pointer-events:none;
+display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:16px;background:var(--sb-el);
+border:1px solid var(--sb-b);box-shadow:var(--sb-sh-s);font-size:12.5px;font-weight:600;color:var(--sb-t);
+transition:opacity .2s,transform .25s var(--sb-spring);z-index:3}
+.jump.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+
+/* ══ KOMPOZİTÖR ══════════════════════════════════════════════════════════ */
+.cp{position:relative;z-index:1;padding:10px 12px 8px;flex:none;background:var(--sb-bg);
+border-top:1px solid color-mix(in srgb,var(--sb-b) 60%,transparent)}
+.rq{display:none;align-items:center;gap:8px;font-size:12px;color:var(--sb-m);padding:7px 10px;
+border-left:2.5px solid var(--sb-c);background:var(--sb-s);border-radius:0 10px 10px 0;margin:0 0 8px}
+.rq.on{display:flex;animation:sbMsg .25s var(--sb-spring)}
 .rq .rt{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.rq button{opacity:.7}
-.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 8px}
-.chip{display:flex;align-items:center;gap:7px;font-size:12px;background:var(--sb-s);border:1px solid var(--sb-b);border-radius:10px;padding:5px 9px;max-width:100%}
-.chip img{width:28px;height:28px;object-fit:cover;border-radius:6px}
-.chip span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:160px}
-.chip button{opacity:.6;line-height:1}
-.cr{display:flex;align-items:flex-end;gap:7px;background:var(--sb-s);border:1px solid var(--sb-b);border-radius:14px;padding:3px 4px 3px 6px;
-transition:border-color .15s,box-shadow .15s}
-.cr:focus-within{border-color:color-mix(in srgb,var(--sb-c) 55%,var(--sb-b));box-shadow:0 0 0 3px color-mix(in srgb,var(--sb-c) 14%,transparent)}
-.cr textarea{flex:1;resize:none;border:0;background:none;padding:9px 4px;max-height:140px;min-height:38px;outline:none;line-height:1.45}
+.rq button{opacity:.7;display:flex}
+.chips{display:none;flex-wrap:wrap;gap:6px;padding:0 0 8px}
+.chips.on{display:flex}
+.chip{position:relative;display:flex;align-items:center;gap:8px;font-size:12px;background:var(--sb-el);
+border:1px solid var(--sb-b);border-radius:12px;padding:5px 9px;max-width:100%;box-shadow:var(--sb-sh-s)}
+.chip img{width:30px;height:30px;object-fit:cover;border-radius:8px}
+.chip span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:150px}
+.chip button{opacity:.6;line-height:1;display:flex}
+.chip button:hover{opacity:1}
+
+/* Kalan karakter — sınıra yaklaşınca belirir, sıfırda uyarır. Sürekli duran
+   bir sayaç kısa yazmayı kural gibi gösterip sohbetin tonunu bozardı. */
+.cnt{display:none;justify-content:flex-end;padding:0 6px 4px;font-size:11px;font-weight:600;
+color:var(--sb-m);font-variant-numeric:tabular-nums}
+.cnt.on{display:flex}
+.cnt.full{color:#e11d48}
+
+.cr{display:flex;align-items:flex-end;gap:6px;background:var(--sb-el);border:1.5px solid var(--sb-b);
+border-radius:20px;padding:4px 5px 4px 6px;transition:border-color .18s,box-shadow .18s}
+.cr:focus-within{border-color:var(--sb-edge);box-shadow:0 0 0 4px var(--sb-tint)}
+.cr textarea{flex:1;resize:none;border:0;background:none;padding:10px 4px;max-height:132px;min-height:40px;
+outline:none;line-height:1.45}
 .cr textarea::placeholder{color:var(--sb-m)}
-.cb{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;color:var(--sb-m);flex:none}
-.cb:hover{background:var(--sb-s2);color:var(--sb-t)}
-.cb.sd{background:var(--sb-c);color:var(--sb-fg);border-radius:50%;width:36px;height:36px}
-.cb.sd:hover{background:var(--sb-c);filter:brightness(1.12)}
+.cb{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--sb-m);
+flex:none;transition:background .15s,color .15s,transform .2s var(--sb-spring)}
+.cb:hover{background:var(--sb-s);color:var(--sb-t)}
+.cb:active{transform:scale(.92)}
+.cb.sd{background:var(--sb-grad);color:var(--sb-fg);border-radius:50%;box-shadow:0 2px 10px -2px var(--sb-ring)}
+.cb.sd:disabled{background:var(--sb-s2);color:var(--sb-m);box-shadow:none;transform:scale(.9);opacity:1}
+.cb.sd:not(:disabled):hover{filter:brightness(1.1);transform:scale(1.06)}
 
-/* İmza — "Signalbird ile" yerine gerçek bir marka satırı.
-   Kuş işareti + kelime işareti, tek sıra, düşük kontrast: müşterinin
-   markasıyla yarışmaz ama okunur ve tıklanır. */
-.pw{display:flex;align-items:center;justify-content:center;padding:7px 0 3px}
-.pw a{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--sb-m);opacity:.72;
-font-size:11px;letter-spacing:.01em;padding:3px 8px;border-radius:8px;transition:opacity .15s,background .15s}
+/* Emoji seçici — 24 yüz yeter; tam bir emoji klavyesi widget'a 40 KB ekler. */
+.emj{position:absolute;bottom:100%;left:12px;right:12px;margin-bottom:8px;display:none;flex-wrap:wrap;gap:2px;
+background:var(--sb-el);border:1px solid var(--sb-b);border-radius:16px;padding:8px;box-shadow:var(--sb-sh);z-index:5}
+.emj.on{display:flex;animation:sbTeaser .22s var(--sb-spring)}
+.emj button{width:34px;height:34px;border-radius:9px;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center}
+.emj button:hover{background:var(--sb-s);transform:scale(1.15)}
+
+/* İmza — cümle kurmaz, isim söyler. Müşterinin markasıyla yarışmaz. */
+.pw{display:flex;align-items:center;justify-content:center;padding:8px 0 2px}
+.pw a{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--sb-m);opacity:.65;
+font-size:11px;padding:3px 9px;border-radius:9px;transition:opacity .15s,background .15s}
 .pw a:hover{opacity:1;background:var(--sb-s)}
-.pw .pk{opacity:.85;flex:none}
-.pw .pn2{font-weight:600;letter-spacing:-.005em;color:var(--sb-t);opacity:.75}
+.pw .pn2{font-weight:650;letter-spacing:-.008em;color:var(--sb-t);opacity:.8}
 
-.drop{position:absolute;inset:8px;background:color-mix(in srgb,var(--sb-bg) 92%,transparent);display:none;align-items:center;justify-content:center;
-font-weight:600;color:var(--sb-c);border:2px dashed var(--sb-c);border-radius:12px;z-index:5;pointer-events:none}
-.bd.dragging .drop{display:flex}
+.drop{position:absolute;inset:8px;background:color-mix(in srgb,var(--sb-bg) 88%,transparent);display:none;
+align-items:center;justify-content:center;flex-direction:column;gap:8px;font-weight:600;color:var(--sb-c);
+border:2px dashed var(--sb-edge);border-radius:16px;z-index:6;pointer-events:none;backdrop-filter:blur(2px)}
+.bd.dragover .drop{display:flex}
 
-/* ── Ön-form ve puanlama ─────────────────────────────────────────────── */
-.fm{flex:1;overflow-y:auto;padding:26px 22px;display:flex;flex-direction:column;gap:13px}
-.fm h3{margin:0;font-size:19px;font-weight:650;letter-spacing:-.02em;text-wrap:balance}
-.fm p{margin:0 0 4px;color:var(--sb-m);font-size:13.5px;line-height:1.55}
-.fm input,.fm textarea,.fm select{width:100%;border:1px solid var(--sb-b);border-radius:11px;padding:11px 13px;outline:none;
-background:var(--sb-s);color:inherit;font:inherit;transition:border-color .15s,box-shadow .15s}
-.fm input:focus,.fm textarea:focus,.fm select:focus{border-color:color-mix(in srgb,var(--sb-c) 55%,var(--sb-b));
-box-shadow:0 0 0 3px color-mix(in srgb,var(--sb-c) 14%,transparent);background:var(--sb-bg)}
-.fm textarea{resize:vertical;min-height:74px}
-.btn{background:var(--sb-c);color:var(--sb-fg);border-radius:11px;padding:12px 16px;font-weight:600;text-align:center;letter-spacing:-.01em;
-transition:filter .15s,transform .1s}
-.btn:hover{filter:brightness(1.08)}
+/* ══ FORMLAR (ön-form, puanlama) ═════════════════════════════════════════ */
+.fm{flex:1;overflow-y:auto;padding:24px 22px 22px;display:flex;flex-direction:column;gap:14px}
+.fm h3{margin:0;font-size:21px;font-weight:680;letter-spacing:-.028em;text-wrap:balance;line-height:1.25}
+.fm p{margin:-6px 0 4px;color:var(--sb-m);font-size:13.5px;line-height:1.55}
+.fld{position:relative}
+.fld input,.fld select,.fm textarea{width:100%;border:1.5px solid var(--sb-b);border-radius:14px;
+padding:20px 14px 8px;outline:none;background:var(--sb-el);color:inherit;font:inherit;
+transition:border-color .18s,box-shadow .18s}
+.fm textarea{padding:14px;resize:vertical;min-height:86px}
+.fld input:focus,.fld select:focus,.fm textarea:focus{border-color:var(--sb-edge);box-shadow:0 0 0 4px var(--sb-tint)}
+/* Yüzen etiket: yer tutucu metin, kullanıcı yazmaya başlayınca kaybolan tek
+   ipucudur. Etiket kalır — alanın ne olduğu her zaman görünür. */
+.fld label{position:absolute;left:15px;top:14px;font-size:14px;color:var(--sb-m);pointer-events:none;
+transition:transform .18s var(--sb-spring),font-size .18s,color .18s;transform-origin:left top}
+.fld input:focus+label,.fld input.has+label,.fld select+label{transform:translateY(-8px) scale(.78);color:var(--sb-m)}
+.fld input:focus+label{color:var(--sb-c)}
+.fld select{appearance:none;padding-top:20px}
+.fld .cv{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--sb-m);pointer-events:none}
+.fld.bad input{border-color:#e11d48}
+
+.btn{background:var(--sb-grad);color:var(--sb-fg);border-radius:15px;padding:14px 18px;font-weight:620;
+text-align:center;letter-spacing:-.012em;box-shadow:0 2px 10px -2px var(--sb-ring);
+transition:filter .15s,transform .18s var(--sb-spring)}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
 .btn:active{transform:translateY(1px)}
-.btn.gh{background:none;color:var(--sb-m);font-weight:500}
-.btn.gh:hover{background:var(--sb-s);filter:none}
-.stars{display:flex;justify-content:center;gap:7px;margin:10px 0}
-.stars button{color:var(--sb-b);padding:4px;transition:transform .12s,color .12s}
-.stars button:hover{transform:scale(1.14)}
+.btn.gh{background:none;color:var(--sb-m);font-weight:520;box-shadow:none}
+.btn.gh:hover{background:var(--sb-s);filter:none;transform:none}
+
+.stars{display:flex;justify-content:center;gap:8px;margin:14px 0 6px}
+.stars button{color:var(--sb-b);padding:4px;transition:transform .22s var(--sb-spring),color .18s}
+.stars button:hover{transform:scale(1.2) rotate(-6deg)}
 .stars button.on{color:#f5a524}
 .stars button.on svg{fill:currentColor}
-.ok{text-align:center;padding:34px 22px;color:var(--sb-t)}
-.ok .rv{margin-top:20px;color:var(--sb-m)}
-.notice{margin:10px 16px;padding:10px 13px;font-size:12.5px;color:var(--sb-m);background:var(--sb-s);border:1px solid var(--sb-b);
-border-radius:11px;text-align:center}
-.notice button{color:var(--sb-c);font-weight:600;margin-left:6px}
+.rl{text-align:center;font-size:13px;color:var(--sb-m);min-height:20px}
+
+.ok{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+padding:30px 24px;gap:8px}
+.ok .ic{width:64px;height:64px;border-radius:50%;background:var(--sb-tint);color:var(--sb-c);
+display:flex;align-items:center;justify-content:center;margin-bottom:8px;animation:sbPop .5s var(--sb-spring)}
+.ok h3{margin:0;font-size:19px;font-weight:660;letter-spacing:-.02em}
+.ok p{margin:0;color:var(--sb-m);font-size:13.5px;line-height:1.55}
+.ok .btn{margin-top:14px;text-decoration:none;display:inline-flex;justify-content:center}
+
+.notice{margin:0 16px 10px;padding:11px 14px;font-size:12.5px;color:var(--sb-m);background:var(--sb-el);
+border:1px solid var(--sb-b);border-radius:14px;text-align:center;display:none}
+.notice.on{display:block}
+.notice button{color:var(--sb-c);font-weight:650;margin-left:6px}
 `;
