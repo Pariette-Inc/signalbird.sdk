@@ -1,5 +1,20 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-02 — v2.3.1: taşıyıcıya gönderici kanalı + Go derleme onarımı
+
+- `MAIL_MAILER=signalbird` taşıyıcısı artık gönderici kanalı taşıyor:
+  `config/mail.php` → `'signalbird' => ['transport' => 'signalbird',
+  'channel' => 'noreply']` (KODA yazılır, env değil — kanal adı sır değildir).
+  Kanal `module_key` olarak gövdede gider; From adresini sunucu, panelde
+  adresle birlikte açılan `email` kanalından çözer. Kanalsız kurulum eski
+  davranışta (varsayılan gönderen adres). `signalbird.mail_channel` config
+  anahtarı da var (env isteyene).
+- Go: `management.go` `http.Request` → `http.request` — 1 Eyl "yeni versiyon"
+  commit'inden kalan derleme hatası; v2.3.0 tag'inde Go yüzeyi derlenmiyordu,
+  CI vet bunu yakaladı.
+- CONTRACT §8: `sendEmail` alanlarına `attachments`/`module_key`/
+  `sending_address_id` eklendi, §8.3.1'e kanal + ek bölümü yazıldı.
+
 ## 2026-09-02 — v2.3.0: e-posta ekleri + gönderici kanalı (`sendMail`)
 
 **Ekler:** `SignalbirdTransport` artık düz ekleri REDDETMİYOR — base64 olarak

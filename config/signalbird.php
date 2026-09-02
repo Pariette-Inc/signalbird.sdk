@@ -59,4 +59,14 @@ return [
     */
     'mail_class' => env('SIGNALBIRD_MAIL_CLASS', 'transactional'),
 
+    /*
+    | Taşıyıcının GÖNDERİCİ KANALI (2 Eyl 2026) — From adresini panelde adresle
+    | birlikte açılan `email` kanalı seçer (Telsiz'in radio('kanal') modeli).
+    | Kanal adı SIR DEĞİLDİR; tercih edilen yer env değil KODDUR:
+    |   config/mail.php → 'signalbird' => ['transport' => 'signalbird',
+    |                                      'channel' => 'noreply']
+    | Boş bırakılırsa varsayılan gönderen adres kullanılır.
+    */
+    'mail_channel' => env('SIGNALBIRD_MAIL_CHANNEL'),
+
 ];

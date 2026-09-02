@@ -41,6 +41,7 @@ class SignalbirdTransport extends AbstractTransport
     public function __construct(
         private readonly MessagingClient $client,
         private readonly string $class = 'transactional',
+        private readonly ?string $channel = null,
     ) {
         parent::__construct();
     }
@@ -60,6 +61,17 @@ class SignalbirdTransport extends AbstractTransport
             'subject' => $email->getSubject() ?? '',
             'body' => $this->body($email),
         ];
+
+        /*
+         * GÖNDERİCİ KANALI (2 Eyl 2026): From adresini kanal seçer — Telsiz'in
+         * radio('kanal') modeli. `config/mail.php` içinde
+         *   'signalbird' => ['transport' => 'signalbird', 'channel' => 'noreply']
+         * KODA yazılır (kanal adı sırlardan değildir, env gerektirmez).
+         * Kanalsız kurulum eskisi gibi varsayılan gönderen adrese düşer.
+         */
+        if ($this->channel !== null && $this->channel !== '') {
+            $payload['module_key'] = $this->channel;
+        }
 
         if ($fromName = $this->fromName($email)) {
             $payload['from_name'] = $fromName;

@@ -180,7 +180,7 @@ denetler. Alan adları API ile aynıdır (snake_case) — SDK yeniden adlandırm
 
 | Alan | Metot | HTTP |
 |---|---|---|
-| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, template_hash?, vars?, sending_domain_id?, contact_id?, from_name?, reply_to?})` | `POST /v1/email/send` |
+| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, template_hash?, vars?, sending_domain_id?, sending_address_id?, module_key?, contact_id?, from_name?, reply_to?, attachments?})` — `attachments`: en çok 5 × `{filename, mime?, content_b64}`, toplam çözülmüş 7 MB (`ATTACHMENTS_TOO_LARGE`); `module_key`: gönderici KANALI, From adresini panelde adrese bağlı `email` kanalı seçer (v2.3.0) | `POST /v1/email/send` |
 | SMS | `sendSms({to, class, body, brand_id?, contact_id?})` · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
 | push | `sendPush({to, class, subject, body, vars?, contact_id?})` — `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
 | olay | `track({event, contact:{email?|phone?|external_id?}, data?})` — kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
@@ -217,6 +217,16 @@ Signalbird::mail()
 `transactional()` / `commercial()` demek **zorunludur** — sınıfın varsayılanı
 yoktur. Uygulamanın mevcut `Mailable` sınıfları için bu gerekmez:
 `MAIL_MAILER=signalbird` ile hepsi zaten Signalbird'den çıkar (§8.8).
+
+**Gönderici kanalı ve ekler (v2.3.x):** `Signalbird::sendMail('noReply')` =
+`mail()->channel('noReply')` — kanal `module_key` olarak gövdede gider, From
+adresini panelde adresle birlikte açılan `email` kanalı seçer (Telsiz'in
+`radio('kanal')` modeli; yeni anahtar üretilmez). `->attach(filename, content,
+mime?)` / `->attachFile(path)` ekler; `->body(...)` = `html(...)`. Taşıyıcı
+(§8.8) kanalı mailer tanımından alır:
+`'signalbird' => ['transport' => 'signalbird', 'channel' => 'noreply']` —
+kanal adı sır değildir, KODA yazılır. Taşıyıcı düz ekleri de taşır; CID/inline
+gömme reddedilir (görsel https ile barındırılır).
 
 ### 8.4 Toplu kişi yükleme
 

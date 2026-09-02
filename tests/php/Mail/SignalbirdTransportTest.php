@@ -171,6 +171,24 @@ final class SignalbirdTransportTest extends TestCase
         $this->send($this->baseEmail(), $client);
     }
 
+    public function testKanalVerilirseModuleKeyGider(): void
+    {
+        // Gönderici kanalı (2 Eyl 2026): config/mail.php'deki 'channel'
+        // taşıyıcıya iner ve module_key olarak gövdede gider — From adresini
+        // sunucu kanaldan çözer.
+        $client = (new FakeMessagingClient())->queueJson(202, ['id' => 'm_1', 'status' => 'queued']);
+
+        (new SignalbirdTransport($client, 'transactional', 'noreply'))
+            ->send($this->baseEmail(), Envelope::create($this->baseEmail()));
+
+        $this->assertSame('noreply', $client->calls[0]['body']['module_key'] ?? null);
+
+        // Kanalsız kurulumda alan hiç gitmez (eski davranış birebir).
+        $client2 = (new FakeMessagingClient())->queueJson(202, ['id' => 'm_2', 'status' => 'queued']);
+        $this->send($this->baseEmail(), $client2);
+        $this->assertArrayNotHasKey('module_key', $client2->calls[0]['body']);
+    }
+
     public function testTasiyiciAdiSignalbird(): void
     {
         // `config/mail.php` içindeki `'transport' => 'signalbird'` bu ada bağlıdır.

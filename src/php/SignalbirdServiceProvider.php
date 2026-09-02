@@ -106,6 +106,9 @@ class SignalbirdServiceProvider extends ServiceProvider
             return new SignalbirdTransport(
                 $this->app->make(MessagingClient::class),
                 (string) ($config['class'] ?? config('signalbird.mail_class', 'transactional')),
+                // Gönderici kanalı: mailer tanımındaki 'channel' (KODA yazılır,
+                // env değil), yoksa config('signalbird.mail_channel').
+                ($config['channel'] ?? config('signalbird.mail_channel')) ?: null,
             );
         });
 
