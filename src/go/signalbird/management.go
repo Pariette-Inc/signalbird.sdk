@@ -43,30 +43,30 @@ func (m *Management) RadioEvents(ctx context.Context, query Query) (Result, erro
 // (logger, email, sms, push, chat) aynı gövdeyi kullanır.
 
 func (m *Management) ListModuleKeys(ctx context.Context, module string, query Query) (Result, error) {
-	return m.http.Request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys", nil, query)
+	return m.http.request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys", nil, query)
 }
 
 func (m *Management) GetModuleKey(ctx context.Context, module string, id any) (Result, error) {
-	return m.http.Request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys/"+seg(id), nil, nil)
+	return m.http.request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys/"+seg(id), nil, nil)
 }
 
 // CreateModuleKey — `key` verilmezse başlıktan üretilir; çakışırsa sayı eklenir.
 func (m *Management) CreateModuleKey(ctx context.Context, module string, input any) (Result, error) {
-	return m.http.Request(ctx, "POST", "/v1/modules/"+seg(module)+"/keys", input, nil)
+	return m.http.request(ctx, "POST", "/v1/modules/"+seg(module)+"/keys", input, nil)
 }
 
 // UpdateModuleKey — `key` DEĞİŞTİRİLEBİLİR: eski ad 30 gün daha kabul edilir.
 func (m *Management) UpdateModuleKey(ctx context.Context, module string, id any, input any) (Result, error) {
-	return m.http.Request(ctx, "PATCH", "/v1/modules/"+seg(module)+"/keys/"+seg(id), input, nil)
+	return m.http.request(ctx, "PATCH", "/v1/modules/"+seg(module)+"/keys/"+seg(id), input, nil)
 }
 
 func (m *Management) DeleteModuleKey(ctx context.Context, module string, id any) (Result, error) {
-	return m.http.Request(ctx, "DELETE", "/v1/modules/"+seg(module)+"/keys/"+seg(id), nil, nil)
+	return m.http.request(ctx, "DELETE", "/v1/modules/"+seg(module)+"/keys/"+seg(id), nil, nil)
 }
 
 // ListModuleKeyDevices — push kanalının cihazları; token MASKELİ döner.
 func (m *Management) ListModuleKeyDevices(ctx context.Context, module string, id any, query Query) (Result, error) {
-	return m.http.Request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys/"+seg(id)+"/devices", nil, query)
+	return m.http.request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys/"+seg(id)+"/devices", nil, query)
 }
 
 // ── Sohbet: gelen kutusu ───────────────────────────────────────────────
