@@ -69,15 +69,34 @@ class SignalbirdTransport extends AbstractTransport
             $payload['reply_to'] = $replyTo;
         }
 
-        // Ekler henüz taşınmıyor: gönderim düğümünün iş paketi biçiminde ek
-        // alanı yok (bkz. send.signalbird/ARCHITECTURE.md §3). Sessizce
-        // düşürmek, kullanıcının gönderdiğini sandığı faturanın hiç gitmemesi
-        // demek olurdu — bu yüzden AÇIKÇA hata verilir.
-        if ($email->getAttachments() !== []) {
-            throw new TransportException(
-                'Signalbird: bu taşıyıcı henüz e-posta eki göndermiyor. '
-                . 'Eki kendi depolamanızda barındırıp iletide bağlantı olarak paylaşın.'
-            );
+        /*
+         * Ekler (2 Eyl 2026): düz ekler taşınır — base64 olarak API'ye gider,
+         * mesajla saklanır ve düğüm MIME'a döker. Toplam boyut sınırı sunucuda
+         * (7 MB çözülmüş, ATTACHMENTS_TOO_LARGE).
+         *
+         * CID/inline gömme HÂLÂ taşınmaz (multipart/related düğümde yok);
+         * sessizce düşürmek görselin kaybolması demek olurdu — açıkça reddedilir.
+         * Gömülü görsel yerine barındırılmış https adresi kullanın.
+         */
+        $attachments = [];
+
+        foreach ($email->getAttachments() as $part) {
+            if (strtolower((string) $part->getDisposition()) === 'inline') {
+                throw new TransportException(
+                    'Signalbird: gömülü (CID/inline) içerik taşınmıyor; görseli barındırıp '
+                    . 'HTML gövdede https adresiyle kullanın. Düz dosya ekleri desteklenir.'
+                );
+            }
+
+            $attachments[] = [
+                'filename' => $part->getFilename() ?: 'ek',
+                'mime' => $part->getMediaType().'/'.$part->getMediaSubtype(),
+                'content_b64' => base64_encode($part->getBody()),
+            ];
+        }
+
+        if ($attachments !== []) {
+            $payload['attachments'] = $attachments;
         }
 
         foreach ($recipients as $recipient) {

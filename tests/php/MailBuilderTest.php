@@ -71,4 +71,27 @@ class MailBuilderTest extends TestCase
         $this->assertArrayNotHasKey('template', $byId);
         $this->assertSame('commercial', $byId['class']);
     }
+
+    public function test_kanal_ve_ekler_payloada_girer(): void
+    {
+        // sendMail('kanal') deseni: modül anahtarı gövdede taşınır, From
+        // adresini sunucu kanaldan çözer (2 Eyl 2026).
+        $payload = $this->builder()
+            ->channel('noReply')
+            ->to('ayse@ornek.com')
+            ->subject('Makbuz')
+            ->body('<p>Makbuzunuz ektedir.</p>')
+            ->attach('makbuz.pdf', 'PDFICERIK', 'application/pdf')
+            ->attach('fatura.csv', 'a;b;c')
+            ->transactional()
+            ->payload();
+
+        $this->assertSame('noReply', $payload['module_key']);
+        $this->assertSame('<p>Makbuzunuz ektedir.</p>', $payload['body']);
+        $this->assertCount(2, $payload['attachments']);
+        $this->assertSame('makbuz.pdf', $payload['attachments'][0]['filename']);
+        $this->assertSame('application/pdf', $payload['attachments'][0]['mime']);
+        $this->assertSame(base64_encode('PDFICERIK'), $payload['attachments'][0]['content_b64']);
+        $this->assertArrayNotHasKey('mime', $payload['attachments'][1]);
+    }
 }

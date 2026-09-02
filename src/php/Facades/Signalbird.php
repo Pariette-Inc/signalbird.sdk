@@ -62,6 +62,26 @@ class Signalbird extends Facade
     }
 
     /**
+     * Kanaldan e-posta — gönderici KANALI ile (2 Eyl 2026, Ahmet).
+     *
+     *   Signalbird::sendMail('noReply')
+     *       ->to('ayse@ornek.com')
+     *       ->subject('Makbuzunuz')
+     *       ->body('<p>…</p>')
+     *       ->attach('makbuz.pdf', $pdf, 'application/pdf')
+     *       ->transactional()
+     *       ->send();
+     *
+     * Kanal, panelde adresle birlikte açılan `email` modül anahtarıdır; From
+     * adresini o seçer. Yeni anahtar üretilmez — kimlik domain anahtarında,
+     * davranış kanalda (Telsiz `radio('kanal')` ile aynı model).
+     */
+    public static function sendMail(string $channel): MailBuilder
+    {
+        return static::mail()->channel($channel);
+    }
+
+    /**
      * Yönetim istemcisi. Laravel konteyneri varsa oradaki tekil
      * (`signalbird.management`), yoksa ortam değişkenlerinden kurulan örnek.
      */

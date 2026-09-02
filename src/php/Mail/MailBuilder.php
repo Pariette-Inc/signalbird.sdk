@@ -84,6 +84,56 @@ class MailBuilder
         return $this->with('body', $body);
     }
 
+    /** `html()` ile aynı — `sendMail('kanal')->body(…)` okunuşu için. */
+    public function body(string $body): self
+    {
+        return $this->html($body);
+    }
+
+    /**
+     * GÖNDERİCİ KANALI (2 Eyl 2026): panelde adresle birlikte açılan `email`
+     * modül anahtarı. From adresini kanal seçer — Telsiz'in `radio('kanal')`
+     * deseniyle aynı; yeni anahtar üretilmez, domain anahtarı kimliktir.
+     *
+     *   Signalbird::sendMail('noReply')->to(…)->subject(…)->body(…)->send();
+     */
+    public function channel(string $key): self
+    {
+        return $this->with('module_key', $key);
+    }
+
+    // ── Ekler ────────────────────────────────────────────────────────────
+
+    /**
+     * Dosya eki — ham içerikle. İçerik base64'e çevrilip API'ye taşınır;
+     * toplam çözülmüş boyut sınırı sunucudadır (7 MB, ATTACHMENTS_TOO_LARGE).
+     *
+     *   ->attach('makbuz.pdf', $pdfBytes, 'application/pdf')
+     */
+    public function attach(string $filename, string $content, ?string $mime = null): self
+    {
+        $attachments = $this->payload['attachments'] ?? [];
+        $attachments[] = array_filter([
+            'filename' => $filename,
+            'mime' => $mime,
+            'content_b64' => base64_encode($content),
+        ], fn ($v) => $v !== null);
+
+        return $this->with('attachments', $attachments);
+    }
+
+    /** Dosya eki — diskteki yoldan. Ad verilmezse dosya adı kullanılır. */
+    public function attachFile(string $path, ?string $filename = null, ?string $mime = null): self
+    {
+        $content = @file_get_contents($path);
+
+        if ($content === false) {
+            throw new SignalbirdException("Signalbird: ek okunamadı — {$path}", 'ATTACHMENT_UNREADABLE', 0);
+        }
+
+        return $this->attach($filename ?: basename($path), $content, $mime ?: (mime_content_type($path) ?: null));
+    }
+
     /**
      * Panelde tanımlı şablon — ADIYLA ya da kimliğiyle.
      *

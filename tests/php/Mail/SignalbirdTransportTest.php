@@ -126,16 +126,33 @@ final class SignalbirdTransportTest extends TestCase
         );
     }
 
-    public function testEkVarsaAcikcaHataVerir(): void
+    public function testDuzEkPayloadaTasinir(): void
     {
-        // Sessizce düşürmek, kullanıcının gönderdiğini sandığı faturanın hiç
-        // gitmemesi demek olurdu.
-        $client = new FakeMessagingClient();
+        // 2 Eyl 2026: ek desteği geldi — düğüm multipart/mixed üretir.
+        // İçerik base64 taşınır; boyut sınırı sunucudadır (7 MB).
+        $client = (new FakeMessagingClient())->queueJson(202, ['id' => 'm_1', 'status' => 'queued']);
 
         $email = $this->baseEmail()->attach('fatura icerigi', 'fatura.pdf', 'application/pdf');
 
+        $this->send($email, $client);
+
+        $attachments = $client->calls[0]['body']['attachments'] ?? [];
+        $this->assertCount(1, $attachments);
+        $this->assertSame('fatura.pdf', $attachments[0]['filename']);
+        $this->assertSame('application/pdf', $attachments[0]['mime']);
+        $this->assertSame(base64_encode('fatura icerigi'), $attachments[0]['content_b64']);
+    }
+
+    public function testGomuluIcerikHalaReddedilir(): void
+    {
+        // CID/inline gömme düğümde yok (multipart/related üretilmiyor);
+        // sessizce düşürmek görselin kaybolması demek olurdu.
+        $client = new FakeMessagingClient();
+
+        $email = $this->baseEmail()->embed('gorsel bayt', 'logo.png', 'image/png');
+
         $this->expectException(TransportException::class);
-        $this->expectExceptionMessageMatches('/eki göndermiyor/u');
+        $this->expectExceptionMessageMatches('/gömülü/u');
 
         $this->send($email, $client);
     }

@@ -1,5 +1,29 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-02 — v2.3.0: e-posta ekleri + gönderici kanalı (`sendMail`)
+
+**Ekler:** `SignalbirdTransport` artık düz ekleri REDDETMİYOR — base64 olarak
+`attachments` alanında API'ye taşır (mesajla saklanır, düğüm multipart/mixed
+üretir; sunucu sınırı toplam 7 MB çözülmüş, `ATTACHMENTS_TOO_LARGE`).
+CID/inline gömme hâlâ açıkça reddedilir (multipart/related düğümde yok) —
+görseli barındırıp https ile kullanın. `MailBuilder`a `attach(filename,
+content, mime)` ve `attachFile(path)` eklendi. `sendEmail(input)` tüm
+dillerde geçiş yaptığı için `attachments` alanı diğer dillerde de çalışır.
+
+**Gönderici kanalı (Ahmet, 2 Eyl):** yeni anahtar YOK — kimlik domain
+anahtarında, davranış kanalda (Telsiz `radio('kanal')` modeli):
+
+```php
+Signalbird::sendMail('noReply')
+    ->to('ayse@ornek.com')->subject('Makbuz')->body('<p>…</p>')
+    ->attach('makbuz.pdf', $pdf, 'application/pdf')
+    ->transactional()->send();
+```
+
+`sendMail(kanal)` = `mail()->channel(kanal)`; kanal `module_key` olarak
+gövdede gider, sunucu From adresini kanaldan çözer (module-key:email?,
+panelde adresle birlikte açılır). `body()` = `html()` takma adı.
+
 ## 2026-09-02 — v2.2.2: mesaj uzunluğu tavanı ve dosya türleri
 
 Sözleşme: `docs/CONTRACT.md` § 9.4.
