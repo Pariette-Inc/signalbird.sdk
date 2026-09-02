@@ -510,7 +510,7 @@ var ChatSession = class {
   async start() {
     this.stopped = false;
     const boot = await this.app.bootstrap();
-    const app = boot.data?.app;
+    const app = boot.data?.channel ?? boot.data?.app;
     if (!boot.ok || !app?.chat_enabled) {
       this.patch({ enabled: false, loading: false, errorCode: boot.code });
       return;

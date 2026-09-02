@@ -149,7 +149,15 @@ export interface RealtimeInfo {
 }
 
 export interface Bootstrap {
-  app: SdkApp;
+  /**
+   * SDK sözleşmesinde alanın adı `channel` (1 Eyl 2026 — konuşma bir
+   * "uygulamaya" değil kanala aittir). `app` ESKİ sunucular içindir; widget
+   * ikisini de okur. 3 Eyl'e kadar widget yalnız `app` okuyordu ve yeni
+   * sunucuda HİÇ çizilmiyordu — canlı chat bu yüzden hiç açılmadı.
+   */
+  channel?: SdkApp;
+  /** @deprecated eski sunucu alanı; `channel` yoksa okunur. */
+  app?: SdkApp;
   realtime?: RealtimeInfo;
   online: boolean;
   within_hours: boolean;

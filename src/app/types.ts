@@ -76,7 +76,30 @@ export interface TopicOption {
 
 /** `POST /v1/sdk/bootstrap` yanıtı — widget çizilmeden önceki tek soru. */
 export interface BootstrapResult {
-  app: {
+  /**
+   * Sözleşme adı `channel` (1 Eyl 2026); `app` eski sunucular için okunur.
+   * 3 Eyl'e kadar yalnız `app` okunuyordu ve yeni sunucuda mobil sohbet
+   * "kapalı" görünüyordu.
+   */
+  channel?: BootstrapChannel;
+  /** @deprecated eski sunucu alanı; `channel` yoksa okunur. */
+  app?: BootstrapChannel;
+  /** Boşsa konu adımı hiç gösterilmez. */
+  topics?: TopicOption[];
+  /** Mevcut açık konuşma (varsa) — ChatSession ilk listelemeyi atlar. */
+  conversation?: Conversation | null;
+  /**
+   * Canlı bağlantı — YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan taraf
+   * hiçbir şey göremez, odaya girmek imza ister ve imzayı
+   * `POST /v1/sdk/chat/socket/auth` verir.
+   *
+   * `enabled:false` ise yoklamayla çalışılır; canlı bağlantı bir
+   * İYİLEŞTİRMEDİR, onsuz da sistem tamdır.
+   */
+  realtime?: { enabled: boolean; url?: string };
+}
+
+export interface BootstrapChannel {
     id: number;
     name: string;
     chat_enabled: boolean;
@@ -111,20 +134,6 @@ export interface BootstrapResult {
       theme?: 'light' | 'dark' | 'auto';
       launcher_icon?: 'bird' | 'chat' | 'logo';
     };
-  };
-  /** Boşsa konu adımı hiç gösterilmez. */
-  topics?: TopicOption[];
-  /** Mevcut açık konuşma (varsa) — ChatSession ilk listelemeyi atlar. */
-  conversation?: Conversation | null;
-  /**
-   * Canlı bağlantı — YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan taraf
-   * hiçbir şey göremez, odaya girmek imza ister ve imzayı
-   * `POST /v1/sdk/chat/socket/auth` verir.
-   *
-   * `enabled:false` ise yoklamayla çalışılır; canlı bağlantı bir
-   * İYİLEŞTİRMEDİR, onsuz da sistem tamdır.
-   */
-  realtime?: { enabled: boolean; url?: string };
 }
 
 export interface Visitor {

@@ -12,7 +12,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "signalbird"
-version = "2.3.1"
+version = "2.3.2"
 description = "Signalbird SDK — Telsiz (log), Gönderim (e-posta/SMS/push) ve Yönetim istemcisi"
 readme = "README.md"
 requires-python = ">=3.8"

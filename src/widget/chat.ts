@@ -111,21 +111,32 @@ export class ChatController {
       locale: this.opts.locale,
     });
 
-    if (!boot.ok || !boot.data?.app) {
+    if (!boot.ok || !boot.data) {
+      this.log('bootstrap failed', boot);
+      return;
+    }
+
+    // Sunucu 1 Eyl'den beri `channel` gönderir; `app` eski sunucu uyumu.
+    // 3 Eyl'e kadar yalnız `app` okunuyordu ve widget yeni sunucuda hiç
+    // çizilmiyordu — canlı chat'in "hiç açılmamasının" kök sebebi buydu.
+    const app = boot.data.channel ?? boot.data.app;
+
+    if (!app) {
       this.log('bootstrap failed', boot);
       return;
     }
     if (this.destroyed) return;
 
-    const { app, online, within_hours, visitor, conversation, topics, realtime } = boot.data;
+    const { online, within_hours, visitor, conversation, topics, realtime } = boot.data;
     if (!app.chat_enabled) {
       this.log('chat disabled for app');
       return;
     }
 
-    this.settings = app.chat || ({} as ChatSettings);
+    const settings = app.chat || ({} as ChatSettings);
+    this.settings = settings;
     this.appName = app.name || '';
-    this.locale = resolveLocale(this.settings.locale, this.opts.locale);
+    this.locale = resolveLocale(settings.locale, this.opts.locale);
     this.t = strings(this.locale);
 
     // Sır vardı ama sunucu ziyaretçiyi tanımadı → sır geçersiz, temizle.
@@ -136,12 +147,12 @@ export class ChatController {
     this.store.withinHours = within_hours !== false;
     if (conversation) this.store.setConversation(conversation);
 
-    const maxMb = Number(this.settings.max_attachment_mb || app.max_attachment_mb || 10);
+    const maxMb = Number(settings.max_attachment_mb || app.max_attachment_mb || 10);
     this.ui = new UI({
       t: this.t,
       locale: this.locale,
       publicKey: this.opts.publicKey,
-      settings: this.settings,
+      settings,
       appName: this.appName,
       maxMb,
       topics: topics || [],

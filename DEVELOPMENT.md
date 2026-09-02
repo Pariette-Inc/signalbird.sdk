@@ -1,5 +1,20 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-03 — v2.3.2: KRİTİK — bootstrap sözleşme uyumsuzluğu (canlı chat hiç açılmıyordu)
+
+Sunucu 1 Eyl'den beri bootstrap yanıtında `channel` gönderiyor (KEY_ARCHITECTURE
+kararı, BootstrapController'da yorumla bile yazılmış); widget ve app yüzeyi ise
+hâlâ `app` okuyordu. Sonuç: bootstrap 200 dönüyor, widget "bootstrap failed"
+deyip SESSİZCE hiç çizilmiyordu — penyu.io'da canlı chat bu yüzden hiç
+açılmadı (3 Eyl, Ahmet canlıda yakaladı; teşhis canlı sayfada fetch-alias
+deneyiyle doğrulandı, düzeltme sonrası balon + ön-form + mesaj gönderimi
+uçtan uca çalıştı).
+
+- `src/widget/chat.ts` ve `src/app/session.ts`: `boot.data.channel ?? boot.data.app`
+  (eski sunucu uyumu korunur).
+- Tipler: `Bootstrap.channel` / `BootstrapResult.channel` asıl alan; `app`
+  @deprecated. `BootstrapChannel` ayrı tipe çıktı.
+
 ## 2026-09-02 — v2.3.1: taşıyıcıya gönderici kanalı + Go derleme onarımı
 
 - `MAIL_MAILER=signalbird` taşıyıcısı artık gönderici kanalı taşıyor:

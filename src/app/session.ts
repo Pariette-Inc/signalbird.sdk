@@ -29,7 +29,7 @@
  */
 import { clientId, SignalbirdApp } from './client';
 import { Socket } from '../shared/socket';
-import type { BootstrapResult, Conversation, Message, SbResult, SessionInput, StartConversationInput, TopicOption } from './types';
+import type { BootstrapResult, Conversation, Message, SbResult, SessionInput, StartConversationInput, TopicOption, BootstrapChannel } from './types';
 
 export interface ChatState {
   /** Sohbet bu uygulamada açık mı (`bootstrap` cevabı). */
@@ -55,7 +55,7 @@ export interface ChatState {
    * Ekran bunları PANELDEN alır, kendi içine gömmez: müşteri rengini ya da
    * puanlama adresini değiştirdiğinde yeni sürüm yayınlamak gerekmesin.
    */
-  settings: BootstrapResult['app']['chat'] | null;
+  settings: BootstrapChannel['chat'] | null;
 }
 
 export type ChatListener = (state: ChatState) => void;
@@ -134,7 +134,8 @@ export class ChatSession {
     this.stopped = false;
 
     const boot = await this.app.bootstrap();
-    const app = boot.data?.app;
+    // Sunucu 1 Eyl'den beri `channel` gönderir; `app` eski sunucu uyumu.
+    const app = boot.data?.channel ?? boot.data?.app;
 
     if (!boot.ok || !app?.chat_enabled) {
       this.patch({ enabled: false, loading: false, errorCode: boot.code });

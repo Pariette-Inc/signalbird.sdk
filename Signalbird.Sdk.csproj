@@ -19,7 +19,7 @@
     <EnableDefaultItems>false</EnableDefaultItems>
 
     <PackageId>Signalbird.Sdk</PackageId>
-    <Version>2.3.1</Version>
+    <Version>2.3.2</Version>
     <Authors>Signalbird</Authors>
     <Description>Signalbird SDK — Telsiz (log), Gönderim (e-posta/SMS/push) ve Yönetim istemcisi. Bağımlılıksız, ASP.NET Core DI destekli.</Description>
     <PackageTags>signalbird;logging;notification;messaging;email;sms;push;chat;observability</PackageTags>

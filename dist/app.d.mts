@@ -69,43 +69,14 @@ interface TopicOption {
 }
 /** `POST /v1/sdk/bootstrap` yanıtı — widget çizilmeden önceki tek soru. */
 interface BootstrapResult {
-    app: {
-        id: number;
-        name: string;
-        chat_enabled: boolean;
-        push_enabled: boolean;
-        locale?: string;
-        within_hours?: boolean;
-        offline_message?: string | null;
-        chat?: {
-            color?: string;
-            position?: string;
-            launcher_text?: string;
-            welcome_message?: string;
-            max_attachment_mb?: number;
-            sound?: boolean;
-            locale?: string;
-            prechat?: {
-                name?: boolean;
-                email?: boolean;
-            };
-            /**
-             * Sohbet sonu puanlama bağlantısı (Trustpilot, Google İşletme…).
-             *
-             * `review_min_rating` bir nezaket kuralı değil TİCARİ bir kuraldır:
-             * eşiğin altında puan veren müşteriye bağlantı HİÇ gösterilmez.
-             * Memnun olmamış müşteriyi halka açık bir puanlama sitesine yollamak
-             * kendi ayağımıza sıkmaktır.
-             */
-            review_url?: string | null;
-            review_label?: string | null;
-            review_min_rating?: number;
-            /** Marka: logo, tema, balon ikonu (29 Ağu 2026). */
-            logo_url?: string | null;
-            theme?: 'light' | 'dark' | 'auto';
-            launcher_icon?: 'bird' | 'chat' | 'logo';
-        };
-    };
+    /**
+     * Sözleşme adı `channel` (1 Eyl 2026); `app` eski sunucular için okunur.
+     * 3 Eyl'e kadar yalnız `app` okunuyordu ve yeni sunucuda mobil sohbet
+     * "kapalı" görünüyordu.
+     */
+    channel?: BootstrapChannel;
+    /** @deprecated eski sunucu alanı; `channel` yoksa okunur. */
+    app?: BootstrapChannel;
     /** Boşsa konu adımı hiç gösterilmez. */
     topics?: TopicOption[];
     /** Mevcut açık konuşma (varsa) — ChatSession ilk listelemeyi atlar. */
@@ -121,6 +92,43 @@ interface BootstrapResult {
     realtime?: {
         enabled: boolean;
         url?: string;
+    };
+}
+interface BootstrapChannel {
+    id: number;
+    name: string;
+    chat_enabled: boolean;
+    push_enabled: boolean;
+    locale?: string;
+    within_hours?: boolean;
+    offline_message?: string | null;
+    chat?: {
+        color?: string;
+        position?: string;
+        launcher_text?: string;
+        welcome_message?: string;
+        max_attachment_mb?: number;
+        sound?: boolean;
+        locale?: string;
+        prechat?: {
+            name?: boolean;
+            email?: boolean;
+        };
+        /**
+         * Sohbet sonu puanlama bağlantısı (Trustpilot, Google İşletme…).
+         *
+         * `review_min_rating` bir nezaket kuralı değil TİCARİ bir kuraldır:
+         * eşiğin altında puan veren müşteriye bağlantı HİÇ gösterilmez.
+         * Memnun olmamış müşteriyi halka açık bir puanlama sitesine yollamak
+         * kendi ayağımıza sıkmaktır.
+         */
+        review_url?: string | null;
+        review_label?: string | null;
+        review_min_rating?: number;
+        /** Marka: logo, tema, balon ikonu (29 Ağu 2026). */
+        logo_url?: string | null;
+        theme?: 'light' | 'dark' | 'auto';
+        launcher_icon?: 'bird' | 'chat' | 'logo';
     };
 }
 interface Visitor {
@@ -421,7 +429,7 @@ interface ChatState {
      * Ekran bunları PANELDEN alır, kendi içine gömmez: müşteri rengini ya da
      * puanlama adresini değiştirdiğinde yeni sürüm yayınlamak gerekmesin.
      */
-    settings: BootstrapResult['app']['chat'] | null;
+    settings: BootstrapChannel['chat'] | null;
 }
 type ChatListener = (state: ChatState) => void;
 interface ChatSessionOptions {
