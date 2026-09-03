@@ -609,7 +609,7 @@ export class UI {
     this.replyBar.classList.toggle('on', !!m);
     if (!m) return;
 
-    const who = m.sender_type === 'visitor' ? this.o.t.you : m.sender_name || this.o.t.agent;
+    const who = m.sender_type === 'visitor' ? this.o.t.you : m.agent?.name || m.sender_name || this.o.t.agent;
     this.replyBar.appendChild(icon('reply', 14));
     this.replyBar.appendChild(h('span', { class: 'rt' }, `${this.o.t.replyingTo} ${who}: ${snippet(m, this.o.t)}`));
     this.replyBar.appendChild(h('button', { type: 'button', 'aria-label': this.o.t.cancel, onclick: () => this.setReply(null) }, icon('close', 14)));

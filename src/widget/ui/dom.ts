@@ -100,6 +100,7 @@ const ICONS = {
   clip: '<path d="m21.4 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
   file: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/>',
   check: '<path d="M20 6 9 17l-5-5"/>',
+  link: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/>',
   checks: '<path d="M18 6 7 17l-4-4"/><path d="m22 10-7.5 7.5L13 16"/>',
   reply: '<path d="M9 17H5a2 2 0 0 1-2-2V9"/><path d="m3 9 4-4"/><path d="m3 9 4 4"/><path d="M9 17h6a6 6 0 0 0 0-12h-2"/>',
   more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',

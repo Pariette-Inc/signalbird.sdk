@@ -156,12 +156,33 @@ interface IdentifyInput {
     phone?: string;
     attributes?: Record<string, unknown>;
 }
-type MessageSender = 'visitor' | 'agent' | 'system';
+/** `bot` = kanal ajanı (yapay zekâ). Okuyan taraf için ajan gibi ele alınır. */
+type MessageSender = 'visitor' | 'agent' | 'bot' | 'system';
+interface MessageOption {
+    label: string;
+    value?: string;
+    url?: string;
+}
+interface MessageMeta {
+    ai?: boolean;
+    agent_name?: string | null;
+    /** Dokunulabilir seçenekler: `url` varsa aç, yoksa `value ?? label` gönder. */
+    options?: MessageOption[];
+    [key: string]: unknown;
+}
 interface Message {
     id: string;
     sender_type: MessageSender;
+    /** Sunucu kartı: ajan ya da bot (`bot:true`), sistemde null. */
+    agent?: {
+        id: number | null;
+        name: string;
+        avatar_url?: string | null;
+        bot?: boolean;
+    } | null;
     body?: string | null;
     attachments?: Attachment[] | null;
+    meta?: MessageMeta | null;
     reply_to_id?: string | null;
     reactions?: Record<string, string[]> | null;
     delivered_at?: string | null;

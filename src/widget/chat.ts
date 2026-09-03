@@ -353,7 +353,7 @@ export class ChatController {
       c.status === 'resolved' &&
       !this.store.wasRated(c.id) &&
       this.ui.currentView === 'chat' &&
-      this.store.messages.some((m) => m.sender_type === 'agent')
+      this.store.messages.some((m) => m.sender_type === 'agent' || m.sender_type === 'bot')
     ) {
       this.ratingMode = 'resolved';
       this.ui.setEndVisible(false);

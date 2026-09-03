@@ -147,7 +147,7 @@ export class Store {
       } else {
         next.push(m);
         byId.set(m.id, m);
-        if (m.sender_type === 'agent') newAgent++;
+        if (m.sender_type === 'agent' || m.sender_type === 'bot') newAgent++;
       }
     }
 

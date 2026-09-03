@@ -147,6 +147,7 @@ function renderRow(
   next: Message | null,
   fresh: boolean
 ): HTMLElement {
+  // `bot` (kanal ajanı) ziyaretçi için karşı taraftır — ajan tarafına çizilir.
   const side = m.sender_type === 'visitor' ? 'v' : m.sender_type === 'system' ? 's' : 'a';
   const startsGroup = !grouped(prev, m);
   const endsGroup = !grouped(m, next);
@@ -171,7 +172,7 @@ function renderRow(
   // satırlarda görünmez bir kopya yer tutar ki baloncuklar hizada kalsın.
   if (side === 'a') {
     row.appendChild(
-      h('div', { class: `av${endsGroup ? '' : ' gh'}` }, avatarNode(ctx.agentAvatar, m.sender_name || ctx.agentName))
+      h('div', { class: `av${endsGroup ? '' : ' gh'}` }, avatarNode(ctx.agentAvatar, senderName(m) || ctx.agentName))
     );
   }
 
@@ -188,7 +189,7 @@ function renderRow(
   // Yanıt alıntısı
   if (m.reply_to_id) {
     const target = ctx.find(m.reply_to_id);
-    const who = target ? (target.sender_type === 'visitor' ? ctx.t.you : target.sender_name || ctx.agentName) : '';
+    const who = target ? (target.sender_type === 'visitor' ? ctx.t.you : senderName(target) || ctx.agentName) : '';
     bubble.appendChild(h('span', { class: 'q' }, who ? `${who}: ` : '', target ? snippet(target, ctx.t) : '…'));
   }
 
@@ -232,6 +233,30 @@ function renderRow(
 
   col.appendChild(bubble);
 
+  /*
+   * Kanal ajanının seçenekleri (3 Eyl 2026): "5 paket göster, dokununca
+   * sepete eklensin". `url` olan seçenek üst pencerede açılır (widget iframe
+   * içinde olabilir); olmayan, ziyaretçinin mesajı olarak gönderilir.
+   * Yalnız SON bot mesajında dokunulabilir — eski bir listeye dokunmak
+   * bağlamı kaybolmuş bir cevap üretirdi.
+   */
+  const options = side === 'a' && m.meta?.options?.length ? m.meta.options.slice(0, 6) : null;
+  if (options) {
+    const live = !next || next.sender_type === 'system';
+    const box = h('div', { class: `opts${live ? '' : ' past'}` });
+    for (const o of options) {
+      if (!o || !o.label) continue;
+      if (o.url) {
+        box.appendChild(h('a', { href: o.url, target: '_top', rel: 'noopener' }, o.label, icon('link', 12)));
+      } else {
+        box.appendChild(
+          h('button', { type: 'button', disabled: live ? null : 'disabled', onclick: () => ctx.onQuick?.(o.value || o.label) }, o.label)
+        );
+      }
+    }
+    if (box.childNodes.length) col.appendChild(box);
+  }
+
   // Tepkiler — baloncuğun alt kenarına biner
   const reactions = m.reactions && Object.keys(m.reactions).length ? m.reactions : null;
   if (reactions) {
@@ -272,6 +297,11 @@ function renderRow(
 }
 
 /** İki mesaj aynı öbekte mi: aynı gönderen, aynı gün, 5 dakikadan yakın. */
+/** Görünen gönderen adı: ajan/bot kartı, yoksa eski `sender_name`. */
+function senderName(m: Message): string | null {
+  return m.agent?.name || m.sender_name || m.meta?.agent_name || null;
+}
+
 function grouped(a: Message | null, b: Message | null): boolean {
   if (!a || !b) return false;
   if (a.sender_type !== b.sender_type || a.sender_type === 'system') return false;

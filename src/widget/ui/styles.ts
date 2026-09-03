@@ -330,6 +330,16 @@ border:1px solid var(--sb-b);color:var(--sb-t);box-shadow:var(--sb-sh-s);
 transition:transform .2s var(--sb-spring),border-color .15s,background .15s}
 .qk button:hover{transform:translateY(-2px);border-color:var(--sb-edge);background:var(--sb-tint)}
 
+/* Kanal ajanının seçenekleri — baloncuğun altında dikey liste */
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:6px;max-width:100%}
+.opts a,.opts button{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;
+font-size:13px;font-weight:550;padding:9px 12px;border-radius:12px;background:var(--sb-el);
+border:1px solid var(--sb-b);color:var(--sb-t);box-shadow:var(--sb-sh-s);text-decoration:none;cursor:pointer;
+transition:transform .2s var(--sb-spring),border-color .15s,background .15s}
+.opts a:hover,.opts button:hover:not([disabled]){transform:translateY(-1px);border-color:var(--sb-edge);background:var(--sb-tint)}
+.opts button[disabled]{opacity:.55;cursor:default}
+.opts.past a{opacity:.8}
+
 .day{align-self:center;font-size:11px;font-weight:650;letter-spacing:.02em;color:var(--sb-m);
 background:var(--sb-s);padding:5px 12px;border-radius:12px;margin:14px 0 10px}
 

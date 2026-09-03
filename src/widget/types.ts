@@ -183,7 +183,7 @@ export interface Conversation {
   subject?: string | null;
   last_message_at?: string | null;
   last_message_preview?: string | null;
-  last_message_sender?: 'visitor' | 'agent' | 'system' | null;
+  last_message_sender?: 'visitor' | 'agent' | 'bot' | 'system' | null;
   visitor_unread?: number;
   rating?: number | null;
   assigned_user_id?: number | null;
@@ -207,12 +207,31 @@ export interface Attachment {
   height?: number;
 }
 
+export interface MessageOption {
+  label: string;
+  value?: string;
+  url?: string;
+}
+
+export interface MessageMeta {
+  ai?: boolean;
+  agent_name?: string | null;
+  options?: MessageOption[];
+  [key: string]: unknown;
+}
+
 export interface Message {
   id: string;
   conversation_id?: string;
-  sender_type: 'visitor' | 'agent' | 'system';
+  /**
+   * `bot` = kanal ajanı (yapay zekâ, 3 Eyl 2026). Ziyaretçi için karşı
+   * taraftır: ajan gibi çizilir, adı `agent.name`/`sender_name`.
+   */
+  sender_type: 'visitor' | 'agent' | 'bot' | 'system';
   sender_id?: string | number | null;
   sender_name?: string | null;
+  /** Sunucu kartı: ajan ya da bot (`bot:true`). */
+  agent?: { id: number | null; name: string; avatar_url?: string | null; bot?: boolean } | null;
   type: 'text' | 'image' | 'file' | 'system';
   body: string | null;
   /**
@@ -232,6 +251,12 @@ export interface Message {
   read_at?: string | null;
   edited_at?: string | null;
   deleted_at?: string | null;
+  /**
+   * Sunucu meta'sı. `options`: kanal ajanının sunduğu dokunulabilir
+   * seçenekler — `url` varsa sayfa açılır, yoksa `value ?? label` ziyaretçinin
+   * mesajı olarak gönderilir.
+   */
+  meta?: MessageMeta | null;
   created_at: string;
   /** Yerel: sunucuya gitti mi */
   _pending?: boolean;
