@@ -44,6 +44,11 @@ jobs:
     name: npm
     needs: guard
     runs-on: ubuntu-latest
+    # Jeton JOB seviyesinde: adımın kendi `env:`i, o adımın `if:`inde HENÜZ
+    # görünmez — eski hâliyle "Yayınla" HER sürümde sessizce atlanıyordu
+    # (v2.3.0-2.3.2'de yakalandı, 3 Eyl 2026). Job env'i adım if'inde görünür.
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -57,14 +62,15 @@ jobs:
 
       - name: Yayınla
         if: env.NODE_AUTH_TOKEN != ''
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
 
   pypi:
     name: PyPI
     needs: guard
     runs-on: ubuntu-latest
+    env:
+      TWINE_USERNAME: __token__
+      TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -75,15 +81,14 @@ jobs:
 
       - name: Yayınla
         if: env.TWINE_PASSWORD != ''
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: twine upload dist_py/*
 
   nuget:
     name: NuGet
     needs: guard
     runs-on: ubuntu-latest
+    env:
+      NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -93,8 +98,6 @@ jobs:
 
       - name: Yayınla
         if: env.NUGET_KEY != ''
-        env:
-          NUGET_KEY: ${{ secrets.NUGET_API_KEY }}
         run: dotnet nuget push "dist_nuget/*.nupkg" --api-key "$NUGET_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
   # Packagist ve Go/SPM için yayın adımı YOKTUR; ikisi de etiketi doğrudan

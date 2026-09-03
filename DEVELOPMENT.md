@@ -1,5 +1,20 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-03 (2) — publish.yml: "Yayınla" adımları HİÇ çalışmamış
+
+Ahmet "npm publish gerekiyor mu?" diye sorunca çıktı: v2.3.0/2.3.1/2.3.2
+yayın koşularının ÜÇÜNDE de npm "Yayınla" adımı `skipped` — iş akışı yeşil
+bitiyor ama hiçbir şey basmıyordu (npm'deki eski sürümler elle basılmıştı;
+PyPI'da hiç sürüm yok). Sebep: `if: env.NODE_AUTH_TOKEN != ''` koşulundaki
+jeton ADIMIN KENDİ `env:` bloğundaydı ve GitHub `if`'i o env devreye girmeden
+değerlendirir — koşul her zaman boş, adım her zaman atlanıyordu. PyPI ve
+NuGet işlerinde de aynı kalıp vardı.
+
+Düzeltme: jetonlar JOB seviyesine taşındı (job env'i adım `if`'inde görünür).
+"Jeton tanımsızsa adım atlanır" davranışı korunuyor — artık gerçekten jetona
+bakarak. Packagist etkilenmedi (webhook, v2.3.2 orada). Bekleyen sürümler için
+tag yeniden koşturulur: `gh workflow run publish --ref v2.3.2`.
+
 ## 2026-09-03 — v2.3.2: KRİTİK — bootstrap sözleşme uyumsuzluğu (canlı chat hiç açılmıyordu)
 
 Sunucu 1 Eyl'den beri bootstrap yanıtında `channel` gönderiyor (KEY_ARCHITECTURE
