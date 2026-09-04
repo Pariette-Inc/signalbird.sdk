@@ -44,6 +44,11 @@ jobs:
     name: npm
     needs: guard
     runs-on: ubuntu-latest
+    # `npm publish --provenance` OIDC jetonu ister; izin verilmezse
+    # "requires write access to the id-token permission" ile düşer (v2.4.1'de düştü).
+    permissions:
+      contents: read
+      id-token: write
     # Jeton JOB seviyesinde: adımın kendi `env:`i, o adımın `if:`inde HENÜZ
     # görünmez — eski hâliyle "Yayınla" HER sürümde sessizce atlanıyordu
     # (v2.3.0-2.3.2'de yakalandı, 3 Eyl 2026). Job env'i adım if'inde görünür.
