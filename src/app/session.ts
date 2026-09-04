@@ -348,7 +348,7 @@ export class ChatSession {
 
       const detail = await this.app.getConversation(first.id);
 
-      this.applyConversation(detail.data?.conversation ?? first, true);
+      this.applyConversation(detail.data?.conversation ?? first, true, detail.data?.messages);
 
       return;
     }
@@ -367,13 +367,21 @@ export class ChatSession {
       return;
     }
 
-    this.applyConversation(detail.data.conversation, !after);
+    this.applyConversation(detail.data.conversation, !after, detail.data.messages);
   }
 
   // ── İç işler ──────────────────────────────────────────────────────────
 
-  private applyConversation(conversation: Conversation, replace: boolean): void {
-    const incoming = conversation.messages ?? [];
+  /*
+   * MESAJLAR YANITIN ÜST DÜZEYİNDE GELİR (4 Eyl 2026). Sunucu `GET
+   * /conversations/{id}` için `{conversation, messages}` döner; burada
+   * `conversation.messages` okunuyordu, o alan hiç yoktu. Sonuç: ilk mesaj
+   * gönderilince liste boş sayılıp ekran "sohbet yok" hâline dönüyordu
+   * (penyu uygulamasında canlıda görüldü). Üst düzey liste önce, eski alan
+   * yedek.
+   */
+  private applyConversation(conversation: Conversation, replace: boolean, messages?: Message[]): void {
+    const incoming = messages ?? conversation.messages ?? [];
     const merged = replace ? incoming : mergeMessages(this.state.messages, incoming);
 
     // Yeni veri geldiyse merdiven sıfırlanır: konuşma canlandığında bir sonraki

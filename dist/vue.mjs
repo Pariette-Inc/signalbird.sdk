@@ -654,7 +654,7 @@ var ChatSession = class {
         return;
       }
       const detail2 = await this.app.getConversation(first.id);
-      this.applyConversation(detail2.data?.conversation ?? first, true);
+      this.applyConversation(detail2.data?.conversation ?? first, true, detail2.data?.messages);
       return;
     }
     const after = this.forceFull ? void 0 : this.lastServerMessageId();
@@ -664,11 +664,19 @@ var ChatSession = class {
       this.patch({ errorCode: detail.code });
       return;
     }
-    this.applyConversation(detail.data.conversation, !after);
+    this.applyConversation(detail.data.conversation, !after, detail.data.messages);
   }
   // ── İç işler ──────────────────────────────────────────────────────────
-  applyConversation(conversation, replace) {
-    const incoming = conversation.messages ?? [];
+  /*
+   * MESAJLAR YANITIN ÜST DÜZEYİNDE GELİR (4 Eyl 2026). Sunucu `GET
+   * /conversations/{id}` için `{conversation, messages}` döner; burada
+   * `conversation.messages` okunuyordu, o alan hiç yoktu. Sonuç: ilk mesaj
+   * gönderilince liste boş sayılıp ekran "sohbet yok" hâline dönüyordu
+   * (penyu uygulamasında canlıda görüldü). Üst düzey liste önce, eski alan
+   * yedek.
+   */
+  applyConversation(conversation, replace, messages) {
+    const incoming = messages ?? conversation.messages ?? [];
     const merged = replace ? incoming : mergeMessages(this.state.messages, incoming);
     if (incoming.length) this.step = 0;
     this.patch({
