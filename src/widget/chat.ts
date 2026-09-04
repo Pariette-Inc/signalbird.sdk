@@ -588,6 +588,15 @@ export class ChatController {
        * ile normalleştirir ve desteklemediği dili zaten eler.
        */
       locale: browserLanguage(),
+      /*
+       * SİTENİN SEÇİLİ DİLİ (4 Eyl 2026, Ahmet): "Türkiye'deki bir bilgisayarı
+       * kullanan yabancı turist tarayıcısı Türkçe olsa da siteyi İngilizce
+       * açar." Entegre eden site `init({ locale })` ile kendi seçili dilini
+       * verir; bu, tarayıcı yerelinden GÜÇLÜ bir sinyaldir ve ziyaretçinin
+       * tercih dili (`preferred_language`) olarak yazılır. Verilmediyse
+       * gönderilmez, sunucu tarayıcı yereline düşer.
+       */
+      ...(this.opts.locale ? { language: this.opts.locale } : {}),
       page_url: location.href,
       user_agent: navigator.userAgent,
     });
