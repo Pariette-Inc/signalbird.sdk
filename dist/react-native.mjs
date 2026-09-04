@@ -114,6 +114,7 @@ var SignalbirdApp = class {
   startConversation(input) {
     return this.request("POST", "/v1/sdk/chat/conversations", {
       client_id: clientId(),
+      ...this.config.platform ? { source: this.config.platform } : {},
       ...input
     });
   }

@@ -30,6 +30,13 @@ export interface AppStorage {
 
 export interface AppConfig {
   /**
+   * Uygulamanın platformu (4 Eyl 2026). Konuşma açılırken `source` olarak
+   * gider; gelen kutusu "Web" yerine iOS/Android gösterir. React Native'de
+   * `Platform.OS` verilir; verilmezse sunucu kanalın platformuna düşer.
+   */
+  platform?: 'ios' | 'android' | 'web';
+
+  /**
    * Açık domain anahtarı (`sb_public_live_…`) — KİMLİĞİ doğrular.
    *
    * Panel → Alan adları → [alan adı] → Anahtarlar. Web anahtarı yalnız izinli

@@ -186,6 +186,7 @@ export class SignalbirdApp {
   startConversation(input: StartConversationInput): Promise<SbResult<{ conversation: Conversation; message: Message }>> {
     return this.request('POST', '/v1/sdk/chat/conversations', {
       client_id: clientId(),
+      ...(this.config.platform ? { source: this.config.platform } : {}),
       ...input,
     });
   }
