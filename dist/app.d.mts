@@ -338,6 +338,9 @@ declare class SignalbirdApp {
     getConversation(id: string, query?: ConversationQuery): Promise<SbResult<{
         conversation: Conversation;
         messages?: Message[];
+        agent_typing?: boolean;
+        online?: boolean;
+        within_hours?: boolean;
     }>>;
     /**
      * İlk mesajla konuşma açar. Kota burada harcanır — konuşma başına sayılır,

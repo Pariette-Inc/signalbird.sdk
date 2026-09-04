@@ -175,7 +175,7 @@ export class SignalbirdApp {
     return this.request('GET', '/v1/sdk/chat/conversations');
   }
 
-  getConversation(id: string, query?: ConversationQuery): Promise<SbResult<{ conversation: Conversation; messages?: Message[] }>> {
+  getConversation(id: string, query?: ConversationQuery): Promise<SbResult<{ conversation: Conversation; messages?: Message[]; agent_typing?: boolean; online?: boolean; within_hours?: boolean }>> {
     return this.request('GET', `/v1/sdk/chat/conversations/${enc(id)}`, undefined, query);
   }
 

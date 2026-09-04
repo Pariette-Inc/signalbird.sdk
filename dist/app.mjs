@@ -651,7 +651,7 @@ var ChatSession = class {
         return;
       }
       const detail2 = await this.app.getConversation(first.id);
-      this.applyConversation(detail2.data?.conversation ?? first, true, detail2.data?.messages);
+      this.applyConversation(detail2.data?.conversation ?? first, true, detail2.data?.messages, detail2.data);
       return;
     }
     const after = this.forceFull ? void 0 : this.lastServerMessageId();
@@ -661,7 +661,7 @@ var ChatSession = class {
       this.patch({ errorCode: detail.code });
       return;
     }
-    this.applyConversation(detail.data.conversation, !after, detail.data.messages);
+    this.applyConversation(detail.data.conversation, !after, detail.data.messages, detail.data);
   }
   // ── İç işler ──────────────────────────────────────────────────────────
   /*
@@ -672,16 +672,23 @@ var ChatSession = class {
    * (penyu uygulamasında canlıda görüldü). Üst düzey liste önce, eski alan
    * yedek.
    */
-  applyConversation(conversation, replace, messages) {
+  /*
+   * `agent_typing`, `online` ve okunmamış sayısı da ÜST DÜZEYDE gelir
+   * (4 Eyl 2026, TestFlight'ta "Janet yazıyor" hiç görünmedi): sunucu
+   * `{conversation, messages, agent_typing, online, agent}` döner; burada
+   * `conversation.agent_typing` okunuyordu ve o alan yoktu. Okunmamış sayısı
+   * konuşmanın içinde `unread` adıyla, `unread_count` değil.
+   */
+  applyConversation(conversation, replace, messages, envelope) {
     const incoming = messages ?? conversation.messages ?? [];
     const merged = replace ? incoming : mergeMessages(this.state.messages, incoming);
     if (incoming.length) this.step = 0;
     this.patch({
       conversation,
       messages: merged,
-      unread: conversation.unread_count ?? 0,
-      agentTyping: !!conversation.agent_typing,
-      withinHours: conversation.within_hours ?? this.state.withinHours,
+      unread: conversation.unread ?? conversation.unread_count ?? 0,
+      agentTyping: !!(envelope?.agent_typing ?? conversation.agent_typing),
+      withinHours: envelope?.within_hours ?? conversation.within_hours ?? this.state.withinHours,
       errorCode: void 0
     });
   }

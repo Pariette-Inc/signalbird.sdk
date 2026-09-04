@@ -348,7 +348,7 @@ export class ChatSession {
 
       const detail = await this.app.getConversation(first.id);
 
-      this.applyConversation(detail.data?.conversation ?? first, true, detail.data?.messages);
+      this.applyConversation(detail.data?.conversation ?? first, true, detail.data?.messages, detail.data);
 
       return;
     }
@@ -367,7 +367,7 @@ export class ChatSession {
       return;
     }
 
-    this.applyConversation(detail.data.conversation, !after, detail.data.messages);
+    this.applyConversation(detail.data.conversation, !after, detail.data.messages, detail.data);
   }
 
   // ── İç işler ──────────────────────────────────────────────────────────
@@ -380,7 +380,19 @@ export class ChatSession {
    * (penyu uygulamasında canlıda görüldü). Üst düzey liste önce, eski alan
    * yedek.
    */
-  private applyConversation(conversation: Conversation, replace: boolean, messages?: Message[]): void {
+  /*
+   * `agent_typing`, `online` ve okunmamış sayısı da ÜST DÜZEYDE gelir
+   * (4 Eyl 2026, TestFlight'ta "Janet yazıyor" hiç görünmedi): sunucu
+   * `{conversation, messages, agent_typing, online, agent}` döner; burada
+   * `conversation.agent_typing` okunuyordu ve o alan yoktu. Okunmamış sayısı
+   * konuşmanın içinde `unread` adıyla, `unread_count` değil.
+   */
+  private applyConversation(
+    conversation: Conversation,
+    replace: boolean,
+    messages?: Message[],
+    envelope?: { agent_typing?: boolean; online?: boolean; within_hours?: boolean },
+  ): void {
     const incoming = messages ?? conversation.messages ?? [];
     const merged = replace ? incoming : mergeMessages(this.state.messages, incoming);
 
@@ -391,9 +403,9 @@ export class ChatSession {
     this.patch({
       conversation,
       messages: merged,
-      unread: conversation.unread_count ?? 0,
-      agentTyping: !!conversation.agent_typing,
-      withinHours: conversation.within_hours ?? this.state.withinHours,
+      unread: (conversation as { unread?: number }).unread ?? conversation.unread_count ?? 0,
+      agentTyping: !!(envelope?.agent_typing ?? conversation.agent_typing),
+      withinHours: envelope?.within_hours ?? conversation.within_hours ?? this.state.withinHours,
       errorCode: undefined,
     });
   }
