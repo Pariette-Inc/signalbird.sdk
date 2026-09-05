@@ -1,5 +1,32 @@
 # Geliştirme Kaydı — signalbird.sdk
 
+## 2026-09-05 — Sayfa içi (inline) sohbet ve kanala ait ajan adı
+
+Ahmet: "Sohbet sistemi inline veya popup olabilsin. Bir site ikisini de
+kullanabilsin isterse." Ayrıca sohbet penceresinde ziyaretçiye "Pariette Admin"
+görünüyordu — görünen ad panelden yönetilmeliydi.
+
+**Widget** (`src/widget`):
+- `layout: 'inline'` eklendi. Panel sabitlenmiş değil, verilen kabın içine
+  çizilir; balon, kapatma düğmesi, karşılama kartı, önizleme, sürükleme,
+  boyutlandırma ve sayfa kaydırma kilidi kapalıdır; sohbet kendiliğinden açık
+  gelir.
+- Kap sırası: `init({container})` → kanal ayarındaki `inline_selector` →
+  `#signalbird-chat`. Bulunamazsa inline isteği DÜŞÜRÜLÜR ve balona dönülür —
+  yanlış bir seçici yüzünden sohbetin hiç görünmemesi en kötü sonuçtu.
+- `Signalbird.inline(target, options?)`: ana denetleyiciden ayrı bir sohbet
+  başlatır. "Bir site ikisini de kullansın" isteği budur — genel kurulum
+  balonu çizerken destek sayfası kendi kabına sayfa içi sohbeti koyar. Aynı
+  kaba ikinci kez çizilmez, `destroy()` hepsini söker.
+- Tek satırlık kurulumda `data-layout` / `data-container` nitelikleri.
+- `InitOptions.layout` kanal ayarının ÜSTÜNDEDİR: ayar sitenin varsayılanı,
+  sayfa istisnası.
+
+**Sözleşme**: CONTRACT §9.2 maddeleri 2c/2e/2f.
+
+Ajan adı çözümü SUNUCUDADIR (`agent_display_name`, signalbird.api
+`ChatPresenter`); widget bir ad hesaplamaz, tipte yalnız bilgi olarak durur.
+
 ## 2026-09-03 (2) — publish.yml: "Yayınla" adımları HİÇ çalışmamış
 
 Ahmet "npm publish gerekiyor mu?" diye sorunca çıktı: v2.3.0/2.3.1/2.3.2

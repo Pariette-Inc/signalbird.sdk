@@ -16,6 +16,20 @@ export interface InitOptions {
   locale?: string;
   /** Sayfa yüklenirken zaten bilinen kullanıcı (login sonrası). */
   user?: IdentifyInput;
+  /**
+   * Biçimi kanal ayarının ÜSTÜNDE ezer (5 Eyl 2026).
+   *
+   * Ayar sitenin varsayılanıdır; tek bir sayfa ondan ayrılabilsin diye burası
+   * var: destek sayfası `layout: 'inline'` der, geri kalan sayfalarda balon
+   * çalışmaya devam eder. "Bir site ikisini de kullanabilsin" bunun içindir.
+   */
+  layout?: 'bubble' | 'sidebar' | 'inline';
+  /**
+   * `inline` biçiminde sohbetin çizileceği kap: CSS seçicisi ya da elemanın
+   * kendisi. Verilmezse kanal ayarındaki `inline_selector`, o da yoksa
+   * `#signalbird-chat` aranır.
+   */
+  container?: string | Element;
   debug?: boolean;
 }
 
@@ -97,10 +111,27 @@ export interface ChatSettings {
   launcher_mode?: 'always' | 'manual';
 
   /**
-   * Panelin biçimi: köşedeki küçük pencere ya da ekran boyu çekmece.
-   * `position` ikisinde de geçerlidir.
+   * Panelin biçimi.
+   *
+   * `bubble`  : köşedeki küçük pencere (varsayılan).
+   * `sidebar` : ekran boyu, kenara yaslı çekmece.
+   * `inline`  : sayfanın İÇİNDE, verilen kabın içinde. Balon, açma/kapama,
+   *             sürükleme ve sayfa kaydırma kilidi yoktur — destek sayfasının
+   *             gövdesi sohbettir.
+   *
+   * `position` ilk ikisinde geçerlidir.
    */
-  layout?: 'bubble' | 'sidebar';
+  layout?: 'bubble' | 'sidebar' | 'inline';
+
+  /** `inline` biçiminde kabın CSS seçicisi. Varsayılan `#signalbird-chat`. */
+  inline_selector?: string | null;
+
+  /**
+   * Ziyaretçinin gördüğü ajan adı — kanal ayarı. Sunucu adları ZATEN buna
+   * göre çözer; alan burada bilgi olarak durur (panelin ayarı okuyan kodu
+   * aynı tipi kullanıyor).
+   */
+  agent_display_name?: string | null;
 
   /**
    * Dile göre metinler. Sunucu ziyaretçinin diline göre ÇÖZER ve tek dilli

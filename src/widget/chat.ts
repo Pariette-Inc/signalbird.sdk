@@ -99,6 +99,34 @@ export class ChatController {
     this.ready = this.start().catch((e) => this.log('start failed', e));
   }
 
+  /**
+   * Sayfa içi sohbetin kabı. Sıra: `init({container})` → kanal ayarındaki
+   * seçici → `#signalbird-chat`. Hepsi try/catch içinde: geçersiz bir seçici
+   * `querySelector`'ı fırlatır ve ev sahibi sayfaya taşardı.
+   */
+  private resolveContainer(settings: ChatSettings): Element | null {
+    const given = this.opts.container;
+
+    if (given && typeof given !== 'string') return given;
+
+    const selectors = [
+      typeof given === 'string' ? given : '',
+      String(settings.inline_selector || ''),
+      '#signalbird-chat',
+    ].filter(Boolean);
+
+    for (const selector of selectors) {
+      try {
+        const el = document.querySelector(selector);
+        if (el) return el;
+      } catch {
+        this.log('invalid inline selector', selector);
+      }
+    }
+
+    return null;
+  }
+
   private log(...args: unknown[]): void {
     if (this.opts.debug) console.debug('[signalbird]', ...args);
   }
@@ -134,6 +162,26 @@ export class ChatController {
     }
 
     const settings = app.chat || ({} as ChatSettings);
+
+    /*
+     * BİÇİM: sayfanın sözü ayarın üstündedir (5 Eyl 2026).
+     *
+     * Kanal ayarı sitenin VARSAYILANIDIR; tek bir sayfa ondan ayrılabilsin
+     * diye `init({layout, container})` onu ezer. Aynı sitede hem balon hem
+     * sayfa içi sohbet böyle olur: genel kurulum balonu çizer, destek sayfası
+     * `Signalbird.inline('#destek')` der.
+     */
+    if (this.opts.layout) settings.layout = this.opts.layout;
+
+    const container = settings.layout === 'inline' ? this.resolveContainer(settings) : null;
+
+    // Kap bulunamadıysa inline isteği DÜŞÜRÜLÜR: seçici yanlış diye sohbetin
+    // hiç görünmemesi, balona dönmekten kötüdür.
+    if (settings.layout === 'inline' && !container) {
+      this.log('inline container not found; falling back to bubble');
+      settings.layout = 'bubble';
+    }
+
     this.settings = settings;
     this.appName = app.name || '';
     this.locale = resolveLocale(settings.locale, this.opts.locale);
@@ -156,6 +204,7 @@ export class ChatController {
       appName: this.appName,
       maxMb,
       topics: topics || [],
+      container,
       actions: {
         open: () => this.open(),
         close: () => this.close(),
@@ -195,6 +244,12 @@ export class ChatController {
 
     this.started = true;
     this.poller.start();
+
+    /*
+     * Sayfa içi sohbet KENDİLİĞİNDEN açıktır (5 Eyl 2026): kap zaten
+     * görünür, ziyaretçinin ayrıca bir düğmeye basması gerekmez.
+     */
+    if (this.settings?.layout === 'inline') this.open();
 
     /*
      * Canlı bağlantı — polling'in YERİNE değil, ÜSTÜNE.
@@ -265,6 +320,9 @@ export class ChatController {
    */
   private syncLauncher(): void {
     if (!this.ui) return;
+
+    // Sayfa içi biçimde balon hiç çizilmez; gizle/göster kararı da yok.
+    if (this.settings?.layout === 'inline') return;
 
     if (this.settings?.launcher_mode !== 'manual') {
       this.ui.setLauncherHidden(false);
