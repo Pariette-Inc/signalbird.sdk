@@ -221,6 +221,20 @@ border-radius:0;border:0;translate:none!important}
 @keyframes sbSlideL{from{opacity:.5;transform:translateX(-40px)}to{opacity:1;transform:none}}
 .sb.sidebar .gp,.sb.sidebar .drag{display:none}
 
+/* ── Sayfa içi (layout:'inline') ──────────────────────────────────────────
+   Sohbet sayfanın akışına girer: sabitlenmiş değil, kabın içinde. Balon,
+   kapatma düğmesi, karşılama kartı ve önizleme burada anlamsızdır — kap zaten
+   görünür. Yükseklik kaptan gelir; kap yükseklik vermediyse 560px'e düşülür ki
+   sıfır yükseklikli bir kutu çıkmasın. */
+.sb.inline{position:static;inset:auto;display:block;width:100%;height:100%}
+.sb.inline .ln,.sb.inline .dm,.sb.inline .teaser,.sb.inline .toast,
+.sb.inline .gp,.sb.inline .drag{display:none!important}
+.sb.inline .pn{position:relative;display:flex;width:100%;max-width:none;height:100%;
+min-height:min(560px,80vh);translate:none!important;transform:none!important;
+animation:none!important;box-shadow:none;border-radius:14px}
+/* Kapatma düğmesi başlıkta da gizlenir: kapanacak bir pencere yok. */
+.sb.inline .ha > button:last-child{display:none}
+
 @media (prefers-reduced-motion:reduce){
   .sb *,.sb *::before,.sb *::after{animation:none!important;transition:none!important}
 }

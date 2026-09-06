@@ -60,6 +60,14 @@ export interface UIOptions {
   maxMb: number;
   /** Ziyaretçinin seçebileceği konular; boşsa ön-formda adım çizilmez. */
   topics: TopicOption[];
+  /**
+   * `layout: 'inline'` için sohbetin çizileceği kap (5 Eyl 2026).
+   *
+   * Denetleyici çözer (seçici → ayar → `#signalbird-chat`); burası hazır
+   * elemanı alır. Boşsa inline istenmiş olsa bile balona düşülür: kabı
+   * olmayan bir sohbet, HİÇ çizilmeyen bir sohbetten iyidir.
+   */
+  container?: Element | null;
   actions: UIActions;
 }
 
@@ -144,14 +152,23 @@ export class UI {
   private scrollLock = 0;
   private locked = false;
 
+  /**
+   * Sayfa içi biçim (5 Eyl 2026).
+   *
+   * Kap yoksa inline istenmiş olsa bile FALSE kalır ve widget balona döner —
+   * yanlış bir seçici yüzünden sohbetin hiç görünmemesi en kötü sonuçtu.
+   */
+  private readonly inline: boolean;
+
   constructor(private readonly o: UIOptions) {
     const t = o.t;
+    this.inline = o.settings.layout === 'inline' && !!o.container;
     this.host = h('div', { id: 'signalbird-widget' });
     this.root = this.host.attachShadow({ mode: 'open' });
     this.root.appendChild(h('style', null, CSS));
 
     const pos = o.settings.position === 'left' ? 'left' : 'right';
-    const layout = o.settings.layout === 'sidebar' ? ' sidebar' : '';
+    const layout = this.inline ? ' inline' : o.settings.layout === 'sidebar' ? ' sidebar' : '';
     this.wrap = h('div', {
       class: `sb ${pos}${layout}${prefersDark(o.settings.theme) ? ' dark' : ''}`,
       style: `--sb-c:${safeColor(o.settings.color)}`,
@@ -242,7 +259,7 @@ export class UI {
      * anlamsız: kenara yaslı, ekran boyu bir paneli 12 piksel sola çekmek bir
      * tercih değil kazadır.
      */
-    if (o.settings.layout !== 'sidebar') {
+    if (o.settings.layout !== 'sidebar' && !this.inline) {
       this.restoreGeometry();
       this.enableMove(header);
       this.enableResize();
@@ -270,7 +287,28 @@ export class UI {
   }
 
   mount(): void {
-    if (!this.host.isConnected) document.body.appendChild(this.host);
+    if (!this.host.isConnected) {
+      /*
+       * Inline sohbet sayfanın AKIŞINA girer: kabın içine eklenir ve orada
+       * kalır. `document.body` yerine kap seçilmezse `position:fixed` bir
+       * panel çıkar ve sayfanın düzeni ile kavga eder.
+       */
+      (this.inline ? this.o.container! : document.body).appendChild(this.host);
+    }
+
+    /*
+     * Inline biçimde panel HEP açıktır: balon yok, kapatma yok. Escape ile
+     * kapanmasını da dinlemeyiz — kullanıcı sayfanın içindeki bir formu
+     * kapatmaya çalışırken sohbeti kaybetmesin.
+     */
+    if (this.inline) {
+      this.wrap.classList.add('open');
+      requestAnimationFrame(() => {
+        if (this.list) scrollToBottom(this.list);
+      });
+      return;
+    }
+
     document.addEventListener('keydown', this.onKey);
     this.scheduleTeaser();
   }
@@ -305,6 +343,13 @@ export class UI {
   }
 
   setOpen(open: boolean): void {
+    // Inline panelin kapalı hâli yoktur; denetleyici yine de çağırabilir
+    // (ör. sohbet bitince) — orada kapanmak boş bir kutu bırakırdı.
+    if (this.inline) {
+      this.wrap.classList.add('open');
+      return;
+    }
+
     this.wrap.classList.toggle('open', open);
 
     if (open) {
@@ -945,6 +990,7 @@ export class UI {
    * hesap ayarı değil, bu cihazdaki bu kişinin tercihi.
    */
   private scheduleTeaser(): void {
+    if (this.inline) return;
     if (recalled(this.key(TEASER_KEY)) || recalled(this.key(SEEN_KEY))) return;
     if (this.o.settings.launcher_mode === 'manual') return;
 
@@ -1042,7 +1088,9 @@ export class UI {
    * kaydırma konumu geri yüklenir. Yoksa panel kapanınca sayfa başa dönüyordu.
    */
   private lockScroll(): void {
-    if (this.locked || !isMobile()) return;
+    // Sayfa içi sohbet sayfanın bir parçasıdır; gövdeyi kilitlemek ziyaretçiyi
+    // kendi sitesinde hapsederdi.
+    if (this.inline || this.locked || !isMobile()) return;
     this.locked = true;
     this.scrollLock = window.scrollY || 0;
     const b = document.body.style;

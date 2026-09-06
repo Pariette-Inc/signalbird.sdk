@@ -15,6 +15,7 @@
  *   Signalbird.init({publicKey, chatKey?, baseUrl?, locale?, user?})
  *   Signalbird.identify({external_id, email, name, phone, attributes})
  *   Signalbird.chat.open() / close() / toggle() / isOpen() / on('unread', fn) / off(…)
+ *   Signalbird.inline('#destek')                  ← sayfa içi sohbet
  *   Signalbird.push.register({token, platform, provider?})
  *   Signalbird.embed({module, mint}).mount('#kap')   ← panel gömme (partner)
  *   Signalbird.destroy()
@@ -31,6 +32,17 @@ export const version: string = typeof __SB_VERSION__ === 'string' ? __SB_VERSION
 type Listener = (payload?: unknown) => void;
 
 let controller: ChatController | null = null;
+/**
+ * Sayfa içi sohbetler (5 Eyl 2026).
+ *
+ * Ana denetleyiciden AYRI tutulur: "bir site ikisini de kullanabilsin" isteği
+ * tam olarak budur — sayfada balon dururken destek bölümünde sayfa içi bir
+ * sohbet açılabilir. Her biri kendi kabına çizilir ve kendi turunu atar;
+ * `destroy()` hepsini birden söker.
+ */
+const inlineControllers: ChatController[] = [];
+/** Son `init` seçenekleri — `inline()` anahtarları oradan devralır. */
+let lastInit: InitOptions | null = null;
 /** `init` öncesi kaydedilen dinleyiciler; başlatınca denetleyiciye bağlanır. */
 const pendingListeners: Array<{ event: ChatEvent; fn: Listener }> = [];
 /** `init` öncesi gelen kimlik; başlatınca uygulanır. */
@@ -64,6 +76,8 @@ export function init(options: InitOptions): void {
       return;
     }
     if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    lastInit = options;
 
     if (controller) controller.destroy();
     controller = new ChatController(options);
@@ -119,6 +133,40 @@ export const chat = {
   },
 };
 
+/**
+ * Sayfanın içine sohbet çizer.
+ *
+ *   <div id="destek" style="height:640px"></div>
+ *   <script>Signalbird.inline('#destek')</script>
+ *
+ * `init()` çağrılmışsa anahtarlar oradan devralınır; çağrılmamışsa
+ * seçeneklerde `publicKey` verilmelidir. Aynı kaba ikinci kez çizilmez.
+ */
+export function inline(
+  target: string | Element,
+  options?: Partial<InitOptions>,
+): void {
+  safe(() => {
+    if (typeof document === 'undefined') return;
+
+    const merged = { ...(lastInit || {}), ...(options || {}) } as InitOptions;
+
+    if (!merged.publicKey) {
+      console.warn('[signalbird] inline: publicKey zorunlu (önce init çağırın)');
+      return;
+    }
+
+    // Aynı kaba ikinci kez çizilmez: React/Vue gibi çerçevelerde `inline()`
+    // yeniden çalıştırıldığında üst üste iki sohbet binerdi.
+    const el = typeof target === 'string' ? document.querySelector(target) : target;
+    if (!el || el.querySelector('#signalbird-widget')) return;
+
+    inlineControllers.push(
+      new ChatController({ ...merged, layout: 'inline', container: target }),
+    );
+  }, undefined);
+}
+
 export const push = {
   /**
    * Cihaz token'ını kaydeder (`POST /v1/sdk/devices`). Token'ı almak
@@ -160,6 +208,7 @@ export function destroy(): void {
   safe(() => {
     controller?.destroy();
     controller = null;
+    for (const c of inlineControllers.splice(0)) c.destroy();
   }, undefined);
 }
 
@@ -183,6 +232,13 @@ safe(() => {
       chatKey: ds.channel || undefined,
       baseUrl: ds.baseUrl || undefined,
       locale: ds.locale || undefined,
+      /*
+       * `data-layout="inline" data-container="#destek"` — tek satırlık
+       * kurulumla sayfa içi sohbet. Betiği ikinci kez koymak yerine bu
+       * niteliklerin olması, kurulum kılavuzunu tek satırda tutuyor.
+       */
+      layout: (ds.layout as InitOptions['layout']) || undefined,
+      container: ds.container || undefined,
       debug: ds.debug === 'true' || ds.debug === '1',
     });
 

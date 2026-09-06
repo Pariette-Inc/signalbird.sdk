@@ -341,9 +341,40 @@ olarak saklanır; `appKey` uyuşmazsa yok sayılır. Sunucu `VISITOR_INVALID`
    sahibinin ayarı, diğeri o cihazdaki kişinin tercihi.
 
 2c. **Panelin biçimi: `layout`** (30 Ağu 2026). `bubble` (varsayılan) köşedeki
-   küçük penceredir; `sidebar` ekran boyu, kenara yaslı çekmecedir. `position`
+   küçük penceredir; `sidebar` ekran boyu, kenara yaslı çekmecedir; `inline`
+   sayfanın içindedir (bkz. 2e). `position`
    ikisinde de geçerlidir. Çekmecede taşıma ve boyutlandırma KAPALIDIR: kenara
    yaslı ve ekran boyu bir paneli birkaç piksel oynatmak tercih değil kazadır.
+
+2e. **Sayfa içi sohbet: `layout: 'inline'`** (5 Eyl 2026). Panel sayfanın
+   AKIŞINA girer: verilen kabın içine çizilir, balon/kapatma/sürükleme yoktur
+   ve sohbet kendiliğinden açıktır. Kap sırayla şuradan çözülür:
+   `init({container})` → kanal ayarındaki `inline_selector` → `#signalbird-chat`.
+   Kap bulunamazsa istek DÜŞÜRÜLÜR ve balona dönülür: yanlış bir seçici
+   yüzünden sohbetin hiç görünmemesi en kötü sonuçtur.
+
+   **Aynı sitede iki biçim birden kullanılabilir.** Kanal ayarı sitenin
+   VARSAYILANIDIR; sayfa onu ezer:
+
+   ```html
+   <!-- her sayfada balon -->
+   <script async src="…/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>
+
+   <!-- destek sayfasında ayrıca sayfa içi sohbet -->
+   <div id="destek" style="height:640px"></div>
+   <script>Signalbird.inline('#destek')</script>
+   ```
+
+   `Signalbird.inline(target, options?)` anahtarları son `init()` çağrısından
+   devralır; aynı kaba ikinci kez çizmez. Tek satırlık kurulumda
+   `data-layout="inline" data-container="#destek"` de aynı işi görür.
+
+2f. **Ziyaretçinin gördüğü ajan adı KANALA aittir** (`agent_display_name`,
+   5 Eyl 2026). Doluysa o kanaldan çıkan her ajan mesajında, devam
+   e-postasında, dökümde ve ziyaretçi push'unda bu ad görünür; ajanın gerçek
+   adı ya da profil takma adı ziyaretçiye HİÇ çıkmaz. Sıra: kanal adı →
+   kullanıcının takma adı → gerçek adın kısaltması. Çözüm SUNUCUDADIR
+   (`ChatPresenter`); widget bir ad hesaplamaz.
 
 2d. **Metinler dile göre**: `texts` = `{ "tr": {greeting, offline_message,
    launcher_text, review_label}, "en": {…} }`. Çözüm SUNUCUDA yapılır
