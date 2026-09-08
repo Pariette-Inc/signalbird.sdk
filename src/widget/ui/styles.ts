@@ -1,5 +1,5 @@
 /**
- * Widget CSS'i — Shadow DOM içinde yaşar, sayfa CSS'inden izole.
+ * Widget CSS'i - Shadow DOM içinde yaşar, sayfa CSS'inden izole.
  *
  * ══ TASARIM DİLİ: "AURORA" (2 Eyl 2026) ══════════════════════════════════
  *
@@ -13,17 +13,17 @@
  *    veriyor (`--sb-c`). Buradaki her vurgu ondan TÜRETİLİR (`color-mix`):
  *    eğim (`--sb-grad`), halka (`--sb-ring`), yumuşak zemin (`--sb-tint`).
  *    Böylece lacivert de turuncu da veren müşteride widget aynı kalitede
- *    duruyor — ikinci bir renk sormuyoruz, çünkü sorulan her ayar
+ *    duruyor - ikinci bir renk sormuyoruz, çünkü sorulan her ayar
  *    doldurulmayan bir ayardır.
  *
  * 2. YÜZEYLER KATMANLI. Tek düz beyaz kutu yerine üç derinlik var: zemin
- *    (`--sb-bg`), yükselti (`--sb-el` — başlık, kompozitör, kartlar) ve
- *    girinti (`--sb-s` — baloncuk, alan). Gölge tek parça değil üç katman:
+ *    (`--sb-bg`), yükselti (`--sb-el` - başlık, kompozitör, kartlar) ve
+ *    girinti (`--sb-s` - baloncuk, alan). Gölge tek parça değil üç katman:
  *    temas (1px), yayılma ve derinlik. Ekranda "duruyor" değil "yüzüyor".
  *
  * 3. HAREKET YAYLI, SÜSLÜ DEĞİL. Tek bir eğri (`--sb-spring`) her yerde.
  *    Panel balondan doğar (transform-origin balonun köşesi), balon panele
- *    dönüşür. `prefers-reduced-motion` her animasyonu kapatır — ve kapatınca
+ *    dönüşür. `prefers-reduced-motion` her animasyonu kapatır - ve kapatınca
  *    arayüz eksik kalmaz, yalnız sakinleşir.
  *
  * 4. MOBİL BİRİNCİ SINIF. Panel tam ekran, `100dvh`, çentik/ev çubuğu
@@ -32,7 +32,7 @@
  *    tutamak ve aşağı sürükleyerek kapatma. Dokunma hedefleri 44px.
  *
  * 5. KENDİNİ FARK ETTİRİR AMA RAHATSIZ ETMEZ. Üç ayrı sinyal var ve üçü de
- *    ayrı işe bakar: `.teaser` (karşılama kartı — ziyaretçi henüz hiç
+ *    ayrı işe bakar: `.teaser` (karşılama kartı - ziyaretçi henüz hiç
  *    konuşmadıysa bir kez), `.toast` (panel kapalıyken gelen yanıtın
  *    önizlemesi), `.ln-pulse` (okunmamış varken balonun sessiz nabzı).
  *    Hepsi kapatılabilir ve kapatma kararı tarayıcıda saklanır.
@@ -63,7 +63,7 @@ export const CSS = `
 
   --sb-r:22px;--sb-rb:18px;
   --sb-spring:cubic-bezier(.22,1.12,.36,1);
-  --sb-kb:0px;              /* mobil klavye yüksekliği — visualViewport verir */
+  --sb-kb:0px;              /* mobil klavye yüksekliği - visualViewport verir */
   --sb-dx:0px;--sb-dy:0px;  /* ziyaretçinin taşıdığı miktar */
 
   position:fixed;bottom:max(20px,env(safe-area-inset-bottom));z-index:2147483000;
@@ -118,7 +118,7 @@ box-shadow:0 2px 8px rgba(244,63,94,.45);animation:sbPop .4s var(--sb-spring)}
 .badge.on{display:flex}
 @keyframes sbPop{from{transform:scale(0)}to{transform:scale(1)}}
 
-/* Okunmamış varken sessiz nabız — hareket, sessiz sekmede görülen tek sinyal.
+/* Okunmamış varken sessiz nabız - hareket, sessiz sekmede görülen tek sinyal.
    Rozet küçüktür, ses ise tarayıcı etkileşim beklediği için çoğu kez hiç
    çalmaz (bkz. sound.ts). */
 .ln-pulse{position:absolute;inset:0;border-radius:inherit;pointer-events:none;display:none}
@@ -174,7 +174,7 @@ flex:none;margin:-4px -4px 0 0}
 
 /* ══ MESAJ ÖNİZLEMESİ (toast) ════════════════════════════════════════════
    Panel kapalıyken ajan yazdığında balonun üstünde belirir. Rozet "bir şey
-   var" der; bu kart NE olduğunu söyler — açılma oranını belirleyen fark. */
+   var" der; bu kart NE olduğunu söyler - açılma oranını belirleyen fark. */
 .toast{position:absolute;bottom:74px;width:296px;max-width:calc(100vw - 40px);display:none;gap:11px;
 background:var(--sb-el);border:1px solid var(--sb-b);border-radius:20px;box-shadow:var(--sb-sh);
 padding:13px 14px;align-items:flex-start;cursor:pointer;text-align:left;
@@ -204,7 +204,7 @@ border:1px solid color-mix(in srgb,var(--sb-b) 70%,transparent)}
 .sb.moving .pn,.sb.sizing .pn{animation:none!important;transition:none;user-select:none}
 @keyframes sbIn{from{opacity:0;transform:translateY(24px) scale(.9)}to{opacity:1;transform:none}}
 
-/* Marka ışığı: rengin panele değdiği yer. Blok bir başlık şeridi değil —
+/* Marka ışığı: rengin panele değdiği yer. Blok bir başlık şeridi değil -
    tepeden aşağı sönen bir aydınlanma. Renk AZ yerde, HER ZAMAN aynı anlamda. */
 .glow{position:absolute;top:0;left:0;right:0;height:190px;pointer-events:none;z-index:0;
 background:radial-gradient(120% 100% at 50% 0%,var(--sb-tint) 0%,transparent 72%)}
@@ -223,7 +223,7 @@ border-radius:0;border:0;translate:none!important}
 
 /* ── Sayfa içi (layout:'inline') ──────────────────────────────────────────
    Sohbet sayfanın akışına girer: sabitlenmiş değil, kabın içinde. Balon,
-   kapatma düğmesi, karşılama kartı ve önizleme burada anlamsızdır — kap zaten
+   kapatma düğmesi, karşılama kartı ve önizleme burada anlamsızdır - kap zaten
    görünür. Yükseklik kaptan gelir; kap yükseklik vermediyse 560px'e düşülür ki
    sıfır yükseklikli bir kutu çıkmasın. */
 .sb.inline{position:static;inset:auto;display:block;width:100%;height:100%}
@@ -240,7 +240,7 @@ animation:none!important;box-shadow:none;border-radius:14px}
 }
 
 /* ══ MOBİL ═══════════════════════════════════════════════════════════════
-   Panel tam ekran. Klavye açılınca gövde kısalır (--sb-kb) — kompozitör
+   Panel tam ekran. Klavye açılınca gövde kısalır (--sb-kb) - kompozitör
    klavyenin altında kalıp erişilemez olmuyor. Tepedeki tutamak aşağı
    sürüklenerek kapatılır; mobilde "kapat" düğmesini aramak yerine alışılmış
    jest çalışır. */
@@ -269,7 +269,7 @@ touch-action:none;cursor:grab}
 .drag:active i{opacity:.6}
 .sb.dragging .pn{transition:none}
 
-/* Boyutlandırma tutamağı — panelin DIŞ köşesinde (sağdaysa sol üst); iç köşe
+/* Boyutlandırma tutamağı - panelin DIŞ köşesinde (sağdaysa sol üst); iç köşe
    tam da kaydırma çubuğuna denk gelirdi. */
 .gp{position:absolute;width:20px;height:20px;z-index:6;opacity:0;transition:opacity .15s}
 .sb.right .gp{top:0;left:0;cursor:nwse-resize}
@@ -344,7 +344,7 @@ border:1px solid var(--sb-b);color:var(--sb-t);box-shadow:var(--sb-sh-s);
 transition:transform .2s var(--sb-spring),border-color .15s,background .15s}
 .qk button:hover{transform:translateY(-2px);border-color:var(--sb-edge);background:var(--sb-tint)}
 
-/* Kanal ajanının seçenekleri — baloncuğun altında dikey liste */
+/* Kanal ajanının seçenekleri - baloncuğun altında dikey liste */
 .opts{display:flex;flex-direction:column;gap:6px;margin-top:6px;max-width:100%}
 .opts a,.opts button{display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;
 font-size:13px;font-weight:550;padding:9px 12px;border-radius:12px;background:var(--sb-el);
@@ -371,7 +371,7 @@ display:flex;align-items:center;justify-content:center;font-size:11px;font-weigh
 .row .av img{width:100%;height:100%;object-fit:cover}
 .row .av.gh{visibility:hidden}
 /* Öbeğin son satırında baloncuğun ALTINDA saat satırı var; avatar onunla değil
-   baloncukla hizalanmalı — yoksa yüz, mesajın bir satır aşağısına kayıyor. */
+   baloncukla hizalanmalı - yoksa yüz, mesajın bir satır aşağısına kayıyor. */
 .row.a:not(.mid) .av{margin-bottom:19px}
 .row .cl{display:flex;flex-direction:column;min-width:0}
 .row.v .cl{align-items:flex-end}
@@ -389,7 +389,7 @@ box-shadow:0 2px 8px -2px var(--sb-ring),0 8px 20px -10px var(--sb-ring)}
 .row.s .bb{background:none;border:0;box-shadow:none;color:var(--sb-m);font-size:12px;text-align:center;padding:4px 10px}
 .bb a{text-decoration:underline;text-underline-offset:2px}
 
-/* Yeni gelen mesaj yerine oturur — liste zıplamaz, mesaj belirir. */
+/* Yeni gelen mesaj yerine oturur - liste zıplamaz, mesaj belirir. */
 @keyframes sbMsg{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
 .row.new .bb{animation:sbMsg .34s var(--sb-spring)}
 
@@ -413,7 +413,7 @@ line-height:1.5;box-shadow:var(--sb-sh-s)}
 .rx button.me{border-color:var(--sb-c);background:var(--sb-tint)}
 .row.v .rx{justify-content:flex-end}
 
-/* Mesaj eylem çubuğu — masaüstünde hover, dokunmatikte uzun basış. */
+/* Mesaj eylem çubuğu - masaüstünde hover, dokunmatikte uzun basış. */
 .ac{position:absolute;top:-34px;display:flex;align-items:center;gap:2px;background:var(--sb-el);
 border:1px solid var(--sb-b);border-radius:20px;padding:3px 5px;box-shadow:var(--sb-sh-s);z-index:3;
 opacity:0;pointer-events:none;transform:translateY(4px) scale(.94);transition:opacity .15s,transform .18s var(--sb-spring)}
@@ -430,7 +430,7 @@ border-radius:14px;box-shadow:var(--sb-sh);z-index:4;min-width:140px;overflow:hi
 .menu button:hover{background:var(--sb-s)}
 .menu button.dg{color:#e11d48}
 
-/* Yazıyor — üç nokta, ajanın baloncuğunun yerinde. */
+/* Yazıyor - üç nokta, ajanın baloncuğunun yerinde. */
 .tp{display:none;align-items:center;gap:8px;padding:6px 16px 10px}
 .tp.on{display:flex;animation:sbMsg .3s var(--sb-spring)}
 .tp .av{width:28px;height:28px;border-radius:50%;overflow:hidden;background:var(--sb-s2);flex:none;
@@ -442,7 +442,7 @@ border-radius:var(--sb-rb);border-bottom-left-radius:6px;padding:12px 14px;box-s
 .tp i:nth-child(2){animation-delay:.18s}.tp i:nth-child(3){animation-delay:.36s}
 @keyframes sbDot{0%,75%,100%{transform:translateY(0);opacity:.35}35%{transform:translateY(-4px);opacity:1}}
 
-/* Aşağı in düğmesi — uzun geçmişte "yeni mesaj aşağıda" kaybolmasın. */
+/* Aşağı in düğmesi - uzun geçmişte "yeni mesaj aşağıda" kaybolmasın. */
 .jump{position:absolute;left:50%;bottom:8px;transform:translateX(-50%) translateY(8px);opacity:0;pointer-events:none;
 display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:16px;background:var(--sb-el);
 border:1px solid var(--sb-b);box-shadow:var(--sb-sh-s);font-size:12.5px;font-weight:600;color:var(--sb-t);
@@ -466,7 +466,7 @@ border:1px solid var(--sb-b);border-radius:12px;padding:5px 9px;max-width:100%;b
 .chip button{opacity:.6;line-height:1;display:flex}
 .chip button:hover{opacity:1}
 
-/* Kalan karakter — sınıra yaklaşınca belirir, sıfırda uyarır. Sürekli duran
+/* Kalan karakter - sınıra yaklaşınca belirir, sıfırda uyarır. Sürekli duran
    bir sayaç kısa yazmayı kural gibi gösterip sohbetin tonunu bozardı. */
 .cnt{display:none;justify-content:flex-end;padding:0 6px 4px;font-size:11px;font-weight:600;
 color:var(--sb-m);font-variant-numeric:tabular-nums}
@@ -487,14 +487,14 @@ flex:none;transition:background .15s,color .15s,transform .2s var(--sb-spring)}
 .cb.sd:disabled{background:var(--sb-s2);color:var(--sb-m);box-shadow:none;transform:scale(.9);opacity:1}
 .cb.sd:not(:disabled):hover{filter:brightness(1.1);transform:scale(1.06)}
 
-/* Emoji seçici — 24 yüz yeter; tam bir emoji klavyesi widget'a 40 KB ekler. */
+/* Emoji seçici - 24 yüz yeter; tam bir emoji klavyesi widget'a 40 KB ekler. */
 .emj{position:absolute;bottom:100%;left:12px;right:12px;margin-bottom:8px;display:none;flex-wrap:wrap;gap:2px;
 background:var(--sb-el);border:1px solid var(--sb-b);border-radius:16px;padding:8px;box-shadow:var(--sb-sh);z-index:5}
 .emj.on{display:flex;animation:sbTeaser .22s var(--sb-spring)}
 .emj button{width:34px;height:34px;border-radius:9px;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center}
 .emj button:hover{background:var(--sb-s);transform:scale(1.15)}
 
-/* İmza — cümle kurmaz, isim söyler. Müşterinin markasıyla yarışmaz. */
+/* İmza - cümle kurmaz, isim söyler. Müşterinin markasıyla yarışmaz. */
 .pw{display:flex;align-items:center;justify-content:center;padding:8px 0 2px}
 .pw a{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--sb-m);opacity:.65;
 font-size:11px;padding:3px 9px;border-radius:9px;transition:opacity .15s,background .15s}
@@ -517,7 +517,7 @@ transition:border-color .18s,box-shadow .18s}
 .fm textarea{padding:14px;resize:vertical;min-height:86px}
 .fld input:focus,.fld select:focus,.fm textarea:focus{border-color:var(--sb-edge);box-shadow:0 0 0 4px var(--sb-tint)}
 /* Yüzen etiket: yer tutucu metin, kullanıcı yazmaya başlayınca kaybolan tek
-   ipucudur. Etiket kalır — alanın ne olduğu her zaman görünür. */
+   ipucudur. Etiket kalır - alanın ne olduğu her zaman görünür. */
 .fld label{position:absolute;left:15px;top:14px;font-size:14px;color:var(--sb-m);pointer-events:none;
 transition:transform .18s var(--sb-spring),font-size .18s,color .18s;transform-origin:left top}
 .fld input:focus+label,.fld input.has+label,.fld select+label{transform:translateY(-8px) scale(.78);color:var(--sb-m)}

@@ -1,5 +1,5 @@
 /**
- * Yönetim (Management) istemcisi — sunucu tarafı.
+ * Yönetim (Management) istemcisi - sunucu tarafı.
  *
  * Müşterinin panelde tıklayarak yaptığı her şeyi kodla yapar: Telsiz projesi ve
  * kanalı açar, olay akışını okur, sohbet gelen kutusunu işler, uygulama kaydı
@@ -10,7 +10,7 @@
  *
  * Neden ayrı sınıf: Gönderim (`SignalbirdMessaging`) ileti gönderir ve kota
  * harcar; bu istemci yapılandırma değiştirir. Aynı anahtar ailesini kullanırlar
- * (`sb_…`) ama scope'ları ve hata kümeleri farklıdır — tek sınıfta birleşseydi
+ * (`sb_…`) ama scope'ları ve hata kümeleri farklıdır - tek sınıfta birleşseydi
  * "hangi scope gerekiyordu" sorusu her metotta yeniden sorulurdu.
  *
  * Sözleşme: docs/CONTRACT.md § 10
@@ -64,7 +64,7 @@ export class SignalbirdManagement {
     if (!config.domainKey.startsWith('sb_secret_live_')) {
       throw new SignalbirdError(
         'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). ' +
-          'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
+        'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
         0,
         'WRONG_KEY_TYPE'
       );
@@ -86,7 +86,7 @@ export class SignalbirdManagement {
     return this.http.request('GET', '/v1/radio/summary');
   }
 
-  /** Olay akışı — kanal, seviye ve tarihe göre süzülür. */
+  /** Olay akışı - kanal, seviye ve tarihe göre süzülür. */
   radioEvents(query?: ListRadioEventsQuery): Promise<SbResult<Paginated<RadioEvent>>> {
     return this.http.request('GET', '/v1/radio/events', undefined, query);
   }
@@ -96,7 +96,7 @@ export class SignalbirdManagement {
   // Telsiz projesi/kanalı ve uygulama kaydı 1 Eyl 2026'da kaldırıldı
   // (../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md §3). Yerlerini TEK
   // bir uç ailesi aldı: modül anahtarları. Beş modülün (logger, email, sms,
-  // push, chat) hepsi aynı gövdeyi kullanır — beş ayrı metot kümesi yazmak,
+  // push, chat) hepsi aynı gövdeyi kullanır - beş ayrı metot kümesi yazmak,
   // altıncı modül geldiğinde altıncısını yazmak demekti.
 
   listModuleKeys(
@@ -113,7 +113,7 @@ export class SignalbirdManagement {
   /**
    * Kanal açar.
    *
-   * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir —
+   * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir -
    * "bu ad alınmış" hatasıyla geri dönmek, CI'da kanal açan bir betiği
    * durdururdu.
    */
@@ -169,7 +169,7 @@ export class SignalbirdManagement {
     return this.http.request('GET', `/v1/chat/conversations/${seg(id)}/messages`, undefined, query);
   }
 
-  /** Proaktif sohbet — ziyaretçi yazmadan ajan başlatır. */
+  /** Proaktif sohbet - ziyaretçi yazmadan ajan başlatır. */
   startConversation(input: StartConversationInput): Promise<SbResult<{ conversation: ChatConversation }>> {
     return this.http.request('POST', '/v1/chat/conversations', input);
   }
@@ -234,7 +234,7 @@ export class SignalbirdManagement {
     );
   }
 
-  /** Tepki açma/kapama — aynı emoji ikinci kez gönderilirse kaldırılır. */
+  /** Tepki açma/kapama - aynı emoji ikinci kez gönderilirse kaldırılır. */
   reactToChatMessage(
     id: string,
     messageId: string,
@@ -304,22 +304,22 @@ export class SignalbirdManagement {
 
   /**
    * Yanıt süresi, çözüm süresi, memnuniyet ve ajan kırılımı.
-   * Veri yoksa süreler `null` döner — 0 DEĞİL.
+   * Veri yoksa süreler `null` döner - 0 DEĞİL.
    */
   chatReport(range: ChatReportRange = '30d'): Promise<SbResult<ChatReport>> {
     return this.http.request('GET', '/v1/chat/reports', undefined, { range });
   }
 
   // Uygulama uçları KALDIRILDI (1 Eyl 2026): "uygulama" ayrı bir kayıt
-  // değil. Sohbet widget'ı ve push kanalı birer modül anahtarıdır —
+  // değil. Sohbet widget'ı ve push kanalı birer modül anahtarıdır -
   // `listModuleKeys('chat')`, `listModuleKeys('push')`. Anahtar döndürme de
   // yok: döndürülen şey DOMAIN anahtarıdır ve o panelden yönetilir.
 
   /**
-   * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
+   * Gömme jetonu - Signalbird ekranını KENDİ panelinizde göstermek için.
    *
    * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
-   * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR —
+   * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR -
    * scope sisteminden geriye kalan tek kapı, çünkü jeton 60 dakikalık bir
    * panel oturumuna çevriliyor.
    */

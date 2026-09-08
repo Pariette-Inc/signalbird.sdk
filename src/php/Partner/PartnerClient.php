@@ -5,7 +5,7 @@ namespace Signalbird\Sdk\Partner;
 use Signalbird\Sdk\SignalbirdException;
 
 /**
- * Partner istemcisi — BEŞİNCİ yüzey.
+ * Partner istemcisi - BEŞİNCİ yüzey.
  *
  * Signalbird'ü kendi ürününün içinde satan sözleşmeli platform (veribenim,
  * submitcms) müşterisini bununla sağlar ve yetkilendirir.
@@ -15,7 +15,7 @@ use Signalbird\Sdk\SignalbirdException;
  * müşterinin kendi anahtarıyla (`sb_`) şirket açamaması içindi; o kural aynen
  * duruyor.
  *
- * Node karşılığı: src/node/partner.ts — davranış birebir aynıdır.
+ * Node karşılığı: src/node/partner.ts - davranış birebir aynıdır.
  * Sözleşme: docs/CONTRACT.md § 12
  */
 class PartnerClient
@@ -81,7 +81,7 @@ class PartnerClient
         return $this->request('PATCH', '/v1/partner/companies/' . rawurlencode($externalId), $input);
     }
 
-    /** Askıya alır — SİLMEZ. */
+    /** Askıya alır - SİLMEZ. */
     public function suspendCompany(string $externalId): array
     {
         return $this->request('DELETE', '/v1/partner/companies/' . rawurlencode($externalId));
@@ -100,7 +100,7 @@ class PartnerClient
 
     /**
      * Domain ekler ve (istenirse) izlemeye alır. Kayıt `verified_via:'partner'`
-     * ile doğar: e-posta/SMS kampanyası için TXT şarttır — yanıttaki `dns`
+     * ile doğar: e-posta/SMS kampanyası için TXT şarttır - yanıttaki `dns`
      * kaydını yayınlayıp `verifyDomain` çağırmak kapıyı açar.
      *
      * @param array<string, mixed> $input
@@ -144,7 +144,7 @@ class PartnerClient
         );
     }
 
-    /** Tek istekte müşterinin tüm domainleri — liste ekranı N+1 atmasın. */
+    /** Tek istekte müşterinin tüm domainleri - liste ekranı N+1 atmasın. */
     public function companyUptime(string $companyExternalId, string $range = '24h'): array
     {
         return $this->request(
@@ -159,7 +159,7 @@ class PartnerClient
     //
     // Salt okur. Partner kendi panelinde "gönderdiğimiz her şeyin durumu"
     // ekranını çizsin diye (MESSAGING_UNIFICATION_2026-08-25.md §5.1).
-    // Alıcı MASKELİ döner, gövde hiç dönmez — gövde zaten saklanmıyor.
+    // Alıcı MASKELİ döner, gövde hiç dönmez - gövde zaten saklanmıyor.
 
     /** @param array<string,mixed> $query channel, status, class, external_ref, q, from, to, per_page */
     public function listMessages(string $companyExternalId, array $query = []): array

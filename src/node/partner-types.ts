@@ -4,14 +4,14 @@
  * Sözleşme: docs/CONTRACT.md § 12 ve
  * signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md.
  *
- * Alan adları API ile birebir aynıdır (snake_case) — SDK yeniden adlandırmaz.
+ * Alan adları API ile birebir aynıdır (snake_case) - SDK yeniden adlandırmaz.
  */
 import type { SbResult } from './http';
 
 export type { SbResult };
 
 export interface PartnerConfig {
-  /** `sb_secret_live_…` — gizli domain anahtarı. Tarayıcıya İNMEZ. */
+  /** `sb_secret_live_…` - gizli domain anahtarı. Tarayıcıya İNMEZ. */
   domainKey: string;
   baseUrl?: string;
   timeout?: number;
@@ -28,7 +28,7 @@ export interface PartnerOwnerInput {
 }
 
 export interface CreateCompanyInput {
-  /** Partner'ın kendi tarafındaki müşteri kimliği — idempotens anahtarı. */
+  /** Partner'ın kendi tarafındaki müşteri kimliği - idempotens anahtarı. */
   external_id: string;
   name: string;
   owner: PartnerOwnerInput;
@@ -66,7 +66,7 @@ export interface PartnerDomain {
   external_id: string;
   domain: string;
   verified_at: string | null;
-  /** `txt` | `partner` — partner beyanı kampanya için YETMEZ. */
+  /** `txt` | `partner` - partner beyanı kampanya için YETMEZ. */
   verified_via: string | null;
   can_send_campaigns: boolean;
   is_active: boolean;
@@ -104,7 +104,7 @@ export interface UptimeReport {
   external_id?: string;
   monitored?: boolean;
   range: string;
-  /** Hiç kontrol yoksa `null` döner — %100 DEĞİL. */
+  /** Hiç kontrol yoksa `null` döner - %100 DEĞİL. */
   uptime: number | null;
   avg_response_ms: number | null;
   checks: number;

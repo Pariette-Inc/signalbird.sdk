@@ -3,7 +3,7 @@ import Foundation
 /// Ziyaretçi kimliğinin saklandığı yer.
 ///
 /// Varsayılan `UserDefaults`'tur. Sır cihazda kalmazsa kullanıcı uygulamayı
-/// her açtığında sohbet geçmişini kaybeder — bu yüzden saklama zorunludur,
+/// her açtığında sohbet geçmişini kaybeder - bu yüzden saklama zorunludur,
 /// isteğe bağlı değil. Keychain isteyen kendi uyarlamasını verir.
 public protocol SignalbirdStorage: Sendable {
     func get(_ key: String) -> String?
@@ -13,7 +13,7 @@ public protocol SignalbirdStorage: Sendable {
 
 /// `UserDefaults` `Sendable` işaretli değildir ama okuma/yazması iş parçacığı
 /// güvenlidir (Apple belgeleri). `@unchecked` bunu açıkça üstlenir; alternatifi
-/// her erişimi bir kuyruğa taşımaktı — üç satırlık bir depo için fazla.
+/// her erişimi bir kuyruğa taşımaktı - üç satırlık bir depo için fazla.
 public struct UserDefaultsStorage: SignalbirdStorage, @unchecked Sendable {
     private let defaults: UserDefaults
 
@@ -28,7 +28,7 @@ public struct UserDefaultsStorage: SignalbirdStorage, @unchecked Sendable {
 
 /// Ziyaretçi kimliğinin kilitli kutusu.
 ///
-/// Sır iki yerden okunur — istek başlıkları ve `currentVisitorID` — ve oturum
+/// Sır iki yerden okunur - istek başlıkları ve `currentVisitorID` - ve oturum
 /// açılışında yazılır. Küçük ama paylaşılan bir durum olduğu için kilidi
 /// kendisi taşır; istemcinin tamamını eşzamanlılık kurallarına hapsetmeye
 /// gerek kalmaz.

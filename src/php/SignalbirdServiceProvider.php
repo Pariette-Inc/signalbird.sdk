@@ -14,18 +14,18 @@ use Signalbird\Sdk\Partner\PartnerClient;
  * Laravel entegrasyonu.
  *
  * Üç şey sağlar:
- *  1. `Signalbird` cephesi — konteynerden çözülen istemci.
- *  2. `signalbird` log kanalı — `Log::channel('signalbird')` ya da
+ *  1. `Signalbird` cephesi - konteynerden çözülen istemci.
+ *  2. `signalbird` log kanalı - `Log::channel('signalbird')` ya da
  *     `LOG_STACK=single,signalbird` ile Laravel'in kendi log akışını Telsiz'e
  *     bağlar. Ayrı bir çağrı yazmadan mevcut `Log::error()` satırları çalışır.
- *  3. `signalbird.messaging` — Gönderim istemcisi (`MessagingClient`) tekili;
+ *  3. `signalbird.messaging` - Gönderim istemcisi (`MessagingClient`) tekili;
  *     `Signalbird::messaging()` ile erişilir.
- *  4. `signalbird.management` — Yönetim istemcisi (`ManagementClient`) tekili;
+ *  4. `signalbird.management` - Yönetim istemcisi (`ManagementClient`) tekili;
  *     `Signalbird::management()` ile erişilir. Telsiz projesi, sohbet gelen
  *     kutusu ve uygulama kaydı buradan yönetilir.
- *  5. `signalbird.partner` — Partner istemcisi (`PartnerClient`) tekili;
+ *  5. `signalbird.partner` - Partner istemcisi (`PartnerClient`) tekili;
  *     yalnız sözleşmeli platformlar (veribenim, submitcms) içindir.
- *  6. `signalbird` posta taşıyıcısı — `MAIL_MAILER=signalbird` ile uygulamanın
+ *  6. `signalbird` posta taşıyıcısı - `MAIL_MAILER=signalbird` ile uygulamanın
  *     HER e-postası Signalbird üzerinden gider ve orada kayda geçer.
  */
 class SignalbirdServiceProvider extends ServiceProvider
@@ -65,7 +65,7 @@ class SignalbirdServiceProvider extends ServiceProvider
 
         // Yönetim istemcisi Gönderim ile AYNI anahtar ailesini kullanır
         // (`sb_…`) ama farklı scope'lar ister. Ayrı bir anahtar tanımlanmadıysa
-        // gönderim anahtarına düşer — çoğu kurulumda tek anahtar vardır.
+        // gönderim anahtarına düşer - çoğu kurulumda tek anahtar vardır.
         $this->app->singleton(ManagementClient::class, function ($app) {
             $config = $app['config']['signalbird'];
 
@@ -80,7 +80,7 @@ class SignalbirdServiceProvider extends ServiceProvider
         $this->app->alias(ManagementClient::class, 'signalbird.management');
 
         // Partner istemcisi: takımlar üstü, ayrı anahtar ailesi (gizli domain anahtarı).
-        // Anahtar tanımlı değilse kurucu `NO_KEY` fırlatır — bu bilinçlidir;
+        // Anahtar tanımlı değilse kurucu `NO_KEY` fırlatır - bu bilinçlidir;
         // partner olmayan kurulum bu tekili hiç çözmez.
         $this->app->singleton(PartnerClient::class, function ($app) {
             $config = $app['config']['signalbird'];

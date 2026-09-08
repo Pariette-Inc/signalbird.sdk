@@ -6,21 +6,21 @@ import (
 	"time"
 )
 
-// BulkChunk — toplu kişi yüklemede tek istekteki üst sınır.
+// BulkChunk - toplu kişi yüklemede tek istekteki üst sınır.
 const BulkChunk = 1000
 
-// KeyConfig — takım anahtarıyla çalışan istemcilerin (Gönderim, Yönetim) ayarı.
+// KeyConfig - takım anahtarıyla çalışan istemcilerin (Gönderim, Yönetim) ayarı.
 type KeyConfig struct {
 	// DomainKey, takım API anahtarıdır (sb_…). Telsiz anahtarı burada çalışmaz.
 	DomainKey  string
 	BaseURL string
-	// Timeout boşsa 15 saniye — toplu kişi yükleme uzun sürebilir.
+	// Timeout boşsa 15 saniye - toplu kişi yükleme uzun sürebilir.
 	Timeout      time.Duration
 	ThrowOnError bool
 	Debug        bool
 }
 
-// Messaging — Gönderim istemcisi: e-posta/SMS/push, kişi, liste, kampanya, mesaj.
+// Messaging - Gönderim istemcisi: e-posta/SMS/push, kişi, liste, kampanya, mesaj.
 type Messaging struct {
 	http *transport
 }
@@ -55,7 +55,7 @@ func newKeyTransport(config KeyConfig) (*transport, error) {
 
 // ── Gönderim ───────────────────────────────────────────────────────────
 
-// SendEmail — class alanı (transactional | commercial) ZORUNLUDUR ve
+// SendEmail - class alanı (transactional | commercial) ZORUNLUDUR ve
 // varsayılanı yoktur: hukuki kapı çağıranın elindedir.
 func (m *Messaging) SendEmail(ctx context.Context, input map[string]any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/email/send", input, nil)
@@ -71,7 +71,7 @@ func (m *Messaging) Track(ctx context.Context, input any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/events", input, nil)
 }
 
-// PreviewSms — parça/karakter hesabı; kota harcamaz.
+// PreviewSms - parça/karakter hesabı; kota harcamaz.
 func (m *Messaging) PreviewSms(ctx context.Context, body string) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/sms/preview", map[string]any{"body": body}, nil)
 }
@@ -160,7 +160,7 @@ func (m *Messaging) ListCampaigns(ctx context.Context, query Query) (Result, err
 	return m.http.request(ctx, "GET", "/v1/campaigns", nil, query)
 }
 
-// CreateCampaign — buradan çıkan her ileti ZORUNLU commercial'dır.
+// CreateCampaign - buradan çıkan her ileti ZORUNLU commercial'dır.
 func (m *Messaging) CreateCampaign(ctx context.Context, input map[string]any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/campaigns", input, nil)
 }
@@ -230,7 +230,7 @@ func (m *Messaging) GetMessage(ctx context.Context, id string) (Result, error) {
 // normalizeContacts, hem []map[string]any hem []any kabul eder.
 //
 // Çağıran çoğu zaman JSON'dan gelen []any taşır; yalnız birini kabul etmek
-// listeyi sessizce BOŞ sayıp "0 kişi yüklendi" demek olurdu — hataların en
+// listeyi sessizce BOŞ sayıp "0 kişi yüklendi" demek olurdu - hataların en
 // kötüsü hiçbir şey söylemeyendir.
 func normalizeContacts(value any) []any {
 	switch typed := value.(type) {

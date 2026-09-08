@@ -13,7 +13,7 @@ declare function asyncStorageAdapter(store: {
     removeItem(key: string): Promise<void>;
 }): AppStorage;
 interface NativeChatOptions {
-    /** Sohbet ekranı önde mi — yoklama hızını belirler. */
+    /** Sohbet ekranı önde mi - yoklama hızını belirler. */
     open?: boolean;
     visitor?: SessionInput;
     /**
@@ -33,7 +33,7 @@ interface NativeChatResult extends ChatState {
     /** Konuşmayı bırakır; sonraki mesaj yeni bir konuşma açar. */
     reset(): void;
 }
-/** İstemciyi kurar. Depoyu vermeyi UNUTMAYIN — bellekte kalırsa oturum uçar. */
+/** İstemciyi kurar. Depoyu vermeyi UNUTMAYIN - bellekte kalırsa oturum uçar. */
 declare function createSignalbirdApp(config: AppConfig): SignalbirdApp;
 declare function useNativeChat(client: SignalbirdApp, options?: NativeChatOptions): NativeChatResult;
 /**

@@ -13,7 +13,7 @@ data class SignalbirdConfig(
     /**
      * Sunucu anahtarı (`sb_secret_live_…`).
      *
-     * Bu anahtar GİZLİDİR ve Android uygulamasına gömülmemelidir — APK
+     * Bu anahtar GİZLİDİR ve Android uygulamasına gömülmemelidir - APK
      * çözülebilir. Mobil taraf sohbeti ve push kaydını [SignalbirdApp] ile
      * (açık anahtarla) yapar; bu istemci sunucu tarafı Kotlin servisleri
      * (Ktor, Spring) içindir.
@@ -22,14 +22,14 @@ data class SignalbirdConfig(
     val baseUrl: String = SIGNALBIRD_DEFAULT_BASE_URL,
     /** Her olaya eklenen köken adı (sunucu ya da servis adı). */
     val source: String? = null,
-    /** Varsayılan 5 sn — bir log çağrısı isteği bekletmemeli. */
+    /** Varsayılan 5 sn - bir log çağrısı isteği bekletmemeli. */
     val timeoutMs: Int = 5_000,
     /** Varsayılan kapalı: telsiz erişilemezse ödeme akışı çökmemeli. */
     val throwOnError: Boolean = false,
 )
 
 /**
- * Telsiz (Radio) istemcisi — log ve olay yazar.
+ * Telsiz (Radio) istemcisi - log ve olay yazar.
  *
  * Sözleşme: docs/CONTRACT.md § 1–7
  */

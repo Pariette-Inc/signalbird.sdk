@@ -18,7 +18,7 @@ use Symfony\Component\Mime\Email;
  * "gönderiyor mu" değil, **ne gönderdiği**: kaç istek çıkıyor, gövde hangisi,
  * hukuki sınıf ne, hata yutuluyor mu.
  *
- * `symfony/mailer` yalnız `require-dev`'dedir — tüketici Laravel dışındaysa
+ * `symfony/mailer` yalnız `require-dev`'dedir - tüketici Laravel dışındaysa
  * bu sınıf hiç yüklenmez.
  */
 final class SignalbirdTransportTest extends TestCase
@@ -114,7 +114,7 @@ final class SignalbirdTransportTest extends TestCase
         // Taşıyıcıdaki `alıcı yok` koruması ikinci savunma hattıdır ve normal
         // yoldan ERİŞİLEMEZ: Symfony'nin Mime katmanı To/Cc/Bcc'siz bir
         // iletiyi taşıyıcıya hiç ulaştırmadan reddeder. Bunu burada
-        // sabitliyoruz ki ileride biri "ölü kod" diye o korumayı silmesin —
+        // sabitliyoruz ki ileride biri "ölü kod" diye o korumayı silmesin -
         // taşıyıcı Symfony dışından da çağrılabilir.
         $email = (new Email())->from('gonderen@ornek.com')->subject('Boş')->text('gövde');
 
@@ -128,7 +128,7 @@ final class SignalbirdTransportTest extends TestCase
 
     public function testDuzEkPayloadaTasinir(): void
     {
-        // 2 Eyl 2026: ek desteği geldi — düğüm multipart/mixed üretir.
+        // 2 Eyl 2026: ek desteği geldi - düğüm multipart/mixed üretir.
         // İçerik base64 taşınır; boyut sınırı sunucudadır (7 MB).
         $client = (new FakeMessagingClient())->queueJson(202, ['id' => 'm_1', 'status' => 'queued']);
 
@@ -174,7 +174,7 @@ final class SignalbirdTransportTest extends TestCase
     public function testKanalVerilirseModuleKeyGider(): void
     {
         // Gönderici kanalı (2 Eyl 2026): config/mail.php'deki 'channel'
-        // taşıyıcıya iner ve module_key olarak gövdede gider — From adresini
+        // taşıyıcıya iner ve module_key olarak gövdede gider - From adresini
         // sunucu kanaldan çözer.
         $client = (new FakeMessagingClient())->queueJson(202, ['id' => 'm_1', 'status' => 'queued']);
 

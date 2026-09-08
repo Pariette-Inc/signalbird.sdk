@@ -3,7 +3,7 @@
  *
  * Her istek uygulama anahtarını (`X-Signalbird-Key`) ve varsa ziyaretçi
  * sırrını (`X-Signalbird-Visitor`) taşır. Sır localStorage'dadır; kimlik
- * doğrulama yoktur — anahtar uygulamayı, sır ziyaretçiyi tanır.
+ * doğrulama yoktur - anahtar uygulamayı, sır ziyaretçiyi tanır.
  *
  * `keepalive` yalnız kısa "durum" isteklerinde (yazıyor, okundu) kullanılır:
  * sekme kapanırken bile gitsinler; büyük gövdelerde tarayıcı keepalive'ı
@@ -15,11 +15,11 @@ export class Api {
   constructor(
     private readonly baseUrl: string,
     private readonly publicKey: string,
-    /** Sohbet kanalı — sunucu hangi widget ayarını uygulayacağını bundan bilir. */
+    /** Sohbet kanalı - sunucu hangi widget ayarını uygulayacağını bundan bilir. */
     private readonly chatKey: string | undefined,
     private readonly secret: () => string | null,
     private readonly log: (...args: unknown[]) => void
-  ) {}
+  ) { }
 
   get<T>(path: string, query?: Record<string, unknown>): Promise<ApiResult<T>> {
     return this.request<T>('GET', path + toQuery(query));
@@ -37,7 +37,7 @@ export class Api {
     return this.request<T>('DELETE', path);
   }
 
-  /** multipart `file` — Content-Type'ı tarayıcı koyar (boundary). */
+  /** multipart `file` - Content-Type'ı tarayıcı koyar (boundary). */
   upload<T>(path: string, file: File): Promise<ApiResult<T>> {
     const form = new FormData();
     form.append('file', file, file.name);

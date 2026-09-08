@@ -1,5 +1,5 @@
 /**
- * Widget metinleri — tr + en. Sunucu metni (karşılama, çevrimdışı mesajı)
+ * Widget metinleri - tr + en. Sunucu metni (karşılama, çevrimdışı mesajı)
  * varsa onu ezer; burası yalnız varsayılan ve arayüz etiketleridir.
  */
 const tr = {
@@ -43,11 +43,11 @@ const tr = {
   rateSend: 'Gönder',
   rateThanks: 'Geri bildiriminiz bize ulaştı.',
   rateThanksTitle: 'Teşekkürler!',
-  /** Yıldız sayısının karşılığı — puan verilince altında görünür. */
+  /** Yıldız sayısının karşılığı - puan verilince altında görünür. */
   rateScale: ['Hiç iyi değildi', 'Beklediğim gibi olmadı', 'İdare eder', 'İyiydi', 'Harikaydı'],
   reviewIntro: 'Yardımcı olabildiysek bizi yorumlar mısınız?',
   reviewCta: 'Değerlendir',
-  failed: 'Gönderilemedi — tekrar dene',
+  failed: 'Gönderilemedi - tekrar dene',
   fileTooLarge: 'Dosya çok büyük (en fazla {mb} MB)',
   fileNotAllowed: 'Bu dosya türünü yükleyemezsiniz',
   tooLong: 'Mesaj en fazla {max} karakter olabilir',
@@ -65,7 +65,7 @@ const tr = {
   jump: 'En alta in',
   newMessage: 'Yeni mesaj',
   /** Boş ekranda karşılamanın altında duran yanıt süresi vaadi. */
-  replyFast: 'Şu an buradayız — genelde birkaç dakika içinde yanıtlıyoruz.',
+  replyFast: 'Şu an buradayız - genelde birkaç dakika içinde yanıtlıyoruz.',
 };
 
 const en: typeof tr = {
@@ -112,7 +112,7 @@ const en: typeof tr = {
   rateScale: ['Not good at all', 'Not what I expected', 'It was okay', 'Good', 'Excellent'],
   reviewIntro: 'If we were helpful, would you leave us a review?',
   reviewCta: 'Leave a review',
-  failed: 'Not sent — tap to retry',
+  failed: 'Not sent - tap to retry',
   fileTooLarge: 'File is too large (max {mb} MB)',
   fileNotAllowed: 'That file type cannot be uploaded',
   tooLong: 'A message may be at most {max} characters',
@@ -129,7 +129,7 @@ const en: typeof tr = {
   emoji: 'Add emoji',
   jump: 'Jump to latest',
   newMessage: 'New message',
-  replyFast: "We're here right now — we usually reply within a few minutes.",
+  replyFast: "We're here right now - we usually reply within a few minutes.",
 };
 
 export type Strings = typeof tr;

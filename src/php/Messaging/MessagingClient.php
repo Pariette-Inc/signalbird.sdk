@@ -5,14 +5,14 @@ namespace Signalbird\Sdk\Messaging;
 use Signalbird\Sdk\SignalbirdException;
 
 /**
- * Gönderim (Messaging) istemcisi — sunucu tarafı.
+ * Gönderim (Messaging) istemcisi - sunucu tarafı.
  *
  * Takım API anahtarıyla (`sb_…`) e-posta/SMS/push gönderir, kişi ve liste
  * yönetir, kampanya açar, mesaj durumlarını okur. Telsiz istemcisinden
  * (`SignalbirdClient`) ayrıdır: farklı anahtar, farklı kapı, farklı kota.
  *
  * Guzzle'a bağımlı DEĞİLDİR: cURL uzantısı her PHP kurulumunda vardır. Retry
- * yoktur: aynı iletiyi iki kez göndermek, hiç göndermemekten pahalıdır —
+ * yoktur: aynı iletiyi iki kez göndermek, hiç göndermemekten pahalıdır -
  * yeniden deneme kararı çağıranındır.
  *
  * Her metot aynı biçimde döner:
@@ -21,7 +21,7 @@ use Signalbird\Sdk\SignalbirdException;
  * hata gövdesini taşıyabilir. `throwOnError` açıksa hata yerine
  * `SignalbirdException` fırlatılır.
  *
- * Node karşılığı: src/node/messaging.ts — davranış birebir aynıdır.
+ * Node karşılığı: src/node/messaging.ts - davranış birebir aynıdır.
  * Sözleşme: docs/CONTRACT.md § 8
  */
 class MessagingClient
@@ -74,11 +74,11 @@ class MessagingClient
     }
 
     /**
-     * Otomasyon olayı — kendi sisteminizdeki bir olayı Signalbird'e bildirir
+     * Otomasyon olayı - kendi sisteminizdeki bir olayı Signalbird'e bildirir
      * ve eşleşen akışı tetikler (docs/MESSAGING_UNIFICATION §11).
      *
      * Signalbird olayın ne anlama geldiğini BİLMEZ: `cart_abandoned`,
-     * `signup`, `page_abandoned` — adı sizin verdiğinizdir. Kişi kaydı yoksa
+     * `signup`, `page_abandoned` - adı sizin verdiğinizdir. Kişi kaydı yoksa
      * açılır; `data` şablon değişkeni olur.
      *
      * @param  array<string,mixed>  $input  event, contact{email|phone|external_id}, data
@@ -88,7 +88,7 @@ class MessagingClient
         return $this->request('POST', '/v1/events', $input);
     }
 
-    /** SMS parça/karakter hesabı — kota harcamaz. */
+    /** SMS parça/karakter hesabı - kota harcamaz. */
     public function previewSms(string $body): array
     {
         return $this->request('POST', '/v1/sms/preview', ['body' => $body]);
@@ -131,7 +131,7 @@ class MessagingClient
      * 1000'lik parçalara bölünür ve SIRAYLA gönderilir (paralel değil: aynı
      * e-posta iki parçada da varsa yarış olmasın). Sonuçlar tek yanıtta
      * birleştirilir. Bir parça başarısız olursa o noktada durulur ve o ana kadar
-     * biriken sayımlar `data` içinde döner — çağıran kaç kişinin işlendiğini görür.
+     * biriken sayımlar `data` içinde döner - çağıran kaç kişinin işlendiğini görür.
      *
      * @param array{contacts: array<int, array<string, mixed>>, list_id?: int, consent_source?: string, consent_text?: string} $input
      */
@@ -222,7 +222,7 @@ class MessagingClient
      *   foreach ($sdk->iterateCampaignMessages(42) as $m) { … }
      *
      * Bir sayfa alınamazsa `SignalbirdException` fırlatır (sessiz yarım liste,
-     * "hepsi bu" sanılır — o daha tehlikeli). `page` sorgudan yok sayılır;
+     * "hepsi bu" sanılır - o daha tehlikeli). `page` sorgudan yok sayılır;
      * `per_page` verilmezse 100'dür.
      *
      * @param  array<string, mixed>  $query
@@ -307,7 +307,7 @@ class MessagingClient
         }
 
         // HTTP hatası: API `{message, code}` döner; Laravel doğrulama hatası
-        // `{message, errors}` döner (kodsuz) — onu VALIDATION_ERROR sayarız.
+        // `{message, errors}` döner (kodsuz) - onu VALIDATION_ERROR sayarız.
         $code = is_array($data) && isset($data['code']) && is_string($data['code']) && $data['code'] !== ''
             ? $data['code']
             : ($status === 422 ? 'VALIDATION_ERROR' : ($status === 401 ? 'API_KEY_INVALID' : "HTTP_{$status}"));

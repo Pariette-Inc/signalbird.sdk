@@ -2,7 +2,7 @@
 #
 # Composer'ın `archive.exclude` ayarı yalnız `composer archive` ve Satis için
 # çalışır. Genel Packagist, GitHub-tabanlı bir paketin "dist" adresi olarak
-# GitHub'ın zipball'ını verir ve GitHub o arşivi `git archive` ile üretir —
+# GitHub'ın zipball'ını verir ve GitHub o arşivi `git archive` ile üretir -
 # yani burada yazan `export-ignore` kuralları geçerlidir, composer.json'daki
 # liste değil. İkisi de tutuluyor: biri unutulursa diğeri yakalar.
 #

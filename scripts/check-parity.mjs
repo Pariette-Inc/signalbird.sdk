@@ -2,16 +2,16 @@
 /**
  * Sözleşme denetimi: her dilin istemcisi AYNI metot kümesini sunmak zorunda.
  *
- * "Tek paket, tek davranış" iddiasını ayakta tutan şey budur — bir dile metot
+ * "Tek paket, tek davranış" iddiasını ayakta tutan şey budur - bir dile metot
  * eklenip diğerine eklenmezse CI kırılır.
  *
  * Beş yüzey, beş küme:
- *   - Telsiz    (docs/CONTRACT.md § 4)   — 7 metot   · sunucu dilleri
- *   - Gönderim  (docs/CONTRACT.md § 8.3) — 21 metot  · sunucu dilleri
- *   - Yönetim   (docs/CONTRACT.md § 10)  — 46 metot  · sunucu dilleri
- *   - Uygulama  (docs/CONTRACT.md § 11)  — 19 metot  · istemci dilleri
+ *   - Telsiz    (docs/CONTRACT.md § 4)   - 7 metot   · sunucu dilleri
+ *   - Gönderim  (docs/CONTRACT.md § 8.3) - 21 metot  · sunucu dilleri
+ *   - Yönetim   (docs/CONTRACT.md § 10)  - 46 metot  · sunucu dilleri
+ *   - Uygulama  (docs/CONTRACT.md § 11)  - 19 metot  · istemci dilleri
  *                                                     (TS, Swift, Kotlin)
- *   - Partner   (docs/CONTRACT.md § 12)  — 23 metot  · sunucu dilleri
+ *   - Partner   (docs/CONTRACT.md § 12)  - 23 metot  · sunucu dilleri
  *       Mobil dile ya da tarayıcıya İNMEZ: partner anahtarı sunucuda kalır.
  * Adlar camelCase ve diller arasında birebirdir; her dil kendi yazım
  * geleneğini korur (`send_email` / `SendEmail` / `sendEmail` aynı metottur).
@@ -33,7 +33,7 @@ const PHP_METHOD = /public function (\w+)\s*\(/gm
 // Python: sınıf gövdesinde dört boşluk girintili `def ad(self, …)`.
 const PYTHON_METHOD = /^\s{4}def (\w+)\s*\(\s*self/gm
 
-// Go: `func (m *Management) Ad(` — alıcı tipi kümede zaten tek olduğu için
+// Go: `func (m *Management) Ad(` - alıcı tipi kümede zaten tek olduğu için
 // alıcı adı okunmaz, yalnız metot adı alınır.
 const GO_METHOD = /^func \(\w+ \*\w+\) (\w+)\(/gm
 
@@ -80,7 +80,7 @@ const SURFACES = [
     aliases: noProto({ debugLog: 'debug' }),
     /*
      * `radio()` sözdizimi şekeridir (kanalı bağlayıp yazaç döner), yeni bir
-     * yüzey değil — her metodu `log()`'a gider. Diller arası parite API
+     * yüzey değil - her metodu `log()`'a gider. Diller arası parite API
      * yüzeyini denetler, dilin kendi deyimini değil.
      */
     ignored: new Set(['constructor', '__construct', 'captureUncaught', 'post', 'send', 'request', 'radio', 'channel']),
@@ -91,7 +91,7 @@ const SURFACES = [
       { name: 'go', file: 'src/go/signalbird/radio.go', pattern: GO_METHOD, normalize: toCamel },
       { name: 'dotnet', file: 'src/dotnet/Signalbird.Sdk/SignalbirdClient.cs', pattern: CSHARP_METHOD, normalize: (n) => toCamel(stripAsync(n)) },
       // Swift ve Kotlin son kullanıcı yüzeyini taşır (§ 11); Telsiz kümesi
-      // sunucu dilleri içindir — mobil uygulamaya gizli anahtar gömülmez.
+      // sunucu dilleri içindir - mobil uygulamaya gizli anahtar gömülmez.
     ],
   },
   {
@@ -108,7 +108,7 @@ const SURFACES = [
       'listMessages', 'getMessage',
     ],
     aliases: noProto({}),
-    // İç yardımcılar (private/protected) — Node'da girinti regex'i onları da yakalar
+    // İç yardımcılar (private/protected) - Node'da girinti regex'i onları da yakalar
     ignored: new Set(['constructor', '__construct', 'request', 'transport', 'fail', 'success', 'buildQuery', 'stringify']),
     languages: [
       { name: 'node', file: 'src/node/messaging.ts', pattern: NODE_METHOD },
@@ -124,11 +124,11 @@ const SURFACES = [
     contract: [
       // Telsiz okuma
       'radioSummary', 'radioEvents',
-      // Modül anahtarları (1 Eyl 2026) — Telsiz projesi/kanalı ve uygulama
+      // Modül anahtarları (1 Eyl 2026) - Telsiz projesi/kanalı ve uygulama
       // kaydının yerini aldı. Beş modül tek gövdeyi paylaşır.
       'listModuleKeys', 'getModuleKey', 'createModuleKey', 'updateModuleKey',
       'deleteModuleKey', 'listModuleKeyDevices',
-      // Sohbet — ajan tarafı
+      // Sohbet - ajan tarafı
       'chatSummary', 'chatUpdates',
       'listConversations', 'getConversation', 'listConversationMessages', 'startConversation',
       'updateConversation', 'setConversationStatus', 'assignConversation', 'readConversation',
@@ -210,13 +210,13 @@ let failed = false
 
 for (const surface of SURFACES) {
   const expected = new Set(surface.contract)
-  console.log(`— ${surface.name} (${surface.ref})`)
+  console.log(`- ${surface.name} (${surface.ref})`)
 
   for (const lang of surface.languages) {
     const path = join(root, lang.file)
 
     if (!existsSync(path)) {
-      console.error(`  ✗ ${lang.name}: kaynak bulunamadı — ${lang.file}`)
+      console.error(`  ✗ ${lang.name}: kaynak bulunamadı - ${lang.file}`)
       failed = true
       continue
     }

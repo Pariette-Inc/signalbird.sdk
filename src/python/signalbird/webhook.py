@@ -5,7 +5,7 @@ Mesaj olay webhook'ları (``message.*``, ``campaign.*``)
 
 İki kural, ikisi de kritik:
   * Doğrulama HAM GÖVDE üzerinde yapılır. JSON'u çözüp yeniden serileştirmek
-    imzayı bozar — Python'da ``request.json`` okuyup ``json.dumps`` etmek en
+    imzayı bozar - Python'da ``request.json`` okuyup ``json.dumps`` etmek en
     sık düşülen tuzaktır.
   * Karşılaştırma sabit zamanlıdır (``hmac.compare_digest``).
 

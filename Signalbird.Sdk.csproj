@@ -1,9 +1,9 @@
 <!--
-  Signalbird SDK — .NET manifesti.
+  Signalbird SDK - .NET manifesti.
 
   Manifest KÖKTE durur (repo kuralı), kaynak `src/dotnet/Signalbird.Sdk/`
   altındadır. Diğer dillerin dosyaları derlemeye girmez: `EnableDefaultItems`
-  kapalıdır ve yalnız .NET kaynağı açıkça eklenir — aksi hâlde MSBuild
+  kapalıdır ve yalnız .NET kaynağı açıkça eklenir - aksi hâlde MSBuild
   `src/**` altındaki her `.cs`'i toplamaya çalışırdı.
 
   Sürüm `VERSION` dosyasıyla kilitlidir; `node scripts/sync-version.mjs`
@@ -21,7 +21,7 @@
     <PackageId>Signalbird.Sdk</PackageId>
     <Version>2.5.0</Version>
     <Authors>Signalbird</Authors>
-    <Description>Signalbird SDK — Telsiz (log), Gönderim (e-posta/SMS/push) ve Yönetim istemcisi. Bağımlılıksız, ASP.NET Core DI destekli.</Description>
+    <Description>Signalbird SDK - Telsiz (log), Gönderim (e-posta/SMS/push) ve Yönetim istemcisi. Bağımlılıksız, ASP.NET Core DI destekli.</Description>
     <PackageTags>signalbird;logging;notification;messaging;email;sms;push;chat;observability</PackageTags>
     <PackageProjectUrl>https://signalbird.io/sdk</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Pariette-Inc/signalbird.sdk</RepositoryUrl>

@@ -5,7 +5,7 @@
  * olarak durur. `publicKey` de saklanır ki aynı alan adında iki farklı uygulama
  * anahtarı birbirinin ziyaretçisini kapmasın.
  *
- * Basit bir yayıncıdır: `on(event, fn)` — arayüz ve dış API buna abone olur.
+ * Basit bir yayıncıdır: `on(event, fn)` - arayüz ve dış API buna abone olur.
  */
 import type { Conversation, Message, Agent } from './types';
 
@@ -31,7 +31,7 @@ export class Store {
   withinHours = true;
   unread = 0;
   isOpen = false;
-  /** Bu tarayıcıda puanlanmış konuşmalar — aynı konuşma için tekrar sorma. */
+  /** Bu tarayıcıda puanlanmış konuşmalar - aynı konuşma için tekrar sorma. */
   private rated = new Set<string>();
   private listeners: Record<string, Listener[]> = {};
 
@@ -203,7 +203,7 @@ export class Store {
       if (value) localStorage.setItem(this.dismissKey, '1');
       else localStorage.removeItem(this.dismissKey);
     } catch {
-      /* yok say — gizli sekmede localStorage yazılamaz, balon görünür kalır */
+      /* yok say - gizli sekmede localStorage yazılamaz, balon görünür kalır */
     }
   }
 

@@ -7,7 +7,7 @@ use Monolog\Level;
 use Monolog\LogRecord;
 
 /**
- * Laravel/Monolog kanalı — uygulamanın log akışı Telsiz'e.
+ * Laravel/Monolog kanalı - uygulamanın log akışı Telsiz'e.
  *
  * `config/logging.php` içine:
  *
@@ -28,7 +28,7 @@ use Monolog\LogRecord;
  * gönderilir (Monolog `close()`'u kapanışta çağırır).
  *
  * Arka plan iş parçacığı YOKTUR (SDK kuralı): gönderim yine aynı istek
- * içinde, ama bir kez olur. Tampon 100'e ulaşırsa erken boşalır — Telsiz'in
+ * içinde, ama bir kez olur. Tampon 100'e ulaşırsa erken boşalır - Telsiz'in
  * toplu ucu bir çağrıda en fazla 100 olay alır.
  *
  * ── HATA YUTULUR ──────────────────────────────────────────────────────────

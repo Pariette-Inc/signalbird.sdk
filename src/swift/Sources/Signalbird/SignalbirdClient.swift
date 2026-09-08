@@ -8,7 +8,7 @@ public enum SignalbirdLevel: String, Sendable {
 public struct SignalbirdConfig {
     /// Sunucu anahtarı (`sb_secret_live_…`).
     ///
-    /// Bu anahtar GİZLİDİR: iOS uygulamasına gömülmemelidir — uygulama paketi
+    /// Bu anahtar GİZLİDİR: iOS uygulamasına gömülmemelidir - uygulama paketi
     /// çözülebilir ve anahtar herkesin eline geçer. Mobil taraf sohbeti ve push
     /// kaydını `SignalbirdApp` ile (açık anahtarla) yapar; Telsiz istemcisi
     /// sunucu tarafı Swift servisleri (Vapor, Hummingbird) içindir.
@@ -33,7 +33,7 @@ public struct SignalbirdConfig {
     }
 }
 
-/// Telsiz (Radio) istemcisi — log ve olay yazar.
+/// Telsiz (Radio) istemcisi - log ve olay yazar.
 ///
 /// Sözleşme: docs/CONTRACT.md § 1–7
 public struct SignalbirdClient {

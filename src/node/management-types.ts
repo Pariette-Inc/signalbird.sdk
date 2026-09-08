@@ -12,7 +12,7 @@ import type { SbResult } from './http';
 export type { SbResult };
 
 export interface ManagementConfig {
-  /** Takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
+  /** Takım API anahtarı (`sb_…`) - `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
   domainKey: string;
   /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
@@ -41,14 +41,14 @@ export type KeyedModule = 'logger' | 'email' | 'sms' | 'push' | 'chat';
 
 export type ModuleKeyLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 
-/** Bildirim kanalı — seçim KANAL düzeyindedir, kişi başına değil. */
+/** Bildirim kanalı - seçim KANAL düzeyindedir, kişi başına değil. */
 export type NotifyChannel = 'push' | 'email';
 
 /**
- * Modül anahtarı — kodun içine gömülen kanal adı.
+ * Modül anahtarı - kodun içine gömülen kanal adı.
  *
  * Gizli DEĞİLDİR: domain anahtarı olmadan hiçbir işe yaramaz. Domain
- * anahtarına referans da VERMEZ — anahtar yenilendiğinde bu kayıtlar
+ * anahtarına referans da VERMEZ - anahtar yenilendiğinde bu kayıtlar
  * bozulmasın diye (KEY_ARCHITECTURE §2).
  */
 export interface ModuleKey {
@@ -183,7 +183,7 @@ export interface ListChatMessagesQuery {
 }
 
 export interface StartConversationInput {
-  /** Ziyaretçi ya da kişi — biri zorunlu. */
+  /** Ziyaretçi ya da kişi - biri zorunlu. */
   visitor_id?: string;
   contact_id?: number;
   body: string;
@@ -233,7 +233,7 @@ export interface AppRecord {
   id: number;
   name: string;
   platform: AppPlatform;
-  /** `sb_public_live_…` — açık anahtar, zaten istemciye gömülür. */
+  /** `sb_public_live_…` - açık anahtar, zaten istemciye gömülür. */
   public_key: string;
   allowed_origins?: string[] | null;
   chat_enabled?: boolean;
@@ -256,7 +256,7 @@ export interface AppInput {
 
 export interface AppDevice {
   id: number;
-  /** Maskeli token — tamamı hiçbir zaman dönmez. */
+  /** Maskeli token - tamamı hiçbir zaman dönmez. */
   token_masked?: string;
   platform?: string;
   provider?: string | null;
@@ -344,7 +344,7 @@ export interface ChatReport {
 }
 
 /**
- * Gömme jetonu isteği — MÜŞTERİNİN kendi paneli için.
+ * Gömme jetonu isteği - MÜŞTERİNİN kendi paneli için.
  *
  * Partner sürümünden (`EmbedTokenInput`) tek farkı kimliğin nasıl verildiği:
  * partner kendi sistemindeki dış kimliği (`user_external_id`) yollar, müşteri

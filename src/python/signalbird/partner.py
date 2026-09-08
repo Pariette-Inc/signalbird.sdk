@@ -1,4 +1,4 @@
-"""Partner istemcisi — BEŞİNCİ yüzey.
+"""Partner istemcisi - BEŞİNCİ yüzey.
 
 Signalbird'ü kendi ürününün içinde satan sözleşmeli platform (veribenim,
 submitcms) müşterisini bununla sağlar ve yetkilendirir.
@@ -60,7 +60,7 @@ class SignalbirdPartner:
         return self._http.request("PATCH", f"/v1/partner/companies/{seg(external_id)}", input)
 
     def suspend_company(self, external_id: str) -> Result:
-        """Askıya alır — SİLMEZ. İzleme ve mesaj geçmişi durur."""
+        """Askıya alır - SİLMEZ. İzleme ve mesaj geçmişi durur."""
         return self._http.request("DELETE", f"/v1/partner/companies/{seg(external_id)}")
 
     def rotate_key(self, external_id: str, type: str) -> Result:
@@ -74,7 +74,7 @@ class SignalbirdPartner:
         """Domain ekler ve (istenirse) izlemeye alır.
 
         Kayıt ``verified_via='partner'`` ile doğar: izleme, sohbet ve push için
-        yeter — **e-posta/SMS kampanyası için TXT şarttır**. Yanıttaki ``dns``
+        yeter - **e-posta/SMS kampanyası için TXT şarttır**. Yanıttaki ``dns``
         kaydını yayınlayıp :meth:`verify_domain` çağırmak kapıyı açar.
         """
         return self._http.request("POST", f"/v1/partner/companies/{seg(company_external_id)}/domains", input)
@@ -97,7 +97,7 @@ class SignalbirdPartner:
         )
 
     def company_uptime(self, company_external_id: str, range: str = "24h") -> Result:
-        """Tek istekte tüm domainler — liste ekranı N+1 atmasın."""
+        """Tek istekte tüm domainler - liste ekranı N+1 atmasın."""
         return self._http.request(
             "GET", f"/v1/partner/companies/{seg(company_external_id)}/uptime", None, {"range": range}
         )
@@ -155,7 +155,7 @@ class SignalbirdPartner:
     def create_embed_token(self, company_external_id: str, input: Mapping[str, Any]) -> Result:
         """Panel ekranını partner sayfasına gömmek için kısa ömürlü jeton.
 
-        120 saniye yaşar ve TEK KULLANIMLIKTIR — jeton URL'de gider, log ve
+        120 saniye yaşar ve TEK KULLANIMLIKTIR - jeton URL'de gider, log ve
         ``Referer`` başlığına düşer.
         """
         return self._http.request("POST", f"/v1/partner/companies/{seg(company_external_id)}/embed", input)

@@ -1,9 +1,9 @@
 /**
- * `signalbird/app` — son kullanıcı (uygulama) yüzeyi.
+ * `signalbird/app` - son kullanıcı (uygulama) yüzeyi.
  *
  * Müşterinin MÜŞTERİSİ için: canlı sohbet ve push cihaz kaydı. Açık uygulama
  * anahtarıyla (`sb_public_live_…`) çalışır ve yalnız ziyaretçinin kendi verisine
- * dokunur — gönderim yapmaz, kişi listesi okumaz.
+ * dokunur - gönderim yapmaz, kişi listesi okumaz.
  *
  * Çatı uyarlamaları bunun üstüne oturur:
  *   `signalbird/react` · `/vue` · `/angular` · `/react-native`

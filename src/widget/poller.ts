@@ -1,12 +1,12 @@
 /**
- * Uyarlanabilir aralıklı polling (penyu deseni — WebSocket yok).
+ * Uyarlanabilir aralıklı polling (penyu deseni - WebSocket yok).
  *
  * Panel kapalıyken merdiven: 20 s ×3 → 60 s ×2 → 180 s. Her yeni veri
  * merdiveni başa sarar. Panel açıkken sabit 3 s.
  *
  * `setTimeout` kendini yeniden kurar (`setInterval` değil): önceki istek
  * bitmeden yenisi başlamaz, sekme uyuyunca istekler üst üste yığılmaz.
- * Sekme gizliyken ya da çevrimdışıyken tur ATLANIR ama merdiven ilerlemez —
+ * Sekme gizliyken ya da çevrimdışıyken tur ATLANIR ama merdiven ilerlemez -
  * kullanıcı geri geldiğinde ilk turda tazelenir (`visibilitychange` sıfırlar).
  */
 const IDLE_LADDER = [20000, 20000, 20000, 60000, 60000, 180000];
@@ -16,12 +16,12 @@ const OPEN_INTERVAL = 3000;
  * Canlı bağlantı varken polling SUSMAZ, YAVAŞLAR (29 Ağu 2026).
  *
  * Soket bağlıyken yeni mesaj zaten haber olarak geliyor ve tur o haberle
- * tetikleniyor; buradaki turlar yalnız EMNİYET AĞIDIR — soket sessizce
+ * tetikleniyor; buradaki turlar yalnız EMNİYET AĞIDIR - soket sessizce
  * ölmüşse (vekil sunucu kesmiş, ağ değişmiş) kullanıcı sonsuza kadar boş
  * ekrana bakmasın.
  *
  * Tamamen kapatmadık: "bağlıyım" diyen ama olay taşımayan bir soket, en kötü
- * arıza türüdür — hiçbir şey kırılmış görünmez, yalnız mesajlar gelmez.
+ * arıza türüdür - hiçbir şey kırılmış görünmez, yalnız mesajlar gelmez.
  */
 const LIVE_OPEN_INTERVAL = 45000;
 const LIVE_IDLE_INTERVAL = 300000;

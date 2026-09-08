@@ -1,10 +1,10 @@
 /**
- * `signalbird/react` — React ve Next.js için kancalar.
+ * `signalbird/react` - React ve Next.js için kancalar.
  *
  * Widget'ı gömmek yerine KENDİ sohbet arayüzünü yazan müşteri içindir. Durum
  * yönetimi `ChatSession`'dadır; buradaki kancalar yalnız React'in yeniden
  * çizim döngüsüne bağlar. Böylece aynı mantık Vue ve Angular'da da birebir
- * çalışır — üç ayrı sohbet motoru bakmak zorunda kalmayız.
+ * çalışır - üç ayrı sohbet motoru bakmak zorunda kalmayız.
  *
  * React bir `peerDependency`'dir; paket onu kendi getirmez.
  */
@@ -29,7 +29,7 @@ export function SignalbirdProvider({ children, ...config }: SignalbirdProviderPr
   return createElement(AppContext.Provider, { value: client }, children);
 }
 
-/** Ham istemci — push kaydı, kimlik, özel çağrılar için. */
+/** Ham istemci - push kaydı, kimlik, özel çağrılar için. */
 export function useSignalbird(): SignalbirdApp {
   const client = useContext(AppContext);
 
@@ -41,7 +41,7 @@ export function useSignalbird(): SignalbirdApp {
 }
 
 export interface UseChatOptions {
-  /** Panel açık mı — yoklama hızını belirler (açık 3 s, kapalı merdiven). */
+  /** Panel açık mı - yoklama hızını belirler (açık 3 s, kapalı merdiven). */
   open?: boolean;
   /** Oturum kurulurken kullanılacak ziyaretçi bilgisi (ön-form ya da giriş). */
   visitor?: SessionInput;
@@ -61,7 +61,7 @@ export interface UseChatResult extends ChatState {
 /**
  * Sohbet durumu + eylemleri.
  *
- * `open` değiştiğinde oturum yeniden KURULMAZ, yalnız yoklama hızı değişir —
+ * `open` değiştiğinde oturum yeniden KURULMAZ, yalnız yoklama hızı değişir -
  * paneli her açışta baştan yüklemek, konuşmayı kaybetmiş gibi hissettirirdi.
  */
 export function useChat(options: UseChatOptions = {}): UseChatResult {
@@ -106,7 +106,7 @@ export function useChat(options: UseChatOptions = {}): UseChatResult {
   };
 }
 
-/** Rozet için okunmamış sayısı — sohbet arayüzü açılmadan da çalışır. */
+/** Rozet için okunmamış sayısı - sohbet arayüzü açılmadan da çalışır. */
 export function useUnreadCount(): number {
   const { unread } = useChat({ open: false });
 

@@ -1,5 +1,5 @@
 /**
- * Signalbird widget — `dist/signalbird.js` (IIFE, global `Signalbird`).
+ * Signalbird widget - `dist/signalbird.js` (IIFE, global `Signalbird`).
  *
  * Tek satır kurulum:
  *   <script async src="https://signalbird.io/sdk/v1/signalbird.js"
@@ -8,7 +8,7 @@
  * Betik yüklenince `data-key` varsa kendini başlatır; yoksa ev sahibi
  * `Signalbird.init({publicKey, chatKey})` çağırır. İki değer ayrıdır: anahtar
  * kimliği doğrular, kanal davranışı seçer (1 Eyl 2026 anahtar mimarisi). Buradaki HER dışa açık fonksiyon
- * try/catch içindedir: widget, ev sahibi sayfaya asla hata fırlatmaz —
+ * try/catch içindedir: widget, ev sahibi sayfaya asla hata fırlatmaz -
  * sohbet balonunun çökmesi müşterinin ödeme sayfasını çökertmemeli.
  *
  * Genel API (docs/PLATFORM_EXPANSION §3.2):
@@ -36,12 +36,12 @@ let controller: ChatController | null = null;
  * Sayfa içi sohbetler (5 Eyl 2026).
  *
  * Ana denetleyiciden AYRI tutulur: "bir site ikisini de kullanabilsin" isteği
- * tam olarak budur — sayfada balon dururken destek bölümünde sayfa içi bir
+ * tam olarak budur - sayfada balon dururken destek bölümünde sayfa içi bir
  * sohbet açılabilir. Her biri kendi kabına çizilir ve kendi turunu atar;
  * `destroy()` hepsini birden söker.
  */
 const inlineControllers: ChatController[] = [];
-/** Son `init` seçenekleri — `inline()` anahtarları oradan devralır. */
+/** Son `init` seçenekleri - `inline()` anahtarları oradan devralır. */
 let lastInit: InitOptions | null = null;
 /** `init` öncesi kaydedilen dinleyiciler; başlatınca denetleyiciye bağlanır. */
 const pendingListeners: Array<{ event: ChatEvent; fn: Listener }> = [];
@@ -193,7 +193,7 @@ export const push = {
 };
 
 /**
- * Panel gömme — ziyaretçi sohbetiyle İLGİSİ YOKTUR, aynı betikte olmasının
+ * Panel gömme - ziyaretçi sohbetiyle İLGİSİ YOKTUR, aynı betikte olmasının
  * sebebi tek kurulumdur: partner paneline zaten bir `<script>` koyuyorsa
  * ikincisini koymasın (KARAR 2026-08-27: "nereye çakarsak orda çalışsın").
  *
@@ -213,7 +213,7 @@ export function destroy(): void {
 }
 
 // ── Otomatik başlatma ──────────────────────────────────────────────────
-// `<script data-key data-channel>` — `document.currentScript` yalnız betik çalışırken
+// `<script data-key data-channel>` - `document.currentScript` yalnız betik çalışırken
 // doludur (async dahil); module/defer dışı senaryolarda da tutar. Bulunamazsa
 // aynı isimde bir script etiketi aranır (ör. tag manager enjeksiyonu).
 safe(() => {
@@ -228,12 +228,12 @@ safe(() => {
     init({
       publicKey: ds.key!,
       // Kanal verilmezse sunucu 400 `MODULE_KEY_MISSING` döner ve widget
-      // çizilmez — sessizce yanlış gelen kutusuna yazmaktansa doğrusu bu.
+      // çizilmez - sessizce yanlış gelen kutusuna yazmaktansa doğrusu bu.
       chatKey: ds.channel || undefined,
       baseUrl: ds.baseUrl || undefined,
       locale: ds.locale || undefined,
       /*
-       * `data-layout="inline" data-container="#destek"` — tek satırlık
+       * `data-layout="inline" data-container="#destek"` - tek satırlık
        * kurulumla sayfa içi sohbet. Betiği ikinci kez koymak yerine bu
        * niteliklerin olması, kurulum kılavuzunu tek satırda tutuyor.
        */

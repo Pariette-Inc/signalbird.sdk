@@ -3,7 +3,7 @@
  *
  * Signalbird her teslimatı `X-Signalbird-Signature: sha256=<hex>` başlığıyla
  * imzalar: `hex(hmac_sha256(raw_body, secret))`. Doğrulama HAM gövde üzerinde
- * yapılmalıdır — JSON'u ayrıştırıp yeniden serileştirmek anahtar sırasını
+ * yapılmalıdır - JSON'u ayrıştırıp yeniden serileştirmek anahtar sırasını
  * değiştirir ve imzayı bozar. Express'te `express.raw()` ya da `verify`
  * kancasıyla ham gövdeyi saklayın.
  */
@@ -16,7 +16,7 @@ export function verifyWebhook(
 ): boolean {
   if (!signatureHeader || !secret) return false;
 
-  // "sha256=abcd…" — başka algoritma ya da biçim kabul edilmez.
+  // "sha256=abcd…" - başka algoritma ya da biçim kabul edilmez.
   const match = /^\s*sha256=([a-f0-9]+)\s*$/i.exec(signatureHeader);
   if (!match) return false;
 

@@ -3,7 +3,7 @@
  *
  * Bu yüzey MÜŞTERİNİN MÜŞTERİSİ içindir: ziyaretçi ya da uygulama kullanıcısı.
  * Anahtarı açıktır (`sb_public_live_…`) ve istemciye gömülür; güvenliği gizlilikten
- * değil kısıttan gelir — yalnız izinli kökenden çalışır ve yalnız ziyaretçinin
+ * değil kısıttan gelir - yalnız izinli kökenden çalışır ve yalnız ziyaretçinin
  * KENDİ verisine dokunur.
  */
 interface SbResult<T = unknown> {
@@ -33,21 +33,21 @@ interface AppConfig {
      */
     platform?: 'ios' | 'android' | 'web';
     /**
-     * Açık domain anahtarı (`sb_public_live_…`) — KİMLİĞİ doğrular.
+     * Açık domain anahtarı (`sb_public_live_…`) - KİMLİĞİ doğrular.
      *
      * Panel → Alan adları → [alan adı] → Anahtarlar. Web anahtarı yalnız izinli
      * kökenlerden, mobil anahtarı yalnız Origin taşımayan isteklerden çalışır.
      */
     publicKey: string;
     /**
-     * Sohbet kanalı — `chat` modülünün anahtarı (`destek`). DAVRANIŞI seçer:
+     * Sohbet kanalı - `chat` modülünün anahtarı (`destek`). DAVRANIŞI seçer:
      * hangi widget ayarı, hangi gelen kutusu.
      *
      * Anahtardan AYRIDIR ve bu bilinçlidir (1 Eyl 2026): domain anahtarını
      * yenilediğinizde kanal adı değişmez, yani kodunuz aynı kalır.
      */
     chatKey?: string;
-    /** Push kanalı — `push` modülünün anahtarı. Cihaz kaydı için gerekir. */
+    /** Push kanalı - `push` modülünün anahtarı. Cihaz kaydı için gerekir. */
     pushKey?: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
@@ -73,7 +73,7 @@ interface TopicOption {
     description?: string | null;
     parent_id?: number | null;
 }
-/** `POST /v1/sdk/bootstrap` yanıtı — widget çizilmeden önceki tek soru. */
+/** `POST /v1/sdk/bootstrap` yanıtı - widget çizilmeden önceki tek soru. */
 interface BootstrapResult {
     /**
      * Sözleşme adı `channel` (1 Eyl 2026); `app` eski sunucular için okunur.
@@ -85,10 +85,10 @@ interface BootstrapResult {
     app?: BootstrapChannel;
     /** Boşsa konu adımı hiç gösterilmez. */
     topics?: TopicOption[];
-    /** Mevcut açık konuşma (varsa) — ChatSession ilk listelemeyi atlar. */
+    /** Mevcut açık konuşma (varsa) - ChatSession ilk listelemeyi atlar. */
     conversation?: Conversation | null;
     /**
-     * Canlı bağlantı — YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan taraf
+     * Canlı bağlantı - YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan taraf
      * hiçbir şey göremez, odaya girmek imza ister ve imzayı
      * `POST /v1/sdk/chat/socket/auth` verir.
      *
@@ -139,7 +139,7 @@ interface BootstrapChannel {
 }
 interface Visitor {
     id: string;
-    /** Ziyaretçi sırrı — YALNIZ oturum açılışında döner, sonra saklanır. */
+    /** Ziyaretçi sırrı - YALNIZ oturum açılışında döner, sonra saklanır. */
     secret?: string;
     name?: string | null;
     email?: string | null;
@@ -196,7 +196,7 @@ interface Message {
     edited_at?: string | null;
     created_at?: string;
     /**
-     * Anlık çeviri — ziyaretçinin diline. Arayüz varsa bunu gösterir; orijinal
+     * Anlık çeviri - ziyaretçinin diline. Arayüz varsa bunu gösterir; orijinal
      * `body`'de durmaya devam eder.
      */
     translation?: {
@@ -211,7 +211,7 @@ interface Message {
      *
      * Tip listede yoktu ama oturum bu alanı yazıyordu: arayüz "gitmedi" hâlini
      * çizmek istediğinde tipi zorlamak (`as`) zorunda kalıyordu. Bekleyen mesaj
-     * ayrıca işaretlenmez — sunucu yanıtı gelene kadar `id` ile `client_id`
+     * ayrıca işaretlenmez - sunucu yanıtı gelene kadar `id` ile `client_id`
      * aynıdır ve bu, "henüz yolda" demenin en ucuz yoludur.
      */
     failed?: boolean;
@@ -240,7 +240,7 @@ interface StartConversationInput {
     attachments?: unknown[];
     page_url?: string;
     /**
-     * Destek konusu — id ya da slug. Seçim SUNUCUDA doğrulanır; geçersizse
+     * Destek konusu - id ya da slug. Seçim SUNUCUDA doğrulanır; geçersizse
      * konuşma yine açılır, konu yok sayılır.
      */
     topic?: string | number;
@@ -252,7 +252,7 @@ interface SendMessageInput {
     attachments?: unknown[];
 }
 interface ConversationQuery {
-    /** `cm_…` imleci — yalnız bundan sonrakiler döner. */
+    /** `cm_…` imleci - yalnız bundan sonrakiler döner. */
     after?: string;
     limit?: number;
 }
@@ -268,17 +268,17 @@ interface RegisterDeviceInput {
 }
 
 /**
- * Uygulama istemcisi — son kullanıcı tarafı (sohbet + push kaydı).
+ * Uygulama istemcisi - son kullanıcı tarafı (sohbet + push kaydı).
  *
  * Tek bir sınıf; tarayıcı, React Native, Electron ve test aynı gövdeyi kullanır.
  * Platform farkı iki noktada toplanmıştır ve ikisi de dışarıdan verilir:
  * `storage` (ziyaretçi sırrı nerede durur) ve `fetchImpl`. Çatıya özel sarmalayıcı
- * yazmak yerine bunu seçtik — React, Vue, Angular ve RN uyarlamaları bu sınıfın
+ * yazmak yerine bunu seçtik - React, Vue, Angular ve RN uyarlamaları bu sınıfın
  * ÜSTÜNE oturur, kopyası değildir.
  *
  * Kimlik iki parçadır: açık domain anahtarı (`X-Signalbird-Key`) ve
  * ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner;
- * kaybolursa yeni oturum açılır ve geçmiş konuşmalar görünmez — bu yüzden
+ * kaybolursa yeni oturum açılır ve geçmiş konuşmalar görünmez - bu yüzden
  * saklama katmanı zorunludur, isteğe bağlı değil.
  *
  * Hiçbir metot istisna fırlatmaz: sohbet balonunun hatası müşterinin ödeme
@@ -324,7 +324,7 @@ declare class SignalbirdApp {
     identify(input: IdentifyInput): Promise<SbResult<{
         visitor: Visitor;
     }>>;
-    /** Saklanan ziyaretçi kimliği — yoksa `null`. */
+    /** Saklanan ziyaretçi kimliği - yoksa `null`. */
     currentVisitor(): Promise<{
         id: string;
         name?: string | null;
@@ -343,7 +343,7 @@ declare class SignalbirdApp {
         within_hours?: boolean;
     }>>;
     /**
-     * İlk mesajla konuşma açar. Kota burada harcanır — konuşma başına sayılır,
+     * İlk mesajla konuşma açar. Kota burada harcanır - konuşma başına sayılır,
      * mesaj başına değil.
      */
     startConversation(input: StartConversationInput): Promise<SbResult<{
@@ -378,21 +378,21 @@ declare class SignalbirdApp {
     rateConversation(conversationId: string, rating: number, comment?: string): Promise<SbResult<unknown>>;
     /**
      * Cihaz token'ını kaydeder. Token'ı almak (FCM/APNs/Web Push izni) ev
-     * sahibinin işidir; SDK yalnız iletir — izin diyaloğunu kimin, ne zaman
+     * sahibinin işidir; SDK yalnız iletir - izin diyaloğunu kimin, ne zaman
      * göstereceği ürün kararıdır, kütüphane kararı değil.
      */
     registerDevice(input: RegisterDeviceInput): Promise<SbResult<unknown>>;
     /** Çıkışta çağrılır: kayıt silinmez, kapatılır (geçmiş korunur). */
     unregisterDevice(token: string): Promise<SbResult<unknown>>;
     /**
-     * Bildirime dokunuldu — açılma damgası.
+     * Bildirime dokunuldu - açılma damgası.
      *
      * Push'ta açılmayı YALNIZCA uygulama bilir: FCM/APNs "teslim ettim" der,
      * "kullanıcı dokundu" demez. Bildirim yükündeki `data.sb_message_id`
      * değerini buraya geri gönderin.
      *
      * ```ts
-     * // React Native / Expo — bildirime dokunma işleyicisinde
+     * // React Native / Expo - bildirime dokunma işleyicisinde
      * const id = response.notification.request.content.data?.sb_message_id
      * if (id) await sb.reportPushOpened(String(id))
      * ```
@@ -407,12 +407,12 @@ declare class SignalbirdApp {
 }
 
 /**
- * Sohbet oturumu — çatısız durum yönetimi.
+ * Sohbet oturumu - çatısız durum yönetimi.
  *
  * `SignalbirdApp` ham uçları verir; burası bir sohbet ekranının gerçekten
  * ihtiyaç duyduğu şeyi verir: mesaj listesi, okunmamış sayısı, yazıyor durumu,
  * iyimser gönderim ve yoklama merdiveni. React/Vue/Angular/React Native
- * uyarlamaları bu sınıfa abone olur — üçünde de aynı mantığı yeniden yazmak,
+ * uyarlamaları bu sınıfa abone olur - üçünde de aynı mantığı yeniden yazmak,
  * üç ayrı hata takımı üretmek demekti.
  *
  * ── CANLI BAĞLANTI + YOKLAMA ──────────────────────────────────────────────
@@ -450,9 +450,9 @@ interface ChatState {
      * Seçimi `setTopic()` taşır; ilk konuşma açılırken gönderilir.
      */
     topics: TopicOption[];
-    /** Seçili konu (slug) — ilk konuşmayla birlikte gider. */
+    /** Seçili konu (slug) - ilk konuşmayla birlikte gider. */
     topic: string | null;
-    /** Son hatanın kodu — arayüz isterse gösterir, göstermezse yutar. */
+    /** Son hatanın kodu - arayüz isterse gösterir, göstermezse yutar. */
     errorCode?: string;
     /**
      * Uygulamanın sohbet ayarları (renk, logo, tema, puanlama bağlantısı…).
@@ -464,7 +464,7 @@ interface ChatState {
 }
 type ChatListener = (state: ChatState) => void;
 interface ChatSessionOptions {
-    /** Panel açık mı — yoklama hızını belirler. */
+    /** Panel açık mı - yoklama hızını belirler. */
     active?: boolean;
     /** Arka plandayken tur atlanır; varsayılan: `document.visibilityState`. */
     isVisible?: () => boolean;
@@ -496,17 +496,17 @@ declare class ChatSession {
     snapshot(): ChatState;
     /** Bootstrap + varsa mevcut konuşmayı yükler, sonra yoklamayı başlatır. */
     start(): Promise<void>;
-    /** Panel açıldı/kapandı — yoklama hızı buna göre değişir. */
+    /** Panel açıldı/kapandı - yoklama hızı buna göre değişir. */
     setActive(active: boolean): void;
     /**
      * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar.
      *
      * Ekranın "yeni sohbet" düğmesi de bunu çağırır. Sunucuda hiçbir şey
-     * silinmez — yalnız bu oturumun neye baktığı değişir.
+     * silinmez - yalnız bu oturumun neye baktığı değişir.
      */
     reset(): void;
     stop(): void;
-    /** Canlı bağlantı kurulu mu — arayüz isterse gösterir (zorunlu değil). */
+    /** Canlı bağlantı kurulu mu - arayüz isterse gösterir (zorunlu değil). */
     get isLive(): boolean;
     /** Ön-form gönderildiğinde ya da uygulama kullanıcıyı tanıdığında. */
     openSession(input: SessionInput): Promise<SbResult<unknown>>;
@@ -520,11 +520,11 @@ declare class ChatSession {
     send(body: string, attachments?: unknown[]): Promise<SbResult<unknown>>;
     /**
      * Ziyaretçinin konu seçimi. Konuşma AÇILDIKTAN sonra çağrılırsa etkisizdir:
-     * açılmış konuşmanın konusunu ajan panelden değiştirir — ziyaretçiye kendi
+     * açılmış konuşmanın konusunu ajan panelden değiştirir - ziyaretçiye kendi
      * konuşmasını yeniden sınıflandırma yetkisi vermek, atamayı da bozardı.
      */
     setTopic(slug: string | null): void;
-    /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` — çağıran zamanlar. */
+    /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar. */
     typing(isTyping: boolean): void;
     /** Görülen son mesaja kadar okundu işaretler. */
     markRead(): Promise<void>;

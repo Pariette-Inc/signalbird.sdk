@@ -23,7 +23,7 @@ public sealed class SignalbirdPartnerOptions
 }
 
 /// <summary>
-/// Partner istemcisi — BEŞİNCİ yüzey.
+/// Partner istemcisi - BEŞİNCİ yüzey.
 ///
 /// <para>
 /// Signalbird'ü kendi ürününün içinde satan sözleşmeli platform (veribenim,
@@ -84,7 +84,7 @@ public sealed class PartnerClient
     public Task<SbResult> UpdateCompanyAsync(object externalId, object input, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Patch, $"/v1/partner/companies/{Transport.Seg(externalId)}", input, null, ct);
 
-    /// <summary>Askıya alır — SİLMEZ. İzleme ve mesaj geçmişi durur.</summary>
+    /// <summary>Askıya alır - SİLMEZ. İzleme ve mesaj geçmişi durur.</summary>
     public Task<SbResult> SuspendCompanyAsync(object externalId, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Delete, $"/v1/partner/companies/{Transport.Seg(externalId)}", null, null, ct);
 
@@ -97,7 +97,7 @@ public sealed class PartnerClient
     /// <summary>
     /// Domain ekler ve (istenirse) izlemeye alır. Kayıt
     /// <c>verified_via='partner'</c> ile doğar: izleme, sohbet ve push için
-    /// yeter — e-posta/SMS KAMPANYASI için TXT şarttır.
+    /// yeter - e-posta/SMS KAMPANYASI için TXT şarttır.
     /// </summary>
     public Task<SbResult> AddDomainAsync(object companyExternalId, object input, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Post, $"/v1/partner/companies/{Transport.Seg(companyExternalId)}/domains", input, null, ct);
@@ -119,7 +119,7 @@ public sealed class PartnerClient
         => _http.RequestAsync(HttpMethod.Get, $"/v1/partner/domains/{Transport.Seg(externalId)}/uptime", null,
             new Dictionary<string, object?> { ["range"] = range }, ct);
 
-    /// <summary>Tek istekte tüm domainler — liste ekranı N+1 atmasın.</summary>
+    /// <summary>Tek istekte tüm domainler - liste ekranı N+1 atmasın.</summary>
     public Task<SbResult> CompanyUptimeAsync(object companyExternalId, string range = "24h", CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Get, $"/v1/partner/companies/{Transport.Seg(companyExternalId)}/uptime", null,
             new Dictionary<string, object?> { ["range"] = range }, ct);
@@ -170,7 +170,7 @@ public sealed class PartnerClient
 
     /// <summary>
     /// Panel ekranını partner sayfasına gömmek için kısa ömürlü jeton:
-    /// 120 saniye yaşar ve TEK KULLANIMLIKTIR — jeton URL'de gider, log ve
+    /// 120 saniye yaşar ve TEK KULLANIMLIKTIR - jeton URL'de gider, log ve
     /// <c>Referer</c> başlığına düşer.
     /// </summary>
     public Task<SbResult> CreateEmbedTokenAsync(object companyExternalId, object input, CancellationToken ct = default)

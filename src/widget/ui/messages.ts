@@ -8,7 +8,7 @@
  * aradaki boşluk 2px ve köşeler sürekli. Her mesaja avatar+saat basmak
  * sohbeti bir kayıt listesine benzetiyordu; gruplanınca konuşmaya benziyor.
  *
- * Her değişimde liste baştan çizilir — yüzlerce mesajda bile ucuz ve "hangi
+ * Her değişimde liste baştan çizilir - yüzlerce mesajda bile ucuz ve "hangi
  * satır değişti" muhasebesinden çok daha az hata üretir. Kaydırma konumu
  * korunur: kullanıcı en alttaysa altta kalır, değilse yerinde durur.
  */
@@ -18,7 +18,7 @@ import type { Strings } from '../i18n';
 
 export const QUICK_EMOJI = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
-/** Kompozitördeki seçicinin listesi — tam emoji klavyesi widget'a girmez. */
+/** Kompozitördeki seçicinin listesi - tam emoji klavyesi widget'a girmez. */
 export const EMOJI_PICKER = [
   '😀', '😄', '😊', '🙂', '😉', '😍', '🤩', '😎',
   '🤔', '😐', '😕', '🙁', '😢', '😭', '😡', '🤯',
@@ -51,7 +51,7 @@ export interface RenderCtx {
   /** Boş ekrandaki hazır başlangıçlar; boşsa çip çizilmez. */
   quick?: string[];
   onQuick?(text: string): void;
-  /** Yanıt süresi vaadi — boş ekranda karşılamanın altında görünür. */
+  /** Yanıt süresi vaadi - boş ekranda karşılamanın altında görünür. */
   responseHint?: string | null;
   /**
    * Müşterinin adı. Boş ekranda ajan HENÜZ atanmamıştır; orada "Destek"
@@ -102,7 +102,7 @@ export function scrollToBottom(list: HTMLElement, smooth = false): void {
   list.scrollTop = list.scrollHeight;
 }
 
-/** Çizimden önce listede olan mesajlar — yalnız YENİ gelenler animasyonlanır. */
+/** Çizimden önce listede olan mesajlar - yalnız YENİ gelenler animasyonlanır. */
 function collectSeen(list: HTMLElement): Set<string> {
   const seen = new Set<string>();
   list.querySelectorAll('[data-id]').forEach((el) => {
@@ -113,7 +113,7 @@ function collectSeen(list: HTMLElement): Set<string> {
 }
 
 /**
- * Boş ekran — form duvarı değil, davet.
+ * Boş ekran - form duvarı değil, davet.
  *
  * KARAR 2026-09-02 (Ahmet: "kendini fark ettirme"). Ziyaretçi paneli
  * açtığında eskiden tek bir gri karşılama balonu görüyordu. Şimdi: ajanın
@@ -147,7 +147,7 @@ function renderRow(
   next: Message | null,
   fresh: boolean
 ): HTMLElement {
-  // `bot` (kanal ajanı) ziyaretçi için karşı taraftır — ajan tarafına çizilir.
+  // `bot` (kanal ajanı) ziyaretçi için karşı taraftır - ajan tarafına çizilir.
   const side = m.sender_type === 'visitor' ? 'v' : m.sender_type === 'system' ? 's' : 'a';
   const startsGroup = !grouped(prev, m);
   const endsGroup = !grouped(m, next);
@@ -220,7 +220,7 @@ function renderRow(
    * `translation` HEDEF dile çevrilmiş metindir ve hedef, mesajı OKUYACAK
    * tarafın dilidir: ziyaretçininki ajanın diline, ajanınki ziyaretçinin
    * diline çevrilir. Ziyaretçinin kendi mesajındaki çeviri ona değil ajana
-   * aittir — 29 Ağu 2026'da canlıda ziyaretçi kendi İngilizce cümlesini
+   * aittir - 29 Ağu 2026'da canlıda ziyaretçi kendi İngilizce cümlesini
    * sayfayı tazeledikten sonra Türkçeye çevrilmiş buluyordu.
    */
   const shown = (side === 'v' ? null : m.translation?.body) || m.body;
@@ -237,7 +237,7 @@ function renderRow(
    * Kanal ajanının seçenekleri (3 Eyl 2026): "5 paket göster, dokununca
    * sepete eklensin". `url` olan seçenek üst pencerede açılır (widget iframe
    * içinde olabilir); olmayan, ziyaretçinin mesajı olarak gönderilir.
-   * Yalnız SON bot mesajında dokunulabilir — eski bir listeye dokunmak
+   * Yalnız SON bot mesajında dokunulabilir - eski bir listeye dokunmak
    * bağlamı kaybolmuş bir cevap üretirdi.
    */
   const options = side === 'a' && m.meta?.options?.length ? m.meta.options.slice(0, 6) : null;
@@ -257,7 +257,7 @@ function renderRow(
     if (box.childNodes.length) col.appendChild(box);
   }
 
-  // Tepkiler — baloncuğun alt kenarına biner
+  // Tepkiler - baloncuğun alt kenarına biner
   const reactions = m.reactions && Object.keys(m.reactions).length ? m.reactions : null;
   if (reactions) {
     const rx = h('div', { class: 'rx' });
@@ -273,7 +273,7 @@ function renderRow(
     if (rx.childNodes.length) col.appendChild(rx);
   }
 
-  // Saat + ✓✓ + "düzenlendi" — yalnız öbeğin son satırında
+  // Saat + ✓✓ + "düzenlendi" - yalnız öbeğin son satırında
   if (endsGroup) {
     const meta = h('div', { class: 'mt' }, timeLabel(m.created_at, ctx.locale));
     if (m.edited_at) meta.appendChild(h('span', { class: 'ed' }, `· ${ctx.t.edited}`));

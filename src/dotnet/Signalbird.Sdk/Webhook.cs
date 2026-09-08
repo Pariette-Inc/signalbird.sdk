@@ -10,7 +10,7 @@ namespace Signalbird.Sdk;
 ///
 /// <para>
 /// İki kural, ikisi de kritik: doğrulama HAM GÖVDE üzerinde yapılır (modelin
-/// deserialize edilip yeniden serialize edilmesi imzayı bozar — ASP.NET
+/// deserialize edilip yeniden serialize edilmesi imzayı bozar - ASP.NET
 /// Core'da <c>EnableBuffering()</c> ile ham gövdeyi okuyun) ve karşılaştırma
 /// sabit zamanlıdır.
 /// </para>

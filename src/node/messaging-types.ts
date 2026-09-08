@@ -1,7 +1,7 @@
 /**
  * Gönderim (Messaging) istemcisinin tipleri.
  *
- * Alan adları API ile birebir aynıdır (snake_case) — SDK, sunucunun döndüğünü
+ * Alan adları API ile birebir aynıdır (snake_case) - SDK, sunucunun döndüğünü
  * yeniden adlandırmaz. Böylece API dokümanındaki bir alan SDK'da da aynı adla
  * bulunur ve iki doküman arasında çeviri tablosu gerekmez.
  */
@@ -11,7 +11,7 @@ export interface MessagingConfig {
   domainKey: string;
   /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
-  /** İstek zaman aşımı (ms). Varsayılan 15000 — toplu kişi yükleme uzun sürebilir. */
+  /** İstek zaman aşımı (ms). Varsayılan 15000 - toplu kişi yükleme uzun sürebilir. */
   timeout?: number;
   /** Hata fırlatılsın mı. Varsayılan `false`: `ok:false` + `code` döner. */
   throwOnError?: boolean;
@@ -24,7 +24,7 @@ export type SbResult<T> =
   | { ok: true; status: number; data: T }
   | { ok: false; status: number; code: string; message: string; data?: unknown };
 
-/** İleti sınıfı — API'de zorunludur ve varsayılanı YOKTUR (hukuki kapı). */
+/** İleti sınıfı - API'de zorunludur ve varsayılanı YOKTUR (hukuki kapı). */
 export type MessageClass = 'transactional' | 'commercial';
 export type Channel = 'email' | 'sms' | 'push';
 
@@ -140,11 +140,11 @@ export interface CreateCampaignInput {
   name: string;
   channel: Channel;
   /**
-   * TXT ile doğrulanmış müşteri domaininin id'si — ZORUNLU. Doğrulanmamış
+   * TXT ile doğrulanmış müşteri domaininin id'si - ZORUNLU. Doğrulanmamış
    * domain adına kampanya açılamaz (`DOMAIN_NOT_VERIFIED`).
    */
   domain_id: number;
-  /** Hedef: `list_id` VEYA `segment_id` — ikisinden tam biri. */
+  /** Hedef: `list_id` VEYA `segment_id` - ikisinden tam biri. */
   list_id?: number;
   segment_id?: number;
   subject?: string;

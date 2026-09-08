@@ -7,10 +7,10 @@ use Signalbird\Sdk\RadioChannel;
 use Signalbird\Sdk\SignalbirdClient;
 
 /**
- * `Signalbird::radio('kanal')->error(…)` — kanalı bir kez bağla, sonra yaz.
+ * `Signalbird::radio('kanal')->error(…)` - kanalı bir kez bağla, sonra yaz.
  *
  * Sınanan şey HTTP değil, kanal adının doğru yere gitmesi: şeker katmanı
- * yanlış anahtarı gönderirse hata sessizdir — kayıt başka bir kanala düşer ve
+ * yanlış anahtarı gönderirse hata sessizdir - kayıt başka bir kanala düşer ve
  * kimse fark etmez.
  */
 class RadioChannelTest extends TestCase

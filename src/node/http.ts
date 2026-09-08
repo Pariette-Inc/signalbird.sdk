@@ -3,7 +3,7 @@
  *
  * Gönderim ve Yönetim istemcileri aynı kapıyı kullanır (`Authorization: Bearer
  * sb_…`), aynı zarfı döner ve aynı kod eşlemesini uygular. İki yerde ayrı ayrı
- * yazılsaydı biri düzeltilip diğeri unutulurdu — hata kodları da sözleşmenin
+ * yazılsaydı biri düzeltilip diğeri unutulurdu - hata kodları da sözleşmenin
  * bir parçasıdır.
  *
  * Sözleşme: docs/CONTRACT.md § 8.2 (zarf) ve § 8.5 (sorgu dizesi)
@@ -30,7 +30,7 @@ export interface TransportConfig {
 }
 
 export class SbTransport {
-  constructor(private readonly config: TransportConfig) {}
+  constructor(private readonly config: TransportConfig) { }
 
   async request<T>(
     method: HttpMethod,
@@ -82,7 +82,7 @@ export class SbTransport {
     }
 
     // API `{message, code}` döner; Laravel doğrulama hatası `{message, errors}`
-    // döner (kodsuz) — onu VALIDATION_ERROR sayarız.
+    // döner (kodsuz) - onu VALIDATION_ERROR sayarız.
     const code: string =
       (data && typeof data === 'object' && typeof data.code === 'string' && data.code) ||
       (status === 422 ? 'VALIDATION_ERROR' : status === 401 ? 'API_KEY_INVALID' : `HTTP_${status}`);
@@ -95,7 +95,7 @@ export class SbTransport {
 
   private fail<T>(status: number, code: string, message: string, data: unknown): SbResult<T> {
     if (this.config.throwOnError) {
-      throw new SignalbirdError(`Signalbird: ${code} — ${message}`, status, code, data);
+      throw new SignalbirdError(`Signalbird: ${code} - ${message}`, status, code, data);
     }
 
     if (this.config.debug) {
@@ -127,7 +127,7 @@ export function buildQuery(query: object | undefined): string {
   return encoded ? `?${encoded}` : '';
 }
 
-/** Yol parçası — kimlikler URL'e gömülmeden önce kodlanır. */
+/** Yol parçası - kimlikler URL'e gömülmeden önce kodlanır. */
 export function seg(value: string | number): string {
   return encodeURIComponent(String(value));
 }

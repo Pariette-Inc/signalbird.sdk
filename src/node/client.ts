@@ -39,7 +39,7 @@ export class SignalbirdClient {
     if (config.domainKey.startsWith(PUBLIC_PREFIX)) {
       throw new SignalbirdError(
         'Signalbird: sunucu istemcisine AÇIK anahtar (sb_public_live_…) verildi. ' +
-          'Gizli anahtarı (sb_secret_live_…) kullanın; açık anahtar tarayıcı içindir.',
+        'Gizli anahtarı (sb_secret_live_…) kullanın; açık anahtar tarayıcı içindir.',
         0,
         'WRONG_KEY_TYPE'
       );
@@ -48,7 +48,7 @@ export class SignalbirdClient {
     if (!config.domainKey.startsWith(SECRET_PREFIX)) {
       throw new SignalbirdError(
         'Signalbird: anahtar biçimi tanınmadı. Gizli domain anahtarı ' +
-          '`sb_secret_live_` ile başlar (Panel → Alan adları → Anahtarlar).',
+        '`sb_secret_live_` ile başlar (Panel → Alan adları → Anahtarlar).',
         0,
         'WRONG_KEY_TYPE'
       );
@@ -93,7 +93,7 @@ export class SignalbirdClient {
   }
 
   /**
-   * Toplu gönderim — 100 kayda kadar.
+   * Toplu gönderim - 100 kayda kadar.
    *
    * Kısmi başarı normaldir (kota tam ortada dolabilir), o yüzden sonuç tek bir
    * durum değil satır satır döner.
@@ -158,7 +158,7 @@ export class SignalbirdClient {
    *
    * Kancayı takıp süreci ÖLDÜRMEYE devam eder: `uncaughtException` sonrası
    * süreci ayakta tutmak, bozuk durumdaki bir uygulamayı çalıştırmaya devam
-   * etmek demektir — log göndermek bunu meşrulaştırmaz.
+   * etmek demektir - log göndermek bunu meşrulaştırmaz.
    */
   captureUncaught(key = 'critical'): () => void {
     const onError = (error: Error) => {

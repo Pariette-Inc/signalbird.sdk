@@ -6,7 +6,7 @@
 // "CS0518: Predefined type ... is not defined" ile kırılır.
 //
 // Çözüm, .NET ekibinin kendi önerdiği yoldur: tipi kütüphane içinde `internal`
-// olarak tanımlamak. `internal` olması şart — `public` olsaydı tüketicinin
+// olarak tanımlamak. `internal` olması şart - `public` olsaydı tüketicinin
 // projesinde aynı tiple çakışır ve bu kez ONUN derlemesi kırılırdı.
 //
 // Koşul `!NET5_0_OR_GREATER`: net8.0 hedefinde tip zaten BCL'de var ve ikinci

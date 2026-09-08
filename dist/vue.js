@@ -91,7 +91,7 @@ var SignalbirdApp = class {
   identify(input) {
     return this.request("POST", "/v1/sdk/identify", input);
   }
-  /** Saklanan ziyaretçi kimliği — yoksa `null`. */
+  /** Saklanan ziyaretçi kimliği - yoksa `null`. */
   async currentVisitor() {
     const stored = await this.loadVisitor();
     return stored ? { id: stored.id, name: stored.name, email: stored.email } : null;
@@ -110,7 +110,7 @@ var SignalbirdApp = class {
     return this.request("GET", `/v1/sdk/chat/conversations/${enc(id)}`, void 0, query);
   }
   /**
-   * İlk mesajla konuşma açar. Kota burada harcanır — konuşma başına sayılır,
+   * İlk mesajla konuşma açar. Kota burada harcanır - konuşma başına sayılır,
    * mesaj başına değil.
    */
   startConversation(input) {
@@ -184,7 +184,7 @@ var SignalbirdApp = class {
   // ── Push ──────────────────────────────────────────────────────────────
   /**
    * Cihaz token'ını kaydeder. Token'ı almak (FCM/APNs/Web Push izni) ev
-   * sahibinin işidir; SDK yalnız iletir — izin diyaloğunu kimin, ne zaman
+   * sahibinin işidir; SDK yalnız iletir - izin diyaloğunu kimin, ne zaman
    * göstereceği ürün kararıdır, kütüphane kararı değil.
    */
   registerDevice(input) {
@@ -195,14 +195,14 @@ var SignalbirdApp = class {
     return this.request("DELETE", `/v1/sdk/devices/${enc(token)}`);
   }
   /**
-   * Bildirime dokunuldu — açılma damgası.
+   * Bildirime dokunuldu - açılma damgası.
    *
    * Push'ta açılmayı YALNIZCA uygulama bilir: FCM/APNs "teslim ettim" der,
    * "kullanıcı dokundu" demez. Bildirim yükündeki `data.sb_message_id`
    * değerini buraya geri gönderin.
    *
    * ```ts
-   * // React Native / Expo — bildirime dokunma işleyicisinde
+   * // React Native / Expo - bildirime dokunma işleyicisinde
    * const id = response.notification.request.content.data?.sb_message_id
    * if (id) await sb.reportPushOpened(String(id))
    * ```
@@ -434,7 +434,7 @@ var Socket = class {
     }
   }
   /**
-   * Olay yolla — ACK İSTEMEDEN.
+   * Olay yolla - ACK İSTEMEDEN.
    *
    * `subscribe`in sonucunu beklemek bir tur daha protokol yönetmek demekti;
    * oysa sonucu zaten davranıştan görüyoruz: imza tutmadıysa yayın gelmez ve
@@ -533,7 +533,7 @@ var ChatSession = class {
     this.patch({ loading: false });
     this.schedule();
   }
-  /** Panel açıldı/kapandı — yoklama hızı buna göre değişir. */
+  /** Panel açıldı/kapandı - yoklama hızı buna göre değişir. */
   setActive(active) {
     if (this.active === active) return;
     this.active = active;
@@ -548,7 +548,7 @@ var ChatSession = class {
    * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar.
    *
    * Ekranın "yeni sohbet" düğmesi de bunu çağırır. Sunucuda hiçbir şey
-   * silinmez — yalnız bu oturumun neye baktığı değişir.
+   * silinmez - yalnız bu oturumun neye baktığı değişir.
    */
   reset() {
     this.patch({ conversation: null, messages: [], unread: 0, agentTyping: false, errorCode: void 0 });
@@ -562,7 +562,7 @@ var ChatSession = class {
     this.socket = null;
     this.live = false;
   }
-  /** Canlı bağlantı kurulu mu — arayüz isterse gösterir (zorunlu değil). */
+  /** Canlı bağlantı kurulu mu - arayüz isterse gösterir (zorunlu değil). */
   get isLive() {
     return this.live;
   }
@@ -617,13 +617,13 @@ var ChatSession = class {
   }
   /**
    * Ziyaretçinin konu seçimi. Konuşma AÇILDIKTAN sonra çağrılırsa etkisizdir:
-   * açılmış konuşmanın konusunu ajan panelden değiştirir — ziyaretçiye kendi
+   * açılmış konuşmanın konusunu ajan panelden değiştirir - ziyaretçiye kendi
    * konuşmasını yeniden sınıflandırma yetkisi vermek, atamayı da bozardı.
    */
   setTopic(slug) {
     this.patch({ topic: slug });
   }
-  /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` — çağıran zamanlar. */
+  /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar. */
   typing(isTyping) {
     const conversation = this.state.conversation;
     if (!conversation) return;

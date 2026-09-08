@@ -1,5 +1,5 @@
 /**
- * signalbird/browser — tarayıcı istemcisi.
+ * signalbird/browser - tarayıcı istemcisi.
  *
  * Ayrı bir giriş noktası olmasının sebebi teknik değil, GÜVENLİKTİR: sunucu
  * anahtarı istemciye gömülemez ve sunucu `Origin` başlığı taşıyan bir istekte
@@ -46,7 +46,7 @@ export class SignalbirdBrowser {
     if (!config.publicKey?.startsWith('sb_public_live_')) {
       throw new Error(
         'Signalbird: tarayıcı istemcisi açık anahtar ister (sb_public_live_…). ' +
-          'Gizli anahtarı (sb_secret_live_…) istemci koduna KOYMAYIN.'
+        'Gizli anahtarı (sb_secret_live_…) istemci koduna KOYMAYIN.'
       );
     }
 
@@ -170,7 +170,7 @@ export function initSignalbird(config: BrowserConfig): SignalbirdBrowser {
   return singleton;
 }
 
-/** Kurulmamışsa sessizce yok sayar — log çağrısı uygulamayı çökertmemeli. */
+/** Kurulmamışsa sessizce yok sayar - log çağrısı uygulamayı çökertmemeli. */
 export function signalbird(): SignalbirdBrowser | null {
   return singleton;
 }

@@ -19,7 +19,7 @@ public struct SbResult {
     public let code: String?
     public let message: String?
 
-    /// Sözlük gövde — çoğu uç `{"conversation": {...}}` biçiminde döner.
+    /// Sözlük gövde - çoğu uç `{"conversation": {...}}` biçiminde döner.
     public var dictionary: [String: Any]? { data as? [String: Any] }
 
     /// Dizi gövde.
@@ -51,7 +51,7 @@ struct Transport {
     let throwOnError: Bool
     let session: URLSession
 
-    /// Kimlik başlıkları — yüzeye göre değişir (`Authorization` ya da
+    /// Kimlik başlıkları - yüzeye göre değişir (`Authorization` ya da
     /// `X-Signalbird-Key` + `X-Signalbird-Module-Key` + ziyaretçi sırrı).
     var headers: () -> [String: String]
 
@@ -116,7 +116,7 @@ struct Transport {
         }
 
         // API `{message, code}` döner; Laravel doğrulama hatası `{message,
-        // errors}` döner (kodsuz) — onu VALIDATION_ERROR sayarız.
+        // errors}` döner (kodsuz) - onu VALIDATION_ERROR sayarız.
         let object = parsed as? [String: Any]
         let code = (object?["code"] as? String).flatMap { $0.isEmpty ? nil : $0 }
             ?? (status == 422 ? "VALIDATION_ERROR" : status == 401 ? "API_KEY_INVALID" : "HTTP_\(status)")
@@ -165,7 +165,7 @@ struct Transport {
         return "\(value)"
     }
 
-    /// Yol parçası — kimlikler URL'e gömülmeden önce kodlanır.
+    /// Yol parçası - kimlikler URL'e gömülmeden önce kodlanır.
     static func seg(_ value: Any) -> String {
         "\(value)".addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? "\(value)"
     }

@@ -3,7 +3,7 @@
  *
  * Bu yüzey MÜŞTERİNİN MÜŞTERİSİ içindir: ziyaretçi ya da uygulama kullanıcısı.
  * Anahtarı açıktır (`sb_public_live_…`) ve istemciye gömülür; güvenliği gizlilikten
- * değil kısıttan gelir — yalnız izinli kökenden çalışır ve yalnız ziyaretçinin
+ * değil kısıttan gelir - yalnız izinli kökenden çalışır ve yalnız ziyaretçinin
  * KENDİ verisine dokunur.
  */
 
@@ -37,7 +37,7 @@ export interface AppConfig {
   platform?: 'ios' | 'android' | 'web';
 
   /**
-   * Açık domain anahtarı (`sb_public_live_…`) — KİMLİĞİ doğrular.
+   * Açık domain anahtarı (`sb_public_live_…`) - KİMLİĞİ doğrular.
    *
    * Panel → Alan adları → [alan adı] → Anahtarlar. Web anahtarı yalnız izinli
    * kökenlerden, mobil anahtarı yalnız Origin taşımayan isteklerden çalışır.
@@ -45,7 +45,7 @@ export interface AppConfig {
   publicKey: string;
 
   /**
-   * Sohbet kanalı — `chat` modülünün anahtarı (`destek`). DAVRANIŞI seçer:
+   * Sohbet kanalı - `chat` modülünün anahtarı (`destek`). DAVRANIŞI seçer:
    * hangi widget ayarı, hangi gelen kutusu.
    *
    * Anahtardan AYRIDIR ve bu bilinçlidir (1 Eyl 2026): domain anahtarını
@@ -53,7 +53,7 @@ export interface AppConfig {
    */
   chatKey?: string;
 
-  /** Push kanalı — `push` modülünün anahtarı. Cihaz kaydı için gerekir. */
+  /** Push kanalı - `push` modülünün anahtarı. Cihaz kaydı için gerekir. */
   pushKey?: string;
   /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
@@ -81,7 +81,7 @@ export interface TopicOption {
   parent_id?: number | null;
 }
 
-/** `POST /v1/sdk/bootstrap` yanıtı — widget çizilmeden önceki tek soru. */
+/** `POST /v1/sdk/bootstrap` yanıtı - widget çizilmeden önceki tek soru. */
 export interface BootstrapResult {
   /**
    * Sözleşme adı `channel` (1 Eyl 2026); `app` eski sunucular için okunur.
@@ -93,10 +93,10 @@ export interface BootstrapResult {
   app?: BootstrapChannel;
   /** Boşsa konu adımı hiç gösterilmez. */
   topics?: TopicOption[];
-  /** Mevcut açık konuşma (varsa) — ChatSession ilk listelemeyi atlar. */
+  /** Mevcut açık konuşma (varsa) - ChatSession ilk listelemeyi atlar. */
   conversation?: Conversation | null;
   /**
-   * Canlı bağlantı — YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan taraf
+   * Canlı bağlantı - YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan taraf
    * hiçbir şey göremez, odaya girmek imza ister ve imzayı
    * `POST /v1/sdk/chat/socket/auth` verir.
    *
@@ -107,45 +107,45 @@ export interface BootstrapResult {
 }
 
 export interface BootstrapChannel {
-    id: number;
-    name: string;
-    chat_enabled: boolean;
-    push_enabled: boolean;
+  id: number;
+  name: string;
+  chat_enabled: boolean;
+  push_enabled: boolean;
+  locale?: string;
+  within_hours?: boolean;
+  offline_message?: string | null;
+  chat?: {
+    color?: string;
+    position?: string;
+    launcher_text?: string;
+    welcome_message?: string;
+    max_attachment_mb?: number;
+    sound?: boolean;
     locale?: string;
-    within_hours?: boolean;
-    offline_message?: string | null;
-    chat?: {
-      color?: string;
-      position?: string;
-      launcher_text?: string;
-      welcome_message?: string;
-      max_attachment_mb?: number;
-      sound?: boolean;
-      locale?: string;
-      prechat?: { name?: boolean; email?: boolean };
+    prechat?: { name?: boolean; email?: boolean };
 
-      /**
-       * Sohbet sonu puanlama bağlantısı (Trustpilot, Google İşletme…).
-       *
-       * `review_min_rating` bir nezaket kuralı değil TİCARİ bir kuraldır:
-       * eşiğin altında puan veren müşteriye bağlantı HİÇ gösterilmez.
-       * Memnun olmamış müşteriyi halka açık bir puanlama sitesine yollamak
-       * kendi ayağımıza sıkmaktır.
-       */
-      review_url?: string | null;
-      review_label?: string | null;
-      review_min_rating?: number;
+    /**
+     * Sohbet sonu puanlama bağlantısı (Trustpilot, Google İşletme…).
+     *
+     * `review_min_rating` bir nezaket kuralı değil TİCARİ bir kuraldır:
+     * eşiğin altında puan veren müşteriye bağlantı HİÇ gösterilmez.
+     * Memnun olmamış müşteriyi halka açık bir puanlama sitesine yollamak
+     * kendi ayağımıza sıkmaktır.
+     */
+    review_url?: string | null;
+    review_label?: string | null;
+    review_min_rating?: number;
 
-      /** Marka: logo, tema, balon ikonu (29 Ağu 2026). */
-      logo_url?: string | null;
-      theme?: 'light' | 'dark' | 'auto';
-      launcher_icon?: 'bird' | 'chat' | 'logo';
-    };
+    /** Marka: logo, tema, balon ikonu (29 Ağu 2026). */
+    logo_url?: string | null;
+    theme?: 'light' | 'dark' | 'auto';
+    launcher_icon?: 'bird' | 'chat' | 'logo';
+  };
 }
 
 export interface Visitor {
   id: string;
-  /** Ziyaretçi sırrı — YALNIZ oturum açılışında döner, sonra saklanır. */
+  /** Ziyaretçi sırrı - YALNIZ oturum açılışında döner, sonra saklanır. */
   secret?: string;
   name?: string | null;
   email?: string | null;
@@ -203,7 +203,7 @@ export interface Message {
   edited_at?: string | null;
   created_at?: string;
   /**
-   * Anlık çeviri — ziyaretçinin diline. Arayüz varsa bunu gösterir; orijinal
+   * Anlık çeviri - ziyaretçinin diline. Arayüz varsa bunu gösterir; orijinal
    * `body`'de durmaya devam eder.
    */
   translation?: { lang: string; body: string; source?: string | null } | null;
@@ -214,7 +214,7 @@ export interface Message {
    *
    * Tip listede yoktu ama oturum bu alanı yazıyordu: arayüz "gitmedi" hâlini
    * çizmek istediğinde tipi zorlamak (`as`) zorunda kalıyordu. Bekleyen mesaj
-   * ayrıca işaretlenmez — sunucu yanıtı gelene kadar `id` ile `client_id`
+   * ayrıca işaretlenmez - sunucu yanıtı gelene kadar `id` ile `client_id`
    * aynıdır ve bu, "henüz yolda" demenin en ucuz yoludur.
    */
   failed?: boolean;
@@ -246,7 +246,7 @@ export interface StartConversationInput {
   attachments?: unknown[];
   page_url?: string;
   /**
-   * Destek konusu — id ya da slug. Seçim SUNUCUDA doğrulanır; geçersizse
+   * Destek konusu - id ya da slug. Seçim SUNUCUDA doğrulanır; geçersizse
    * konuşma yine açılır, konu yok sayılır.
    */
   topic?: string | number;
@@ -260,7 +260,7 @@ export interface SendMessageInput {
 }
 
 export interface ConversationQuery {
-  /** `cm_…` imleci — yalnız bundan sonrakiler döner. */
+  /** `cm_…` imleci - yalnız bundan sonrakiler döner. */
   after?: string;
   limit?: number;
 }

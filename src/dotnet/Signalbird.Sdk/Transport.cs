@@ -164,7 +164,7 @@ internal sealed class Transport
             }
 
             // API `{message, code}` döner; Laravel doğrulama hatası `{message,
-            // errors}` döner (kodsuz) — onu VALIDATION_ERROR sayarız.
+            // errors}` döner (kodsuz) - onu VALIDATION_ERROR sayarız.
             var code = ReadString(data, "code")
                        ?? status switch
                        {
@@ -183,7 +183,7 @@ internal sealed class Transport
     {
         if (_throwOnError)
         {
-            throw new SignalbirdException($"Signalbird: {code} — {message}", status, code, body);
+            throw new SignalbirdException($"Signalbird: {code} - {message}", status, code, body);
         }
 
         return new SbResult { Ok = false, Status = status, Code = code, Message = message };
@@ -254,6 +254,6 @@ internal sealed class Transport
 
     private static string Encode(string value) => Uri.EscapeDataString(value);
 
-    /// <summary>Yol parçası — kimlikler URL'e gömülmeden önce kodlanır.</summary>
+    /// <summary>Yol parçası - kimlikler URL'e gömülmeden önce kodlanır.</summary>
     internal static string Seg(object value) => Uri.EscapeDataString(value.ToString() ?? string.Empty);
 }

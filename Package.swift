@@ -1,6 +1,6 @@
 // swift-tools-version: 5.9
 //
-// Signalbird SDK — Swift paketi.
+// Signalbird SDK - Swift paketi.
 //
 // Manifest KÖKTE durur (SPM zaten kökte arar), kaynak `src/swift/Sources/`
 // altındadır; `path` ile gösterilir ki diğer dillerin dosyaları derlemeye

@@ -6,7 +6,7 @@ use Signalbird\Sdk\Messaging\MessagingClient;
 use Signalbird\Sdk\SignalbirdException;
 
 /**
- * `Signalbird::mail()` — okunur bir e-posta gönderimi.
+ * `Signalbird::mail()` - okunur bir e-posta gönderimi.
  *
  * KARAR 2026-08-29 (Ahmet): "`Mail::` sınıfını kullanmaktansa Signalbird SDK
  * içindeki mail gönderim fonksiyonuyla gönderim gerçekleşsin. Bu fonksiyonun
@@ -16,11 +16,11 @@ use Signalbird\Sdk\SignalbirdException;
  *
  * İki yol vardır ve ikisi de Signalbird'den çıkar:
  *
- *   • `MAIL_MAILER=signalbird` — uygulamanın MEVCUT Mailable'ları (Blade
+ *   • `MAIL_MAILER=signalbird` - uygulamanın MEVCUT Mailable'ları (Blade
  *     görünümleri, şifre sıfırlama, fatura) hiç değişmeden buradan geçer.
  *     Gövde uygulamada üretilir.
  *
- *   • `Signalbird::mail()` — gövde SIGNALBIRD'DE durur: panelden düzenlenen
+ *   • `Signalbird::mail()` - gövde SIGNALBIRD'DE durur: panelden düzenlenen
  *     şablon, değişkenler, gönderen adı. Metni değiştirmek için dağıtım
  *     gerekmez; pazarlama ekibi panelden düzenler.
  *
@@ -62,7 +62,7 @@ class MailBuilder
     }
 
     /**
-     * Signalbird'deki KİŞİ kaydı — açılma/tıklama ve bastırma geçmişi ona
+     * Signalbird'deki KİŞİ kaydı - açılma/tıklama ve bastırma geçmişi ona
      * yazılsın. Kişi yoksa adresten açılır; bu alan yalnız eşleştirmeyi
      * kesinleştirir.
      */
@@ -78,13 +78,13 @@ class MailBuilder
         return $this->with('subject', $subject);
     }
 
-    /** Gövde — HTML ya da düz metin. Şablon kullanılıyorsa gerekmez. */
+    /** Gövde - HTML ya da düz metin. Şablon kullanılıyorsa gerekmez. */
     public function html(string $body): self
     {
         return $this->with('body', $body);
     }
 
-    /** `html()` ile aynı — `sendMail('kanal')->body(…)` okunuşu için. */
+    /** `html()` ile aynı - `sendMail('kanal')->body(…)` okunuşu için. */
     public function body(string $body): self
     {
         return $this->html($body);
@@ -92,7 +92,7 @@ class MailBuilder
 
     /**
      * GÖNDERİCİ KANALI (2 Eyl 2026): panelde adresle birlikte açılan `email`
-     * modül anahtarı. From adresini kanal seçer — Telsiz'in `radio('kanal')`
+     * modül anahtarı. From adresini kanal seçer - Telsiz'in `radio('kanal')`
      * deseniyle aynı; yeni anahtar üretilmez, domain anahtarı kimliktir.
      *
      *   Signalbird::sendMail('noReply')->to(…)->subject(…)->body(…)->send();
@@ -105,7 +105,7 @@ class MailBuilder
     // ── Ekler ────────────────────────────────────────────────────────────
 
     /**
-     * Dosya eki — ham içerikle. İçerik base64'e çevrilip API'ye taşınır;
+     * Dosya eki - ham içerikle. İçerik base64'e çevrilip API'ye taşınır;
      * toplam çözülmüş boyut sınırı sunucudadır (7 MB, ATTACHMENTS_TOO_LARGE).
      *
      *   ->attach('makbuz.pdf', $pdfBytes, 'application/pdf')
@@ -122,20 +122,20 @@ class MailBuilder
         return $this->with('attachments', $attachments);
     }
 
-    /** Dosya eki — diskteki yoldan. Ad verilmezse dosya adı kullanılır. */
+    /** Dosya eki - diskteki yoldan. Ad verilmezse dosya adı kullanılır. */
     public function attachFile(string $path, ?string $filename = null, ?string $mime = null): self
     {
         $content = @file_get_contents($path);
 
         if ($content === false) {
-            throw new SignalbirdException("Signalbird: ek okunamadı — {$path}", 'ATTACHMENT_UNREADABLE', 0);
+            throw new SignalbirdException("Signalbird: ek okunamadı - {$path}", 'ATTACHMENT_UNREADABLE', 0);
         }
 
         return $this->attach($filename ?: basename($path), $content, $mime ?: (mime_content_type($path) ?: null));
     }
 
     /**
-     * Panelde tanımlı şablon — ADIYLA ya da kimliğiyle.
+     * Panelde tanımlı şablon - ADIYLA ya da kimliğiyle.
      *
      * Ad tercih edilir: şablonu silip yeniden yaratsanız bile kodunuz
      * değişmez. Eşleşme büyük/küçük harfe duyarsızdır.
@@ -148,7 +148,7 @@ class MailBuilder
     }
 
     /**
-     * Şablon değişkenleri — `{{ad}}` yerine geçecek değerler.
+     * Şablon değişkenleri - `{{ad}}` yerine geçecek değerler.
      *
      * @param  array<string,mixed>  $vars
      */
@@ -161,7 +161,7 @@ class MailBuilder
 
     /**
      * Görünen gönderen adı. ZARF ADRESİ DEĞİL: postanın çıktığı adres
-     * Signalbird'ün doğrulanmış havuzunda kalır — itibar oranın gönderim
+     * Signalbird'ün doğrulanmış havuzunda kalır - itibar oranın gönderim
      * geçmişine bağlıdır ve onu çağırana bırakmayız.
      */
     public function fromName(string $name): self
@@ -214,8 +214,8 @@ class MailBuilder
             if (! isset($this->payload[$required])) {
                 throw new SignalbirdException(
                     $required === 'class'
-                        ? 'Signalbird: ileti sınıfı zorunlu — transactional() ya da commercial() deyin.'
-                        : 'Signalbird: alıcı zorunlu — to() deyin.',
+                        ? 'Signalbird: ileti sınıfı zorunlu - transactional() ya da commercial() deyin.'
+                        : 'Signalbird: alıcı zorunlu - to() deyin.',
                     'INVALID_INPUT',
                     0,
                 );
@@ -237,7 +237,7 @@ class MailBuilder
         return $this->client->sendEmail($this->payload);
     }
 
-    /** Gönderilecek gövde — hata ayıklama ve test için. */
+    /** Gönderilecek gövde - hata ayıklama ve test için. */
     public function payload(): array
     {
         return $this->payload;

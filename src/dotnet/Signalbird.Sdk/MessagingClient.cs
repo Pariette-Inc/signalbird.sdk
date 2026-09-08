@@ -14,7 +14,7 @@ public sealed class SignalbirdKeyOptions
 
     public string BaseUrl { get; set; } = "https://live.signalbird.io/api";
 
-    /// <summary>Varsayılan 15 sn — toplu kişi yükleme uzun sürebilir.</summary>
+    /// <summary>Varsayılan 15 sn - toplu kişi yükleme uzun sürebilir.</summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(15);
 
     public bool ThrowOnError { get; set; }
@@ -25,7 +25,7 @@ public sealed class SignalbirdKeyOptions
 ///
 /// <para>
 /// <c>class</c> alanı (<c>transactional</c> | <c>commercial</c>) ZORUNLUDUR ve
-/// varsayılanı yoktur — hukuki kapı çağıranın elindedir.
+/// varsayılanı yoktur - hukuki kapı çağıranın elindedir.
 /// </para>
 ///
 /// <para>Sözleşme: docs/CONTRACT.md § 8</para>
@@ -50,7 +50,7 @@ public sealed class MessagingClient
     public Task<SbResult> SendSmsAsync(object input, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Post, "/v1/sms/send", input, null, ct);
 
-    /// <summary>Parça/karakter hesabı — kota harcamaz.</summary>
+    /// <summary>Parça/karakter hesabı - kota harcamaz.</summary>
     /// <summary>Otomasyon olayı: kendi sistemindeki olayı bildirir, akışı tetikler (§11).</summary>
     public Task<SbResult> TrackAsync(object input, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Post, "/v1/events", input, null, ct);
@@ -76,7 +76,7 @@ public sealed class MessagingClient
         => _http.RequestAsync(HttpMethod.Delete, $"/v1/contacts/{Transport.Seg(id)}", null, null, ct);
 
     /// <summary>
-    /// 1000'lik parçalar hâlinde SIRAYLA yükler — paralel değil: aynı e-posta
+    /// 1000'lik parçalar hâlinde SIRAYLA yükler - paralel değil: aynı e-posta
     /// iki parçadaysa yarış olmasın. Bir parça başarısız olursa o noktada durulur.
     /// </summary>
     public async Task<SbResult> BulkContactsAsync(

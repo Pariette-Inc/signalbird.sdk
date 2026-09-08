@@ -1,5 +1,5 @@
 /**
- * Canlı bağlantı — bağımlılıksız socket.io istemcisi.
+ * Canlı bağlantı - bağımlılıksız socket.io istemcisi.
  *
  * KARAR 2026-08-29 (Ahmet): "Chat sistemi hiç durmadan sürekli request atıyor.
  * Bu böyle olmaz, köylü işi bu. WebSocket kurmamız lazım."
@@ -17,15 +17,15 @@
  *
  *   ← `0{"sid":…,"pingInterval":…}`   Engine.IO açılış
  *   → `40`                            ana ad alanına bağlan
- *   ← `40{"sid":…}`                   bağlandı — BU `sid` socket.id'dir
+ *   ← `40{"sid":…}`                   bağlandı - BU `sid` socket.id'dir
  *   → `42["subscribe",{…}]`           olay
  *   ← `42["chat.message",{…}]`        sunucu olayı
  *   ← `2` / → `3`                     ping / pong (ping'i SUNUCU atar; biz
- *                                      yalnız cevaplarız — sessiz bağlantıyı
+ *                                      yalnız cevaplarız - sessiz bağlantıyı
  *                                      canlı tutmak onun işi)
  *
  * `transports: ['websocket']` sunucuda zorunlu tutuluyor, yani uzun yoklamaya
- * (polling) düşme ihtimali yok — zaten kaçtığımız şey o.
+ * (polling) düşme ihtimali yok - zaten kaçtığımız şey o.
  *
  * ── NİYE `src/shared/` ────────────────────────────────────────────────────
  *
@@ -34,13 +34,13 @@
  * mantığı iki ayrı yerde doğru tutmayı gerektirirdi; ilk ayrışmada mobil
  * bağlantı web'de olmayan bir şekilde kopar ve kimse sebebini bulamaz.
  *
- * Sınıfın DOM bağımlılığı yoktur — yalnız `WebSocket` global'i gerekir ve o
+ * Sınıfın DOM bağımlılığı yoktur - yalnız `WebSocket` global'i gerekir ve o
  * React Native'de de vardır.
  */
 
 export interface SocketConfig {
   enabled: boolean;
-  /** `https://ws.signalbird.io` — bootstrap yanıtından gelir. */
+  /** `https://ws.signalbird.io` - bootstrap yanıtından gelir. */
   url?: string;
 }
 
@@ -69,8 +69,8 @@ export class Socket {
     private readonly auth: AuthFn,
     private readonly onEvent: (event: SocketEvent) => void,
     private readonly onState: (connected: boolean) => void,
-    private readonly log: (...args: unknown[]) => void = () => {},
-  ) {}
+    private readonly log: (...args: unknown[]) => void = () => { },
+  ) { }
 
   get connected(): boolean {
     return this.ws?.readyState === WebSocket.OPEN && this.sid !== null;
@@ -138,7 +138,7 @@ export class Socket {
     const type = frame[0];
 
     if (type === '0') {
-      // Açılış — asıl kimlik Socket.IO `40` yanıtında gelir.
+      // Açılış - asıl kimlik Socket.IO `40` yanıtında gelir.
       this.send('40');
       return;
     }
@@ -153,7 +153,7 @@ export class Socket {
     const sub = frame[1];
     const body = frame.slice(2);
 
-    // `40{…}` — ad alanına bağlandık.
+    // `40{…}` - ad alanına bağlandık.
     if (sub === '0') {
       try {
         this.sid = String(JSON.parse(body || '{}').sid || '');
@@ -167,7 +167,7 @@ export class Socket {
       return;
     }
 
-    // `42[…]` — sunucu olayı. `43N[…]` (ack) bizi ilgilendirmiyor: abonelik
+    // `42[…]` - sunucu olayı. `43N[…]` (ack) bizi ilgilendirmiyor: abonelik
     // sonucunu zaten bir sonraki yayında görürüz.
     if (sub === '2') {
       let parsed: unknown;
@@ -219,7 +219,7 @@ export class Socket {
   }
 
   /**
-   * Olay yolla — ACK İSTEMEDEN.
+   * Olay yolla - ACK İSTEMEDEN.
    *
    * `subscribe`in sonucunu beklemek bir tur daha protokol yönetmek demekti;
    * oysa sonucu zaten davranıştan görüyoruz: imza tutmadıysa yayın gelmez ve

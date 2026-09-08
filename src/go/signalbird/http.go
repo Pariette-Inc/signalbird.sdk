@@ -1,4 +1,4 @@
-// Package signalbird — Signalbird SDK'sının Go istemcisi.
+// Package signalbird - Signalbird SDK'sının Go istemcisi.
 //
 // Üç sunucu yüzeyi vardır ve anahtarları farklıdır:
 //
@@ -6,7 +6,7 @@
 //	Messaging  → Gönderim,            sb_…
 //	Management → Yönetim,             sb_… + radio|chat|apps scope'ları
 //
-// Bağımlılığı yoktur: yalnız standart kütüphane. Retry yoktur — aynı iletiyi
+// Bağımlılığı yoktur: yalnız standart kütüphane. Retry yoktur - aynı iletiyi
 // iki kez göndermek hiç göndermemekten pahalıdır, yeniden deneme kararı
 // çağıranındır.
 //
@@ -26,7 +26,7 @@ import (
 	"time"
 )
 
-// DefaultBaseURL — kendi kurulumu olan müşteri BaseURL ile değiştirebilir.
+// DefaultBaseURL - kendi kurulumu olan müşteri BaseURL ile değiştirebilir.
 const DefaultBaseURL = "https://live.signalbird.io/api"
 
 // Result, her metodun döndüğü zarftır. Başarısızlık hata değil, veridir:
@@ -63,10 +63,10 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("signalbird: %s (HTTP %d): %s", e.Code, e.Status, e.Message)
 }
 
-// ErrWrongKeyType — istemciye yanlış aileden anahtar verildi.
+// ErrWrongKeyType - istemciye yanlış aileden anahtar verildi.
 var ErrWrongKeyType = errors.New("signalbird: yanlış anahtar türü")
 
-// ErrNoKey — anahtar boş.
+// ErrNoKey - anahtar boş.
 var ErrNoKey = errors.New("signalbird: anahtar zorunlu")
 
 type transport struct {
@@ -95,7 +95,7 @@ func newTransport(domainKey, baseURL string, timeout time.Duration, throwOnError
 	}
 }
 
-// Query — sorgu dizesi. nil değerler atlanır, dilimler key[]= biçiminde gider.
+// Query - sorgu dizesi. nil değerler atlanır, dilimler key[]= biçiminde gider.
 type Query map[string]any
 
 func (t *transport) request(ctx context.Context, method, path string, body any, query Query) (Result, error) {
@@ -144,7 +144,7 @@ func (t *transport) request(ctx context.Context, method, path string, body any, 
 	}
 
 	// API {message, code} döner; Laravel doğrulama hatası {message, errors}
-	// döner (kodsuz) — onu VALIDATION_ERROR sayarız.
+	// döner (kodsuz) - onu VALIDATION_ERROR sayarız.
 	var parsed struct {
 		Code    string `json:"code"`
 		Message string `json:"message"`
@@ -224,7 +224,7 @@ func buildQuery(query Query) string {
 	return "?" + values.Encode()
 }
 
-// seg — kimlikler URL'e gömülmeden önce kodlanır.
+// seg - kimlikler URL'e gömülmeden önce kodlanır.
 func seg(value any) string {
 	return url.PathEscape(fmt.Sprint(value))
 }

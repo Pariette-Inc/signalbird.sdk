@@ -10,7 +10,7 @@ use Signalbird\Sdk\SignalbirdException;
  * Yönetim istemcisi: anahtar türü, yol kurulumu, sorgu dizesi ve hata eşlemesi.
  *
  * Uçların doğruluğunu API testleri sınar (`signalbird.api`
- * `ManagementApiTest`); buradaki sorular istemciye dair — doğru yola mı
+ * `ManagementApiTest`); buradaki sorular istemciye dair - doğru yola mı
  * gidiyor, kimliği nasıl kodluyor, hatayı nasıl adlandırıyor.
  */
 final class ManagementClientTest extends TestCase
@@ -45,7 +45,7 @@ final class ManagementClientTest extends TestCase
      * Kanal açmak MODÜL yoluna gider ve anahtar (`key`) yanıtta döner.
      *
      * Eskiden burada proje açılıyor ve gizli bir `secret` dönüyordu; proje
-     * kavramı 1 Eyl 2026'da kalktı ve kanalın sırrı yok — sır domain
+     * kavramı 1 Eyl 2026'da kalktı ve kanalın sırrı yok - sır domain
      * anahtarındadır (KEY_ARCHITECTURE §2).
      */
     public function testCreateModuleKeyPostsToModulePath(): void

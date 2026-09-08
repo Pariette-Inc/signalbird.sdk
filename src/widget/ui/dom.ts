@@ -1,5 +1,5 @@
 /**
- * Küçük DOM yardımcıları — çerçeve yok, düz DOM. `h(tag, attrs, ...children)`
+ * Küçük DOM yardımcıları - çerçeve yok, düz DOM. `h(tag, attrs, ...children)`
  * yeter; sanal DOM'a gerek yok, liste yeniden çizimi ucuzdur.
  */
 type Child = Node | string | number | null | undefined | false;
@@ -38,7 +38,7 @@ export function clear(el: Node): void {
   while (el.firstChild) el.removeChild(el.firstChild);
 }
 
-/** SVG ikonlar — path verisi tek satır, boyut CSS'ten. */
+/** SVG ikonlar - path verisi tek satır, boyut CSS'ten. */
 export function icon(name: keyof typeof ICONS, size = 18): SVGSVGElement {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');
@@ -54,15 +54,15 @@ export function icon(name: keyof typeof ICONS, size = 18): SVGSVGElement {
 }
 
 /**
- * Marka işareti — sinyal hattına tünemiş origami kuş.
+ * Marka işareti - sinyal hattına tünemiş origami kuş.
  *
  * KARAR 2026-08-29 (Ahmet): "Chatbot ikonunda Signalbird logosu (kuş) olsun.
  * Neden olmasın ki?"
  *
  * Panel logosunun (signalbird.web `SignalbirdLogo`) SADELEŞTİRİLMİŞ hâlidir ve
  * bu bilinçli: balon 26 pikseldir; ayaklar, katlama çizgileri ve sinyal hattı
- * o boyutta birbirine girip lekeye döner. Kalan siluet — gövde, kafa, gaga,
- * göz — kuşu tanıtmaya yeter.
+ * o boyutta birbirine girip lekeye döner. Kalan siluet - gövde, kafa, gaga,
+ * göz - kuşu tanıtmaya yeter.
  *
  * `currentColor` ile boyanır: balonun rengini müşteri seçiyor, işaret onun
  * üstünde okunaklı kalmalı. Kontür ayrı bir renk kullansaydı, koyu temada
@@ -82,7 +82,7 @@ export function brandIcon(size = 26): SVGSVGElement {
     // gövde ve kafa yüzeyleri (dolgu, düşük opaklık)
     '<path d="M16 16 L30 16 L33 18 L24 33 L15 18 Z" fill="currentColor" fill-opacity=".18" stroke="none"/>' +
     '<path d="M23 4 L31 9 L23 14 L16 9 Z" fill="currentColor" fill-opacity=".28" stroke="none"/>' +
-    // gövde konturu — kanat ucu dahil
+    // gövde konturu - kanat ucu dahil
     '<path d="M30 16 L33 18 L36 27 L34 34 L41 32 L44 38 L31 37 L24 37 L17 35 L13 27 L15 18 L16 16"/>' +
     // kafa konturu
     '<path d="M16 16 L16 9 L23 4 L31 9 L30 16"/>' +
@@ -113,7 +113,7 @@ const ICONS = {
   heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z"/>',
 };
 
-/** Ada göre baş harfler — fotoğrafı olmayan ajanın avatarı. */
+/** Ada göre baş harfler - fotoğrafı olmayan ajanın avatarı. */
 export function initials(name: string | null | undefined): string {
   return (name || '?')
     .trim()
@@ -127,7 +127,7 @@ export function initials(name: string | null | undefined): string {
 /**
  * Avatar içeriği: fotoğraf varsa fotoğraf, yoksa baş harfler.
  *
- * Adres `safeUrl`den geçer — `javascript:` bir avatar değildir; ajan adı
+ * Adres `safeUrl`den geçer - `javascript:` bir avatar değildir; ajan adı
  * sunucudan gelse de widget müşterinin sayfasında çalışıyor.
  */
 export function avatarNode(src: string | null | undefined, name: string): Node {

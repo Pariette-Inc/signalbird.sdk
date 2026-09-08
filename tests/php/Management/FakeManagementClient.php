@@ -7,7 +7,7 @@ use Signalbird\Sdk\Management\ManagementClient;
 /**
  * cURL yerine kuyruğa alınmış yanıtları döner; her `transport()` çağrısını kaydeder.
  *
- * `FakeMessagingClient` ile aynı desen — iki istemci aynı taşıma sözleşmesini
+ * `FakeMessagingClient` ile aynı desen - iki istemci aynı taşıma sözleşmesini
  * paylaşır, testleri de aynı şekilde kurulur.
  */
 final class FakeManagementClient extends ManagementClient

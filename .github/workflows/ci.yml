@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches: [main, test, live]
-    tags: ['v*']
+    tags: ["v*"]
   pull_request:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
           cache: npm
       - run: npm ci
       - run: npm run typecheck
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: "8.2"
       - run: composer validate --strict
       - run: composer install --no-interaction --no-progress
       - name: Sözdizimi kontrolü
@@ -75,14 +75,14 @@ jobs:
 
             leak=$(tar -tf "$tarball" | grep -E '(^|/)(\.build|\.gradle|\.kotlin|bin|dist|node_modules|tests|scripts|src/(node|browser|app|react|vue|angular|react-native|widget|go|python|swift|kotlin|dotnet))/' || true)
             if [ -n "$leak" ]; then
-              echo "::error::$label — girmemesi gereken yollar sızmış:"
+              echo "::error::$label - girmemesi gereken yollar sızmış:"
               echo "$leak" | head -20
               exit 1
             fi
 
             # 500 KB üstü bir PHP istemcisi için makul değil
             if [ "$bytes" -gt 512000 ]; then
-              echo "::error::$label $((bytes / 1024)) KB — 500 KB sınırının üstünde."
+              echo "::error::$label $((bytes / 1024)) KB - 500 KB sınırının üstünde."
               exit 1
             fi
           }
@@ -102,7 +102,7 @@ jobs:
         run: |
           tracked=$(git ls-files | grep -E '^(\.build|\.gradle|\.kotlin|bin|build|obj)/' | head -20 || true)
           if [ -n "$tracked" ]; then
-            echo "::error::Derleme çıktısı depoya commit'lenmiş — 'git rm -r --cached' ile çıkarın:"
+            echo "::error::Derleme çıktısı depoya commit'lenmiş - 'git rm -r --cached' ile çıkarın:"
             echo "$tracked"
             exit 1
           fi
@@ -167,7 +167,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: "3.9"
       - name: Derleme ve içe aktarma
         run: |
           python -m compileall -q src/python/signalbird
@@ -196,7 +196,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: "1.21"
       - run: go vet ./src/go/...
       - run: go build ./src/go/...
 
@@ -207,7 +207,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
       - run: dotnet build Signalbird.Sdk.csproj -c Release
 
   swift:
@@ -225,7 +225,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
       - run: gradle compileKotlin --no-daemon
 
@@ -236,7 +236,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       # Sürüm kilitlidir: VERSION ile manifestler ayrışırsa build kırılır
       - name: VERSION manifestlerle eşleşiyor mu
@@ -255,13 +255,13 @@ jobs:
 
       # Packagist paket adını KAYITLI addan değil, ETİKETİN composer.json'ından
       # okur. Ad ayrışırsa o sürümü sessizce yok sayar ve paket "yalnız
-      # dev-main" olarak kalır — v1.4.0'da tam olarak bu oldu.
+      # dev-main" olarak kalır - v1.4.0'da tam olarak bu oldu.
       - name: Packagist paket adı beklenen mi
         run: |
           name=$(php -r 'echo json_decode(file_get_contents("composer.json"), true)["name"];' 2>/dev/null \
                  || node -p "require('./composer.json').name")
           if [ "$name" != "pariette/signalbird" ]; then
-            echo "::error::composer.json adı '$name' — Packagist kaydı 'pariette/signalbird'. Bu etiket yayınlanmaz."
+            echo "::error::composer.json adı '$name' - Packagist kaydı 'pariette/signalbird'. Bu etiket yayınlanmaz."
             exit 1
           fi
           echo "Packagist adı doğru: $name"

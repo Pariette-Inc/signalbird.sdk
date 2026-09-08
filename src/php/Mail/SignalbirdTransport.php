@@ -11,13 +11,13 @@ use Symfony\Component\Mime\MessageConverter;
 use Symfony\Component\Mailer\Exception\TransportException;
 
 /**
- * Laravel posta taşıyıcısı — uygulamanın HER e-postası Signalbird üzerinden.
+ * Laravel posta taşıyıcısı - uygulamanın HER e-postası Signalbird üzerinden.
  *
  * Sözleşme: signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md § 7.
  *
  * Neden var: müşterinin uygulamasında onlarca `Mailable` sınıfı olur (davet,
  * rapor, form bildirimi, DSAR…). Bunları tek tek SDK çağrısına çevirmek hem
- * çok iş hem de kaçınılmaz olarak eksik kalır — biri unutulur ve o posta
+ * çok iş hem de kaçınılmaz olarak eksik kalır - biri unutulur ve o posta
  * Signalbird kayıtlarında hiç görünmez. Taşıyıcı katmanına inince tek satır
  * konfigürasyon (`MAIL_MAILER=signalbird`) yeter, hiçbir Mailable değişmez.
  *
@@ -30,12 +30,12 @@ use Symfony\Component\Mailer\Exception\TransportException;
  *  - Hata YUTULMAZ: `TransportException` fırlatılır ki Laravel kendi hata
  *    yolunu (kuyruk yeniden denemesi, failed_jobs) işletebilsin.
  *  - Zarf adresi Signalbird havuzundan çıkar; `From` görünen adı ve `Reply-To`
- *    korunur. Gönderen alan adını çağıran seçemez — itibar bizimdir.
+ *    korunur. Gönderen alan adını çağıran seçemez - itibar bizimdir.
  */
 class SignalbirdTransport extends AbstractTransport
 {
     /**
-     * @param  string  $class  `transactional` | `commercial` — hukuki kapı,
+     * @param  string  $class  `transactional` | `commercial` - hukuki kapı,
      *                         varsayılanı yoktur diye config'ten açıkça gelir.
      */
     public function __construct(
@@ -63,7 +63,7 @@ class SignalbirdTransport extends AbstractTransport
         ];
 
         /*
-         * GÖNDERİCİ KANALI (2 Eyl 2026): From adresini kanal seçer — Telsiz'in
+         * GÖNDERİCİ KANALI (2 Eyl 2026): From adresini kanal seçer - Telsiz'in
          * radio('kanal') modeli. `config/mail.php` içinde
          *   'signalbird' => ['transport' => 'signalbird', 'channel' => 'noreply']
          * KODA yazılır (kanal adı sırlardan değildir, env gerektirmez).
@@ -82,12 +82,12 @@ class SignalbirdTransport extends AbstractTransport
         }
 
         /*
-         * Ekler (2 Eyl 2026): düz ekler taşınır — base64 olarak API'ye gider,
+         * Ekler (2 Eyl 2026): düz ekler taşınır - base64 olarak API'ye gider,
          * mesajla saklanır ve düğüm MIME'a döker. Toplam boyut sınırı sunucuda
          * (7 MB çözülmüş, ATTACHMENTS_TOO_LARGE).
          *
          * CID/inline gömme HÂLÂ taşınmaz (multipart/related düğümde yok);
-         * sessizce düşürmek görselin kaybolması demek olurdu — açıkça reddedilir.
+         * sessizce düşürmek görselin kaybolması demek olurdu - açıkça reddedilir.
          * Gömülü görsel yerine barındırılmış https adresi kullanın.
          */
         $attachments = [];
@@ -116,7 +116,7 @@ class SignalbirdTransport extends AbstractTransport
 
             if (! ($result['ok'] ?? false)) {
                 throw new TransportException(sprintf(
-                    'Signalbird: e-posta gönderilemedi (%s) — %s',
+                    'Signalbird: e-posta gönderilemedi (%s) - %s',
                     $result['code'] ?? 'UNKNOWN',
                     $result['message'] ?? 'bilinmeyen hata',
                 ));
@@ -126,7 +126,7 @@ class SignalbirdTransport extends AbstractTransport
 
     /**
      * HTML varsa o gider; yoksa düz metin. Signalbird tarafında gövde tek
-     * alandır ve HTML kabul eder — düz metin de geçerli bir gövdedir.
+     * alandır ve HTML kabul eder - düz metin de geçerli bir gövdedir.
      */
     private function body(Email $email): string
     {

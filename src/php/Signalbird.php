@@ -10,7 +10,7 @@ use Signalbird\Sdk\Partner\PartnerClient;
  * Laravel dışı PHP projeleri için tekil erişim.
  *
  * Laravel kullanıyorsanız `Signalbird\Sdk\Facades\Signalbird` cephesini
- * kullanın — o, servis sağlayıcısı üzerinden yapılandırmayı okur.
+ * kullanın - o, servis sağlayıcısı üzerinden yapılandırmayı okur.
  *
  * Telsiz için `Signalbird::info(...)` (statik yönlendirme), Gönderim için
  * `Signalbird::messaging()->sendEmail([...])`, Yönetim için
@@ -78,7 +78,7 @@ class Signalbird
 
     /**
      * Yönetim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_DOMAIN_KEY` (yoksa
-     * `SIGNALBIRD_DOMAIN_KEY` — çoğu kurulumda tek takım anahtarı vardır)
+     * `SIGNALBIRD_DOMAIN_KEY` - çoğu kurulumda tek takım anahtarı vardır)
      * ortam değişkeninden okunur.
      */
     public static function management(): ManagementClient
@@ -106,7 +106,7 @@ class Signalbird
     }
 
     /**
-     * Partner istemcisi — YALNIZ sözleşmeli platformlar için. Yapılandırılmadıysa
+     * Partner istemcisi - YALNIZ sözleşmeli platformlar için. Yapılandırılmadıysa
      * `SIGNALBIRD_DOMAIN_KEY` okunur.
      */
     public static function partner(): PartnerClient

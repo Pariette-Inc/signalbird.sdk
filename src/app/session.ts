@@ -1,10 +1,10 @@
 /**
- * Sohbet oturumu — çatısız durum yönetimi.
+ * Sohbet oturumu - çatısız durum yönetimi.
  *
  * `SignalbirdApp` ham uçları verir; burası bir sohbet ekranının gerçekten
  * ihtiyaç duyduğu şeyi verir: mesaj listesi, okunmamış sayısı, yazıyor durumu,
  * iyimser gönderim ve yoklama merdiveni. React/Vue/Angular/React Native
- * uyarlamaları bu sınıfa abone olur — üçünde de aynı mantığı yeniden yazmak,
+ * uyarlamaları bu sınıfa abone olur - üçünde de aynı mantığı yeniden yazmak,
  * üç ayrı hata takımı üretmek demekti.
  *
  * ── CANLI BAĞLANTI + YOKLAMA ──────────────────────────────────────────────
@@ -45,9 +45,9 @@ export interface ChatState {
    * Seçimi `setTopic()` taşır; ilk konuşma açılırken gönderilir.
    */
   topics: TopicOption[];
-  /** Seçili konu (slug) — ilk konuşmayla birlikte gider. */
+  /** Seçili konu (slug) - ilk konuşmayla birlikte gider. */
   topic: string | null;
-  /** Son hatanın kodu — arayüz isterse gösterir, göstermezse yutar. */
+  /** Son hatanın kodu - arayüz isterse gösterir, göstermezse yutar. */
   errorCode?: string;
   /**
    * Uygulamanın sohbet ayarları (renk, logo, tema, puanlama bağlantısı…).
@@ -61,7 +61,7 @@ export interface ChatState {
 export type ChatListener = (state: ChatState) => void;
 
 export interface ChatSessionOptions {
-  /** Panel açık mı — yoklama hızını belirler. */
+  /** Panel açık mı - yoklama hızını belirler. */
   active?: boolean;
   /** Arka plandayken tur atlanır; varsayılan: `document.visibilityState`. */
   isVisible?: () => boolean;
@@ -69,11 +69,11 @@ export interface ChatSessionOptions {
   visitor?: SessionInput;
 }
 
-/** Kapalı panelde yoklama aralıkları (ms) — son değer sonsuza kadar tekrarlar. */
+/** Kapalı panelde yoklama aralıkları (ms) - son değer sonsuza kadar tekrarlar. */
 const IDLE_LADDER = [20_000, 20_000, 20_000, 60_000, 60_000, 180_000];
 const ACTIVE_INTERVAL = 3_000;
 
-/** Soket bağlıyken açık paneldeki yoklama — emniyet ağı, ana kanal değil. */
+/** Soket bağlıyken açık paneldeki yoklama - emniyet ağı, ana kanal değil. */
 const ACTIVE_LIVE_INTERVAL = 45_000;
 
 export class ChatSession {
@@ -163,7 +163,7 @@ export class ChatSession {
     this.schedule();
   }
 
-  /** Panel açıldı/kapandı — yoklama hızı buna göre değişir. */
+  /** Panel açıldı/kapandı - yoklama hızı buna göre değişir. */
   setActive(active: boolean): void {
     if (this.active === active) return;
 
@@ -185,7 +185,7 @@ export class ChatSession {
    * Konuşmayı bırakır; sonraki mesaj YENİ bir konuşma açar.
    *
    * Ekranın "yeni sohbet" düğmesi de bunu çağırır. Sunucuda hiçbir şey
-   * silinmez — yalnız bu oturumun neye baktığı değişir.
+   * silinmez - yalnız bu oturumun neye baktığı değişir.
    */
   reset(): void {
     this.patch({ conversation: null, messages: [], unread: 0, agentTyping: false, errorCode: undefined });
@@ -204,7 +204,7 @@ export class ChatSession {
     this.live = false;
   }
 
-  /** Canlı bağlantı kurulu mu — arayüz isterse gösterir (zorunlu değil). */
+  /** Canlı bağlantı kurulu mu - arayüz isterse gösterir (zorunlu değil). */
   get isLive(): boolean {
     return this.live;
   }
@@ -263,11 +263,11 @@ export class ChatSession {
     const result = conversation
       ? await this.app.sendMessage(conversation.id, { body: trimmed, client_id: cid, attachments })
       : await this.app.startConversation({
-          body: trimmed,
-          client_id: cid,
-          attachments,
-          ...(this.state.topic ? { topic: this.state.topic } : {}),
-        } as StartConversationInput);
+        body: trimmed,
+        client_id: cid,
+        attachments,
+        ...(this.state.topic ? { topic: this.state.topic } : {}),
+      } as StartConversationInput);
 
     if (!result.ok) return this.markFailed(cid, result);
 
@@ -280,14 +280,14 @@ export class ChatSession {
 
   /**
    * Ziyaretçinin konu seçimi. Konuşma AÇILDIKTAN sonra çağrılırsa etkisizdir:
-   * açılmış konuşmanın konusunu ajan panelden değiştirir — ziyaretçiye kendi
+   * açılmış konuşmanın konusunu ajan panelden değiştirir - ziyaretçiye kendi
    * konuşmasını yeniden sınıflandırma yetkisi vermek, atamayı da bozardı.
    */
   setTopic(slug: string | null): void {
     this.patch({ topic: slug });
   }
 
-  /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` — çağıran zamanlar. */
+  /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar. */
   typing(isTyping: boolean): void {
     const conversation = this.state.conversation;
 
@@ -455,7 +455,7 @@ export class ChatSession {
       },
       (event) => {
         // OLAYIN İÇİNDEKİ VERİ KULLANILMAZ, yalnız "bir şey oldu" bilgisi:
-        // mesajı kendi yetkimizle çekeriz. Tek istisna `updated` işareti —
+        // mesajı kendi yetkimizle çekeriz. Tek istisna `updated` işareti -
         // o, verinin kendisi değil, NASIL çekileceğinin talimatıdır.
         if (event.data.updated === true) this.forceFull = true;
 
@@ -485,7 +485,7 @@ export class ChatSession {
 
     /*
      * Soket bağlıysa yoklama YAVAŞLAR, DURMAZ. Açık panelde 3 s yerine 45 s;
-     * kapalı panelde merdivenin son basamağı — bir olay kaybolsa bile
+     * kapalı panelde merdivenin son basamağı - bir olay kaybolsa bile
      * konuşma en geç bu kadar gecikir.
      */
     const delay = this.active

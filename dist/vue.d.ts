@@ -2,7 +2,7 @@ import { InjectionKey, Ref, App } from 'vue';
 import { SignalbirdApp, SessionInput, ChatState, IdentifyInput, RegisterDeviceInput, AppConfig } from './app.js';
 
 /**
- * `signalbird/vue` — Vue 3 eklentisi ve composable'ları.
+ * `signalbird/vue` - Vue 3 eklentisi ve composable'ları.
  *
  * React uyarlamasıyla aynı `ChatSession` motorunu kullanır; buradaki tek iş
  * durumu Vue'nun tepkimeli sistemine bağlamaktır.
@@ -21,10 +21,10 @@ declare const SIGNALBIRD_KEY: InjectionKey<SignalbirdApp>;
 declare const signalbirdPlugin: {
     install(app: App, config: AppConfig): void;
 };
-/** Ham istemci — push kaydı, kimlik, özel çağrılar için. */
+/** Ham istemci - push kaydı, kimlik, özel çağrılar için. */
 declare function useSignalbird(): SignalbirdApp;
 interface UseChatOptions {
-    /** Panel açık mı — `ref` verilirse değişimi izlenir. */
+    /** Panel açık mı - `ref` verilirse değişimi izlenir. */
     open?: Ref<boolean> | boolean;
     visitor?: SessionInput;
 }

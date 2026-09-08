@@ -1,10 +1,10 @@
-"""Gönderim (Messaging) istemcisi — sunucu tarafı.
+"""Gönderim (Messaging) istemcisi - sunucu tarafı.
 
 Takım API anahtarıyla (``sb_…``) e-posta/SMS/push gönderir, kişi ve liste
 yönetir, kampanya açar, mesaj durumlarını okur.
 
 Metot adları diğer dillerle birebir aynıdır; Python'da snake_case yazılır
-(``send_email`` ↔ ``sendEmail``) — bir dilin kendi yazım geleneğini bozmak,
+(``send_email`` ↔ ``sendEmail``) - bir dilin kendi yazım geleneğini bozmak,
 paritenin sağladığı kolaylıktan fazlasını götürür.
 
 Sözleşme: docs/CONTRACT.md § 8
@@ -56,7 +56,7 @@ class SignalbirdMessaging:
         return self._http.request("POST", "/v1/events", input)
 
     def preview_sms(self, body: str) -> Result:
-        """SMS parça/karakter hesabı — kota harcamaz."""
+        """SMS parça/karakter hesabı - kota harcamaz."""
         return self._http.request("POST", "/v1/sms/preview", {"body": body})
 
     def send_push(self, input: Mapping[str, Any]) -> Result:
@@ -81,7 +81,7 @@ class SignalbirdMessaging:
 
         Paralel değil: aynı e-posta iki parçadaysa yarış olmasın. Bir parça
         başarısız olursa o noktada durulur ve o ana kadar biriken sayımlar
-        döner — yarısı yüklenmiş bir listeyi "başarısız" diye atmak, hangi
+        döner - yarısı yüklenmiş bir listeyi "başarısız" diye atmak, hangi
         kişinin girdiğini bilmemek demektir.
         """
         contacts: Sequence[Mapping[str, Any]] = list(input.get("contacts") or [])

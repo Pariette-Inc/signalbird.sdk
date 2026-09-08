@@ -70,7 +70,7 @@ var SignalbirdClient = class {
     });
   }
   /**
-   * Toplu gönderim — 100 kayda kadar.
+   * Toplu gönderim - 100 kayda kadar.
    *
    * Kısmi başarı normaldir (kota tam ortada dolabilir), o yüzden sonuç tek bir
    * durum değil satır satır döner.
@@ -123,7 +123,7 @@ var SignalbirdClient = class {
    *
    * Kancayı takıp süreci ÖLDÜRMEYE devam eder: `uncaughtException` sonrası
    * süreci ayakta tutmak, bozuk durumdaki bir uygulamayı çalıştırmaya devam
-   * etmek demektir — log göndermek bunu meşrulaştırmaz.
+   * etmek demektir - log göndermek bunu meşrulaştırmaz.
    */
   captureUncaught(key = "critical") {
     const onError = (error) => {
@@ -230,13 +230,13 @@ var SignalbirdMessaging = class {
     return this.request("POST", "/v1/sms/send", input);
   }
   /**
-   * Otomasyon olayı — kendi sisteminizdeki bir olayı bildirir ve eşleşen
+   * Otomasyon olayı - kendi sisteminizdeki bir olayı bildirir ve eşleşen
    * akışı tetikler (§11). Signalbird olayın anlamını bilmez; adı sizindir.
    */
   track(input) {
     return this.request("POST", "/v1/events", input);
   }
-  /** SMS parça/karakter hesabı — kota harcamaz. */
+  /** SMS parça/karakter hesabı - kota harcamaz. */
   previewSms(body) {
     return this.request("POST", "/v1/sms/preview", { body });
   }
@@ -262,7 +262,7 @@ var SignalbirdMessaging = class {
    * 1000'lik parçalara bölünür ve SIRAYLA gönderilir (paralel değil: aynı
    * e-posta iki parçada da varsa yarış olmasın). Sonuçlar tek yanıtta
    * birleştirilir. Bir parça başarısız olursa o noktada durulur ve o ana kadar
-   * biriken sayımlar `data` içinde döner — çağıran kaç kişinin işlendiğini görür.
+   * biriken sayımlar `data` içinde döner - çağıran kaç kişinin işlendiğini görür.
    */
   async bulkContacts(input) {
     const merged = { imported: 0, updated: 0, skipped: [] };
@@ -321,7 +321,7 @@ var SignalbirdMessaging = class {
    *   for await (const m of sdk.iterateCampaignMessages(42)) { … }
    *
    * Bir sayfa alınamazsa `SignalbirdError` fırlatır (sessiz yarım liste,
-   * "hepsi bu" sanılır — o daha tehlikeli).
+   * "hepsi bu" sanılır - o daha tehlikeli).
    */
   async *iterateCampaignMessages(id, query = {}) {
     let page = 1;
@@ -512,7 +512,7 @@ var SignalbirdManagement = class {
   radioSummary() {
     return this.http.request("GET", "/v1/radio/summary");
   }
-  /** Olay akışı — kanal, seviye ve tarihe göre süzülür. */
+  /** Olay akışı - kanal, seviye ve tarihe göre süzülür. */
   radioEvents(query) {
     return this.http.request("GET", "/v1/radio/events", void 0, query);
   }
@@ -521,7 +521,7 @@ var SignalbirdManagement = class {
   // Telsiz projesi/kanalı ve uygulama kaydı 1 Eyl 2026'da kaldırıldı
   // (../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md §3). Yerlerini TEK
   // bir uç ailesi aldı: modül anahtarları. Beş modülün (logger, email, sms,
-  // push, chat) hepsi aynı gövdeyi kullanır — beş ayrı metot kümesi yazmak,
+  // push, chat) hepsi aynı gövdeyi kullanır - beş ayrı metot kümesi yazmak,
   // altıncı modül geldiğinde altıncısını yazmak demekti.
   listModuleKeys(module, query) {
     return this.http.request("GET", `/v1/modules/${seg(module)}/keys`, void 0, query);
@@ -532,7 +532,7 @@ var SignalbirdManagement = class {
   /**
    * Kanal açar.
    *
-   * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir —
+   * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir -
    * "bu ad alınmış" hatasıyla geri dönmek, CI'da kanal açan bir betiği
    * durdururdu.
    */
@@ -570,7 +570,7 @@ var SignalbirdManagement = class {
   listConversationMessages(id, query) {
     return this.http.request("GET", `/v1/chat/conversations/${seg(id)}/messages`, void 0, query);
   }
-  /** Proaktif sohbet — ziyaretçi yazmadan ajan başlatır. */
+  /** Proaktif sohbet - ziyaretçi yazmadan ajan başlatır. */
   startConversation(input) {
     return this.http.request("POST", "/v1/chat/conversations", input);
   }
@@ -613,7 +613,7 @@ var SignalbirdManagement = class {
       `/v1/chat/conversations/${seg(id)}/messages/${seg(messageId)}`
     );
   }
-  /** Tepki açma/kapama — aynı emoji ikinci kez gönderilirse kaldırılır. */
+  /** Tepki açma/kapama - aynı emoji ikinci kez gönderilirse kaldırılır. */
   reactToChatMessage(id, messageId, emoji) {
     return this.http.request(
       "POST",
@@ -661,20 +661,20 @@ var SignalbirdManagement = class {
   // ── Sohbet: rapor ─────────────────────────────────────────────────────
   /**
    * Yanıt süresi, çözüm süresi, memnuniyet ve ajan kırılımı.
-   * Veri yoksa süreler `null` döner — 0 DEĞİL.
+   * Veri yoksa süreler `null` döner - 0 DEĞİL.
    */
   chatReport(range = "30d") {
     return this.http.request("GET", "/v1/chat/reports", void 0, { range });
   }
   // Uygulama uçları KALDIRILDI (1 Eyl 2026): "uygulama" ayrı bir kayıt
-  // değil. Sohbet widget'ı ve push kanalı birer modül anahtarıdır —
+  // değil. Sohbet widget'ı ve push kanalı birer modül anahtarıdır -
   // `listModuleKeys('chat')`, `listModuleKeys('push')`. Anahtar döndürme de
   // yok: döndürülen şey DOMAIN anahtarıdır ve o panelden yönetilir.
   /**
-   * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
+   * Gömme jetonu - Signalbird ekranını KENDİ panelinizde göstermek için.
    *
    * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
-   * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR —
+   * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR -
    * scope sisteminden geriye kalan tek kapı, çünkü jeton 60 dakikalık bir
    * panel oturumuna çevriliyor.
    */
@@ -726,7 +726,7 @@ var SignalbirdPartner = class {
   updateCompany(externalId, input) {
     return this.http.request("PATCH", `/v1/partner/companies/${seg(externalId)}`, input);
   }
-  /** Askıya alır — SİLMEZ. Müşterinin izleme ve mesaj geçmişi durur. */
+  /** Askıya alır - SİLMEZ. Müşterinin izleme ve mesaj geçmişi durur. */
   suspendCompany(externalId) {
     return this.http.request("DELETE", `/v1/partner/companies/${seg(externalId)}`);
   }
@@ -736,7 +736,7 @@ var SignalbirdPartner = class {
   // ── Domain ────────────────────────────────────────────────────────────
   /**
    * Domain ekler ve (istenirse) izlemeye alır. Kayıt `verified_via:'partner'`
-   * ile doğar: izleme, sohbet ve push için yeter — **e-posta/SMS kampanyası
+   * ile doğar: izleme, sohbet ve push için yeter - **e-posta/SMS kampanyası
    * için TXT şarttır**. Yanıttaki `dns` kaydını yayınlayıp `verifyDomain`
    * çağırmak kapıyı açar.
    */
@@ -759,7 +759,7 @@ var SignalbirdPartner = class {
   domainUptime(externalId, range = "24h") {
     return this.http.request("GET", `/v1/partner/domains/${seg(externalId)}/uptime`, void 0, { range });
   }
-  /** Tek istekte müşterinin tüm domainleri — liste ekranı N+1 atmasın. */
+  /** Tek istekte müşterinin tüm domainleri - liste ekranı N+1 atmasın. */
   companyUptime(companyExternalId, range = "24h") {
     return this.http.request(
       "GET",
@@ -825,7 +825,7 @@ var SignalbirdPartner = class {
   // ── Gömme ─────────────────────────────────────────────────────────────
   /**
    * Panel ekranını partner sayfasına gömmek için kısa ömürlü jeton üretir.
-   * 120 saniye yaşar ve TEK KULLANIMLIKTIR — jeton URL'de gider, log ve
+   * 120 saniye yaşar ve TEK KULLANIMLIKTIR - jeton URL'de gider, log ve
    * `Referer` başlığına düşer.
    */
   createEmbedToken(companyExternalId, input) {

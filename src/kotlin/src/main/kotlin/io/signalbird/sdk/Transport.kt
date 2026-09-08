@@ -40,7 +40,7 @@ class SignalbirdException(
 /**
  * İstemcilerin ortak HTTP katmanı.
  *
- * `HttpURLConnection` ve `org.json` kullanır — ikisi de Android'in kendi
+ * `HttpURLConnection` ve `org.json` kullanır - ikisi de Android'in kendi
  * kütüphanesindedir. OkHttp ya da Retrofit dayatmak, bir SDK'nın müşterinin
  * ağ yığınını seçmesi demek olurdu; tek dış bağımlılık coroutines'tir ve o da
  * her Android projesinde zaten vardır.
@@ -94,7 +94,7 @@ internal class Transport(
             }
 
             // API `{message, code}` döner; Laravel doğrulama hatası `{message,
-            // errors}` döner (kodsuz) — onu VALIDATION_ERROR sayarız.
+            // errors}` döner (kodsuz) - onu VALIDATION_ERROR sayarız.
             val obj = parsed as? JSONObject
             val code = obj?.optString("code").takeUnless { it.isNullOrEmpty() }
                 ?: when (status) {
@@ -116,7 +116,7 @@ internal class Transport(
 
     private fun fail(status: Int, code: String, message: String): SbResult {
         if (throwOnError) {
-            throw SignalbirdException("Signalbird: $code — $message", code, status)
+            throw SignalbirdException("Signalbird: $code - $message", code, status)
         }
 
         return SbResult(ok = false, status = status, code = code, message = message)
@@ -179,7 +179,7 @@ internal class Transport(
 
         private fun encode(value: String): String = URLEncoder.encode(value, "UTF-8")
 
-        /** Yol parçası — kimlikler URL'e gömülmeden önce kodlanır. */
+        /** Yol parçası - kimlikler URL'e gömülmeden önce kodlanır. */
         internal fun seg(value: Any): String = URLEncoder.encode(value.toString(), "UTF-8")
     }
 }

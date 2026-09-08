@@ -1,5 +1,5 @@
 /**
- * Partner istemcisi — BEŞİNCİ yüzey.
+ * Partner istemcisi - BEŞİNCİ yüzey.
  *
  * Signalbird'ü kendi ürününün içinde satan sözleşmeli platform (veribenim,
  * submitcms) müşterisini bununla sağlar ve yetkilendirir: company + takım +
@@ -52,7 +52,7 @@ export class SignalbirdPartner {
     if (!config.domainKey.startsWith('sb_secret_live_')) {
       throw new SignalbirdError(
         'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). ' +
-          'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
+        'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
         0,
         'WRONG_KEY_TYPE'
       );
@@ -95,7 +95,7 @@ export class SignalbirdPartner {
     return this.http.request('PATCH', `/v1/partner/companies/${seg(externalId)}`, input);
   }
 
-  /** Askıya alır — SİLMEZ. Müşterinin izleme ve mesaj geçmişi durur. */
+  /** Askıya alır - SİLMEZ. Müşterinin izleme ve mesaj geçmişi durur. */
   suspendCompany(externalId: string): Promise<SbResult<{ company: PartnerCompany }>> {
     return this.http.request('DELETE', `/v1/partner/companies/${seg(externalId)}`);
   }
@@ -108,7 +108,7 @@ export class SignalbirdPartner {
 
   /**
    * Domain ekler ve (istenirse) izlemeye alır. Kayıt `verified_via:'partner'`
-   * ile doğar: izleme, sohbet ve push için yeter — **e-posta/SMS kampanyası
+   * ile doğar: izleme, sohbet ve push için yeter - **e-posta/SMS kampanyası
    * için TXT şarttır**. Yanıttaki `dns` kaydını yayınlayıp `verifyDomain`
    * çağırmak kapıyı açar.
    */
@@ -137,7 +137,7 @@ export class SignalbirdPartner {
     return this.http.request('GET', `/v1/partner/domains/${seg(externalId)}/uptime`, undefined, { range });
   }
 
-  /** Tek istekte müşterinin tüm domainleri — liste ekranı N+1 atmasın. */
+  /** Tek istekte müşterinin tüm domainleri - liste ekranı N+1 atmasın. */
   companyUptime(
     companyExternalId: string,
     range: UptimeRange = '24h'
@@ -226,7 +226,7 @@ export class SignalbirdPartner {
 
   /**
    * Panel ekranını partner sayfasına gömmek için kısa ömürlü jeton üretir.
-   * 120 saniye yaşar ve TEK KULLANIMLIKTIR — jeton URL'de gider, log ve
+   * 120 saniye yaşar ve TEK KULLANIMLIKTIR - jeton URL'de gider, log ve
    * `Referer` başlığına düşer.
    */
   createEmbedToken(companyExternalId: string, input: EmbedTokenInput): Promise<SbResult<EmbedToken>> {

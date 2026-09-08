@@ -3,7 +3,7 @@
  *
  * Arayüz (`ui/`) çizer, `Store` durumu tutar, `Api` konuşur, `Poller` zamanlar.
  * Buradaki her dış çağrı try/catch içindedir: widget, ev sahibi sayfaya asla
- * hata fırlatmaz — canlı sohbetin çökmesi müşterinin ödeme sayfasını
+ * hata fırlatmaz - canlı sohbetin çökmesi müşterinin ödeme sayfasını
  * çökertmemeli.
  */
 import { Api } from './api';
@@ -146,7 +146,7 @@ export class ChatController {
 
     // Sunucu 1 Eyl'den beri `channel` gönderir; `app` eski sunucu uyumu.
     // 3 Eyl'e kadar yalnız `app` okunuyordu ve widget yeni sunucuda hiç
-    // çizilmiyordu — canlı chat'in "hiç açılmamasının" kök sebebi buydu.
+    // çizilmiyordu - canlı chat'in "hiç açılmamasının" kök sebebi buydu.
     const app = boot.data.channel ?? boot.data.app;
 
     if (!app) {
@@ -252,7 +252,7 @@ export class ChatController {
     if (this.settings?.layout === 'inline') this.open();
 
     /*
-     * Canlı bağlantı — polling'in YERİNE değil, ÜSTÜNE.
+     * Canlı bağlantı - polling'in YERİNE değil, ÜSTÜNE.
      *
      * Soket bağlanınca merdiven yavaşlar (`poller.setLive(true)`), koptuğunda
      * kendiliğinden eski hâline döner. Tek yolun soket olduğu bir sohbet,
@@ -307,7 +307,7 @@ export class ChatController {
    *
    * `manual` (30 Ağu 2026, Ahmet): balon çizilmez, sohbeti sitenin kendi
    * "Canlı destek" düğmesi açar. Üç durumda görünür olur ve bunların hepsi
-   * aynı gerekçeye dayanır — ziyaretçinin okumadığı bir yanıt ortada
+   * aynı gerekçeye dayanır - ziyaretçinin okumadığı bir yanıt ortada
    * kalmasın:
    *
    *   • panel açıkken,
@@ -624,7 +624,7 @@ export class ChatController {
     /*
      * Bilinen kimlik oturuma KENDİLİĞİNDEN eklenir. Çağıranın ayrıca
      * geçirmesini beklemek, ön-formu atladığımız yolda ziyaretçiyi anonim
-     * bırakırdı — ajan kiminle konuştuğunu bilmeden yardım edemez.
+     * bırakırdı - ajan kiminle konuştuğunu bilmeden yardım edemez.
      */
     const known = this.identity
       ? { name: this.identity.name, email: this.identity.email, external_id: this.identity.external_id }
@@ -634,7 +634,7 @@ export class ChatController {
       ...known,
       ...identity,
       /*
-       * ZİYARETÇİNİN GERÇEK TARAYICI DİLİ — arayüz dili DEĞİL (2 Eyl 2026).
+       * ZİYARETÇİNİN GERÇEK TARAYICI DİLİ - arayüz dili DEĞİL (2 Eyl 2026).
        *
        * Buraya `this.locale` yazılıyordu ve o, widget metinleri için `tr`/`en`e
        * DARALTILMIŞ değerdir (bkz. `resolveLocale`). Sonuç: Almanca bir
@@ -663,7 +663,7 @@ export class ChatController {
       const v = r.data.visitor;
       if (!v.secret && !this.store.visitor) {
         // Sunucu sırrı yalnız oluşturma anında döner; elimizde de yoksa
-        // ziyaretçiyi asla doğrulayamayız — sırsız devam etmenin anlamı yok.
+        // ziyaretçiyi asla doğrulayamayız - sırsız devam etmenin anlamı yok.
         this.log('session returned no secret');
         return false;
       }
@@ -687,7 +687,7 @@ export class ChatController {
    * Ziyaretçi kanalına abone ol.
    *
    * Ziyaretçi kimliği oturum açılınca doğar; bootstrap sırasında henüz
-   * olmayabilir. Bu yüzden hem başlangıçta hem her yeni oturumda çağrılır —
+   * olmayabilir. Bu yüzden hem başlangıçta hem her yeni oturumda çağrılır -
    * `Socket.subscribe` aynı kanalı iki kez abone etmez.
    */
   private subscribeVisitor(): void {
@@ -697,7 +697,7 @@ export class ChatController {
   }
 
   /**
-   * Kanal imzası — ziyaretçi sırrıyla, SDK'nın kendi kapısından.
+   * Kanal imzası - ziyaretçi sırrıyla, SDK'nın kendi kapısından.
    *
    * Soket servisi kimseyi tanımaz; kim hangi kanalı dinleyebilir sorusunu
    * API cevaplar ve imzayı o üretir.
@@ -715,7 +715,7 @@ export class ChatController {
    * Sunucudan gelen haber.
    *
    * Gövde YOK: yayın "hareket var" der, veriyi buradan tetiklenen tur çeker.
-   * "Yazıyor" tek istisnadır — o zaten bir işarettir, çekilecek verisi yoktur.
+   * "Yazıyor" tek istisnadır - o zaten bir işarettir, çekilecek verisi yoktur.
    */
   private onSocketEvent(event: { name: string; data: Record<string, unknown> }): void {
     if (event.name === 'chat.typing') {
@@ -832,7 +832,7 @@ export class ChatController {
         /*
          * Önizleme İLE haber ver (2 Eyl 2026). Rozet "bir şey var" der; ne
          * geldiğini söyleyen tek şey mesajın kendisidir ve paneli açtıran da
-         * odur. Özet listesi zaten `last_message_preview` getiriyor — ek bir
+         * odur. Özet listesi zaten `last_message_preview` getiriyor - ek bir
          * istek yok.
          */
         this.ui?.attention({

@@ -18,7 +18,7 @@ namespace Signalbird\Sdk;
  *
  * `final` DEĞİLDİR ve bu bilinçlidir: Mockery final sınıfı sahteleyemez, o
  * yüzden `final` bırakmak `Signalbird::radio('x')->error(…)` çağıran HER
- * müşterinin testini kırardı — "sahtele" diyemedikleri için gerçek HTTP
+ * müşterinin testini kırardı - "sahtele" diyemedikleri için gerçek HTTP
  * isteği atmak zorunda kalırlardı. Bir kütüphanenin kendisini test edilemez
  * yapması, kapatılmasından daha pahalıya mal olur.
  */
@@ -30,7 +30,7 @@ class RadioChannel
     ) {}
 
     /**
-     * Seviyeyi kendin verirsin; vermezsen KANALIN varsayılanı geçerlidir —
+     * Seviyeyi kendin verirsin; vermezsen KANALIN varsayılanı geçerlidir -
      * istemci burada bir varsayılan uydurmaz.
      *
      * @param  array<string, mixed>|null  $context
@@ -66,7 +66,7 @@ class RadioChannel
     }
 
     /**
-     * Kritik seviye kanalın sessiz saatlerini DELER — gece ölen servis
+     * Kritik seviye kanalın sessiz saatlerini DELER - gece ölen servis
      * sabahı bekleyemez. Bu kural sunucudadır, istemci yalnız seviyeyi söyler.
      *
      * @param  array<string, mixed>|null  $context

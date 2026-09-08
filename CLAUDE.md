@@ -4,14 +4,14 @@
 
 ## Proje Tanımı
 
-Signalbird'ün resmi SDK'sı. **Tek paket, tüm diller** — bu repo aynı anda bir
+Signalbird'ün resmi SDK'sı. **Tek paket, tüm diller** - bu repo aynı anda bir
 npm paketi, bir Composer paketi ve (eklendikçe) bir Go modülü, Swift paketi,
 NuGet ve Maven artefaktıdır. Hepsi aynı etiketten çıkar, aynı sürümü ve aynı
 davranışı taşır. Ayrı SDK reposu, ayna repo veya alt modül YOKTUR.
 
-> **v2.0.0 — 1 Eyl 2026.** Dört anahtar ailesi ve 17 elemanlı scope listesi
+> **v2.0.0 - 1 Eyl 2026.** Dört anahtar ailesi ve 17 elemanlı scope listesi
 > KALDIRILDI. Beş yüzeyin tamamı **tek anahtar** kullanır: alan adının
-> anahtarı. Ayrım yüzeyde değil anahtarın TÜRÜNDEDİR — gizli
+> anahtarı. Ayrım yüzeyde değil anahtarın TÜRÜNDEDİR - gizli
 > (`sb_secret_live_`, sunucu) ve açık (`sb_public_live_`, istemci). İkinci ve
 > gizli olmayan kavram: **modül anahtarı**, müşterinin panelde açtığı kanalın
 > adı; koda gömülür. Sözleşme:
@@ -21,11 +21,11 @@ Paket **beş yüzey** taşır; hepsi aynı anahtarı kullanır, kapıları farkl
 
 | Yüzey | Anahtar | Uçlar | Kaynak |
 |---|---|---|---|
-| **Telsiz** (Radio) — log/olay | `sb_secret_live_…` (sunucu) / `sb_public_live_…` (tarayıcı), başlık `X-Signalbird-Key` | `POST /v1/radio/log`, `POST /v1/radio/log/batch` | `src/{node,browser,python,go,dotnet,swift,kotlin}` |
-| **Gönderim** (Messaging) — e-posta/SMS/push, kişi, liste, kampanya, mesaj, webhook imzası | `sb_secret_live_…` (yalnız sunucu) | `/v1/email/send`, `/v1/sms/*`, `/v1/push/send`, `/v1/contacts*`, `/v1/contact-lists*`, `/v1/campaigns*`, `/v1/messages*` | `src/{node,php,python,go,dotnet}` |
-| **Yönetim** (Management) — olay akışı, MODÜL ANAHTARLARI, sohbet gelen kutusu, cihaz | `sb_secret_live_…` (yalnız sunucu) | `/v1/radio/{summary,events}`, `/v1/modules/{module}/keys*`, `/v1/chat/*` | `src/node/management.ts`, `src/php/Management/`, `src/{python,go,dotnet}` |
-| **Uygulama** (App) — son kullanıcıya canlı sohbet + push cihaz kaydı | `sb_public_live_…` (`X-Signalbird-Key`) + kanal (`X-Signalbird-Module-Key`) + ziyaretçi sırrı (`X-Signalbird-Visitor`) | `/v1/sdk/bootstrap`, `/v1/sdk/chat/*`, `/v1/sdk/devices`, `/v1/sdk/identify` | `src/app/`, `src/{react,vue,angular,react-native}`, `src/swift`, `src/kotlin`, `src/widget/` → `dist/signalbird.js` |
-| **Partner** — sözleşmeli platformun müşteri sağlaması, modül yetkisi, gömme jetonu | `sb_secret_live_…` (yalnız sunucu) | `/v1/partner/*` | `src/node/partner.ts`, `src/php/Partner/`, `src/{python,go,dotnet}` |
+| **Telsiz** (Radio) - log/olay | `sb_secret_live_…` (sunucu) / `sb_public_live_…` (tarayıcı), başlık `X-Signalbird-Key` | `POST /v1/radio/log`, `POST /v1/radio/log/batch` | `src/{node,browser,python,go,dotnet,swift,kotlin}` |
+| **Gönderim** (Messaging) - e-posta/SMS/push, kişi, liste, kampanya, mesaj, webhook imzası | `sb_secret_live_…` (yalnız sunucu) | `/v1/email/send`, `/v1/sms/*`, `/v1/push/send`, `/v1/contacts*`, `/v1/contact-lists*`, `/v1/campaigns*`, `/v1/messages*` | `src/{node,php,python,go,dotnet}` |
+| **Yönetim** (Management) - olay akışı, MODÜL ANAHTARLARI, sohbet gelen kutusu, cihaz | `sb_secret_live_…` (yalnız sunucu) | `/v1/radio/{summary,events}`, `/v1/modules/{module}/keys*`, `/v1/chat/*` | `src/node/management.ts`, `src/php/Management/`, `src/{python,go,dotnet}` |
+| **Uygulama** (App) - son kullanıcıya canlı sohbet + push cihaz kaydı | `sb_public_live_…` (`X-Signalbird-Key`) + kanal (`X-Signalbird-Module-Key`) + ziyaretçi sırrı (`X-Signalbird-Visitor`) | `/v1/sdk/bootstrap`, `/v1/sdk/chat/*`, `/v1/sdk/devices`, `/v1/sdk/identify` | `src/app/`, `src/{react,vue,angular,react-native}`, `src/swift`, `src/kotlin`, `src/widget/` → `dist/signalbird.js` |
+| **Partner** - sözleşmeli platformun müşteri sağlaması, modül yetkisi, gömme jetonu | `sb_secret_live_…` (yalnız sunucu) | `/v1/partner/*` | `src/node/partner.ts`, `src/php/Partner/`, `src/{python,go,dotnet}` |
 
 **Yönetim ADMIN yüzeyi DEĞİLDİR.** Anahtar tek bir takıma bağlıdır ve yalnız o
 takımın kayıtlarına dokunur. Kullanıcı yönetimi, faturalama, abonelik ve plan
@@ -43,7 +43,7 @@ Ana kaynak sözleşme: `docs/CONTRACT.md` (§0 yüzey tablosu, §1–7 Telsiz,
 
 ## Repo yapısı
 
-Manifest dosyaları **kökte** durur — her paket yöneticisi kendi manifestini
+Manifest dosyaları **kökte** durur - her paket yöneticisi kendi manifestini
 kökte arar. Kaynaklar dile göre ayrılır, her manifest kendi dizinini gösterir.
 
 ```
@@ -75,7 +75,7 @@ signalbird.sdk/
 │   └── kotlin/src/main/kotlin/io/signalbird/sdk/   # SignalbirdApp · SignalbirdClient · Storage
 ├── .gitattributes          # export-ignore → Packagist'in indirdiği zipball'ı BU belirler
 ├── config/                 # Laravel config (vendor:publish)
-├── tests/php/              # PHPUnit — Messaging/ · Management/ · Partner/ · Mail/
+├── tests/php/              # PHPUnit - Messaging/ · Management/ · Partner/ · Mail/
 ├── dist/                   # tsup çıktısı: index, browser, app, react, vue, angular, react-native, signalbird.js
 └── .github/workflows/ci.yml
 ```
@@ -114,7 +114,7 @@ Widget (`dist/signalbird.js`) npm tarball'ında durur ama müşteri onu CDN'den
    hatanın haftalar sonra fark edilmesi demektir.
 5b. **Modül anahtarı GİZLİ DEĞİLDİR ve denetlenmez.** Kanalın adıdır, kodun
    içinde durur; domain anahtarı olmadan işe yaramaz. Domain anahtarına
-   referans VERMEZ — anahtar yenilendiğinde müşterinin kodu aynı kalsın diye.
+   referans VERMEZ - anahtar yenilendiğinde müşterinin kodu aynı kalsın diye.
 6. **Widget ev sahibine hata fırlatmaz.** `src/widget/index.ts` içindeki her
    genel çağrı try/catch'lidir; bunu bozacak değişiklik yapma.
 
@@ -137,14 +137,14 @@ Go, Kotlin ve .NET araç zincirleri bu makinede kurulu değil; CI'da derlenir.
 Her geliştirme (yeni metot, parametre değişikliği, davranış değişikliği) şu
 dosyalarda da güncellenir:
 
-1. `docs/CONTRACT.md` — sözleşme
-2. `README.md` — kök, dil matrisi ve hızlı başlangıç
-3. `DEVELOPMENT.md` — tarihli kayıt (en yeni üstte)
-4. `signalbird.web/public/docs/{tr,en}/` — `sdk-node.md`, `sdk-browser.md`,
+1. `docs/CONTRACT.md` - sözleşme
+2. `README.md` - kök, dil matrisi ve hızlı başlangıç
+3. `DEVELOPMENT.md` - tarihli kayıt (en yeni üstte)
+4. `signalbird.web/public/docs/{tr,en}/` - `sdk-node.md`, `sdk-browser.md`,
    `sdk-php.md`, `sdk-messaging.md`, `sdk-widget.md`, `sdk-management.md`,
    `sdk-app.md`, `sdk-partner.md`, `sdk-python.md`, `sdk-go.md`, `sdk-dotnet.md`,
    `sdk-swift.md`, `sdk-kotlin.md`
-5. `signalbird.web/src/app/[locale]/(marketing)/sdk/page.tsx` — yüzey × dil
+5. `signalbird.web/src/app/[locale]/(marketing)/sdk/page.tsx` - yüzey × dil
    seçicili ana sayfa; oradaki her kod örneği pakette GERÇEKTEN olmalı
 
 ### Akış
@@ -168,14 +168,14 @@ docs/CONTRACT.md güncelle
 - **Admin yüzeyi OLMAYACAK**: kullanıcı yönetimi, faturalama, abonelik, plan,
   şirket/takım CRUD. Yönetim yüzeyi müşterinin KENDİ projesi içindir.
   **Tek istisna Partner yüzeyidir** ve ayrı anahtar türü taşır (CONTRACT §12.1)
-- Mobil dillerde (Swift, Kotlin) Gönderim ya da Yönetim istemcisi OLMAYACAK —
+- Mobil dillerde (Swift, Kotlin) Gönderim ya da Yönetim istemcisi OLMAYACAK -
   GİZLİ anahtar (`sb_secret_live_`) telefona gömülmez
 - Anahtar dışında kimlik doğrulama OLMAYACAK (widget'ta ziyaretçi sırrı da bir anahtardır)
-- İstemci içinde otomatik retry OLMAYACAK — kritik alarmı iki kez çaldırır,
+- İstemci içinde otomatik retry OLMAYACAK - kritik alarmı iki kez çaldırır,
   iletiyi iki kez gönderir
-- Batch/kuyruk/arka plan thread'i OLMAYACAK (widget'ın polling'i hariç — o
+- Batch/kuyruk/arka plan thread'i OLMAYACAK (widget'ın polling'i hariç - o
   sunucuya değil ziyaretçiye hizmet eder)
-- Widget'a çerçeve/bağımlılık EKLENMEYECEK — düz DOM, Shadow DOM, tek IIFE
+- Widget'a çerçeve/bağımlılık EKLENMEYECEK - düz DOM, Shadow DOM, tek IIFE
 - **Derleme çıktısı commit EDİLMEYECEK** (`.build/`, `.gradle/`, `bin/`,
   `build/`, `obj/`). Bir kez girerse etiketlere yapışır ve geriye dönük
   temizlenemez; CI girişte tutuyor
@@ -183,7 +183,7 @@ docs/CONTRACT.md güncelle
   ve `illuminate/support` `suggest`tir: Laravel dışı bir tüketici onları
   indirmez. `SignalbirdLogHandler`, `Mail\SignalbirdTransport`,
   `SignalbirdServiceProvider` ve `Facades\Signalbird` bu yüzden yalnız o
-  paketler varken yüklenir — CI onları `class_exists` ile zorlamaz
+  paketler varken yüklenir - CI onları `class_exists` ile zorlamaz
 
 ## Yeni dil ekleme
 
@@ -198,6 +198,6 @@ docs/CONTRACT.md güncelle
 
 ## İlişkili Projeler
 
-- **signalbird.api** — `/v1/radio/*`, `/v1/email|sms|push|contacts|campaigns|messages`, `/v1/sdk/*` uçlarının sahibi → `../signalbird.api/CLAUDE.md`
-- **signalbird.web** — SDK dokümanlarını (`public/docs/`) ve widget'ı (`public/sdk/v1/signalbird.js`) yayınlar → `../signalbird.web/CLAUDE.md`
-- **veribenim.api** — Gönderim istemcisinin (PHP) ilk büyük kullanıcısı
+- **signalbird.api** - `/v1/radio/*`, `/v1/email|sms|push|contacts|campaigns|messages`, `/v1/sdk/*` uçlarının sahibi → `../signalbird.api/CLAUDE.md`
+- **signalbird.web** - SDK dokümanlarını (`public/docs/`) ve widget'ı (`public/sdk/v1/signalbird.js`) yayınlar → `../signalbird.web/CLAUDE.md`
+- **veribenim.api** - Gönderim istemcisinin (PHP) ilk büyük kullanıcısı

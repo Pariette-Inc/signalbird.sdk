@@ -4,7 +4,7 @@ name: publish
 #
 # Sürüm KİLİTLİDİR: `scripts/sync-version.mjs` VERSION dosyasını tüm
 # manifestlere yazar ve CI ayrışmayı kırar. Bu iş akışı da etiketi VERSION ile
-# karşılaştırır — yanlış etiketle yayınlanan bir paket geri alınamaz.
+# karşılaştırır - yanlış etiketle yayınlanan bir paket geri alınamaz.
 #
 # Kayıt defterleri ve nasıl yayınlandıkları:
 #
@@ -50,7 +50,7 @@ jobs:
       contents: read
       id-token: write
     # Jeton JOB seviyesinde: adımın kendi `env:`i, o adımın `if:`inde HENÜZ
-    # görünmez — eski hâliyle "Yayınla" HER sürümde sessizce atlanıyordu
+    # görünmez - eski hâliyle "Yayınla" HER sürümde sessizce atlanıyordu
     # (v2.3.0-2.3.2'de yakalandı, 3 Eyl 2026). Job env'i adım if'inde görünür.
     env:
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -81,7 +81,7 @@ public sealed class ManagementClient
     public Task<SbResult> ListConversationMessagesAsync(string id, IDictionary<string, object?>? query = null, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Get, $"/v1/chat/conversations/{Transport.Seg(id)}/messages", null, query, ct);
 
-    /// <summary>Proaktif sohbet — ziyaretçi yazmadan ajan başlatır.</summary>
+    /// <summary>Proaktif sohbet - ziyaretçi yazmadan ajan başlatır.</summary>
     public Task<SbResult> StartConversationAsync(object input, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Post, "/v1/chat/conversations", input, null, ct);
 
@@ -157,14 +157,14 @@ public sealed class ManagementClient
 
     /// <summary>
     /// Yanıt/çözüm süresi, memnuniyet ve ajan kırılımı.
-    /// Veri yoksa süreler null döner — 0 DEĞİL.
+    /// Veri yoksa süreler null döner - 0 DEĞİL.
     /// </summary>
     public Task<SbResult> ChatReportAsync(string range = "30d", CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Get, "/v1/chat/reports", null,
             new Dictionary<string, object?> { ["range"] = range }, ct);
 
     // Uygulama uçları KALDIRILDI (1 Eyl 2026): sohbet ve push birer modül
-    // anahtarıdır — ListModuleKeysAsync("chat").
+    // anahtarıdır - ListModuleKeysAsync("chat").
 
     public Task<SbResult> EmbedTokenAsync(IDictionary<string, object?> input, CancellationToken ct = default)
         => _http.RequestAsync(HttpMethod.Post, "/v1/embed/tokens", input, null, ct);

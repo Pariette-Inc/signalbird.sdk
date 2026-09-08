@@ -1,5 +1,5 @@
 /**
- * `signalbird/angular` — Angular servisi ve sağlayıcısı.
+ * `signalbird/angular` - Angular servisi ve sağlayıcısı.
  *
  * Dekoratör KULLANMAZ: `@Injectable()` yazsaydık paketin derlenmesi Angular
  * sürümüne bağlanırdı ve her büyük sürümde yeniden yayın gerekirdi. Bunun
@@ -12,7 +12,7 @@ import { BehaviorSubject, type Observable } from 'rxjs';
 import { ChatSession, SignalbirdApp } from '../app';
 import type { AppConfig, ChatState, IdentifyInput, RegisterDeviceInput, SessionInput } from '../app';
 
-/** DI belirteci — Angular'ın `InjectionToken`'ına sarılır (aşağıda). */
+/** DI belirteci - Angular'ın `InjectionToken`'ına sarılır (aşağıda). */
 export const SIGNALBIRD_CONFIG = 'SIGNALBIRD_CONFIG';
 
 /**
@@ -45,7 +45,7 @@ export class SignalbirdService {
     return this.subject.asObservable();
   }
 
-  /** Panel açık mı — yoklama hızını belirler. */
+  /** Panel açık mı - yoklama hızını belirler. */
   setOpen(open: boolean): void {
     this.session.setActive(open);
   }
@@ -97,7 +97,7 @@ export class SignalbirdService {
 /**
  * `bootstrapApplication(App, { providers: [provideSignalbird({ publicKey })] })`
  *
- * Dönen nesne Angular'ın `Provider` biçimindedir ama tipi buraya gömülmez —
+ * Dönen nesne Angular'ın `Provider` biçimindedir ama tipi buraya gömülmez -
  * paket Angular'a derleme zamanı bağımlılık taşımaz.
  */
 export function provideSignalbird(config: AppConfig): {

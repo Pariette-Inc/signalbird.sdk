@@ -1,9 +1,9 @@
 /**
- * signalbird — sunucu tarafı giriş noktası.
+ * signalbird - sunucu tarafı giriş noktası.
  *
  * Next.js sunucu bileşenleri, API route'ları, Express/Fastify/NestJS ve düz
  * Node betikleri buradan alır. TARAYICI için `signalbird/browser`
- * kullanılır — gizli anahtar istemciye inmez.
+ * kullanılır - gizli anahtar istemciye inmez.
  *
  * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
  *  - `SignalbirdClient`     → Telsiz (log yazma), `sb_secret_live_…`
@@ -11,10 +11,10 @@
  *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
  *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
  *  - `SignalbirdPartner`    → Partner (müşteri sağlama, modül yetkisi, gömme),
- *                             gizli anahtar — yalnız sözleşmeli platformlar
+ *                             gizli anahtar - yalnız sözleşmeli platformlar
  *
  * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
- * `signalbird/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
+ * `signalbird/app` - ve onun çatı uyarlamaları `/react`, `/vue`,
  * `/angular`, `/react-native`.
  */
 export { SignalbirdClient } from './client';
@@ -151,7 +151,7 @@ let managementSingleton: SignalbirdManagement | null = null;
 /**
  * Ortam değişkeninden kurulan paylaşımlı yönetim istemcisi.
  *
- * `SIGNALBIRD_DOMAIN_KEY` okunur (yoksa `SIGNALBIRD_DOMAIN_KEY` — ikisi de aynı
+ * `SIGNALBIRD_DOMAIN_KEY` okunur (yoksa `SIGNALBIRD_DOMAIN_KEY` - ikisi de aynı
  * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
  *
  *   import { management } from 'signalbird'

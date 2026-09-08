@@ -1,5 +1,5 @@
 /**
- * Gömme çekirdeği — çatısız, bağımlılıksız.
+ * Gömme çekirdeği - çatısız, bağımlılıksız.
  *
  * Ev sahibi tarafında TEK satır:
  *
@@ -53,7 +53,7 @@ function resolveTheme(theme: EmbedTheme | undefined): 'light' | 'dark' {
   return 'light';
 }
 
-/** `{url}`, `{data:{url}}` ya da düz string — üçü de kabul edilir. */
+/** `{url}`, `{data:{url}}` ya da düz string - üçü de kabul edilir. */
 function readUrl(result: unknown): string | null {
   if (typeof result === 'string') return result || null;
 
@@ -189,7 +189,7 @@ export function createEmbed(options: EmbedOptions): EmbedHandle {
     /*
      * `allow-same-origin` ŞART: gömülü ekran jetonu KENDİ kökeninde oturuma
      * çevirir; sandbox onu kısarsa ekran hiç açılmaz. `allow-top-navigation`
-     * VERİLMEZ — gömülü ekran ev sahibi panelin tamamını başka bir adrese
+     * VERİLMEZ - gömülü ekran ev sahibi panelin tamamını başka bir adrese
      * götüremesin. Ses (yeni mesaj) ve dosya yükleme için `allow-popups` ve
      * `allow-downloads` gerekir.
      */
@@ -242,7 +242,7 @@ export function createEmbed(options: EmbedOptions): EmbedHandle {
         typeof targetSelector === 'string' ? document.querySelector(targetSelector) : targetSelector;
 
       if (!(element instanceof HTMLElement)) {
-        throw new Error('Signalbird: gömme kabı bulunamadı — ' + String(targetSelector));
+        throw new Error('Signalbird: gömme kabı bulunamadı - ' + String(targetSelector));
       }
 
       container = element;

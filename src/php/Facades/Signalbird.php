@@ -47,7 +47,7 @@ class Signalbird extends Facade
     }
 
     /**
-     * Zincirlenebilir e-posta gönderimi — şablon, değişken, gönderen adı.
+     * Zincirlenebilir e-posta gönderimi - şablon, değişken, gönderen adı.
      *
      *   Signalbird::mail()->to($u->email)->template('Hoş Geldiniz')
      *       ->vars(['ad' => $u->name])->transactional()->send();
@@ -62,7 +62,7 @@ class Signalbird extends Facade
     }
 
     /**
-     * Kanaldan e-posta — gönderici KANALI ile (2 Eyl 2026, Ahmet).
+     * Kanaldan e-posta - gönderici KANALI ile (2 Eyl 2026, Ahmet).
      *
      *   Signalbird::sendMail('noReply')
      *       ->to('ayse@ornek.com')
@@ -73,7 +73,7 @@ class Signalbird extends Facade
      *       ->send();
      *
      * Kanal, panelde adresle birlikte açılan `email` modül anahtarıdır; From
-     * adresini o seçer. Yeni anahtar üretilmez — kimlik domain anahtarında,
+     * adresini o seçer. Yeni anahtar üretilmez - kimlik domain anahtarında,
      * davranış kanalda (Telsiz `radio('kanal')` ile aynı model).
      */
     public static function sendMail(string $channel): MailBuilder
@@ -93,7 +93,7 @@ class Signalbird extends Facade
     }
 
     /**
-     * Partner istemcisi — yalnız sözleşmeli platformlar (veribenim, submitcms).
+     * Partner istemcisi - yalnız sözleşmeli platformlar (veribenim, submitcms).
      * Laravel konteyneri varsa oradaki tekil (`signalbird.partner`).
      */
     public static function partner(): PartnerClient

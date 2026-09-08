@@ -4,7 +4,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | TEK ANAHTAR — `SIGNALBIRD_DOMAIN_KEY`
+    | TEK ANAHTAR - `SIGNALBIRD_DOMAIN_KEY`
     |--------------------------------------------------------------------------
     | Sözleşme: ../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md
     |
@@ -15,7 +15,7 @@ return [
     | Gizli anahtar (`sb_secret_live_…`) bu dosyanın okuduğu tek şeydir ve
     | kurulumun TAMAMIDIR: gönderim (e-posta/SMS/push), kişi ve kampanya,
     | yönetim (sohbet, kanal, domain) ve Telsiz log yazımı aynı anahtarla
-    | çalışır. Yüzey başına ayrı anahtar YOKTUR — 28 Ağu 2026'da "bir tane
+    | çalışır. Yüzey başına ayrı anahtar YOKTUR - 28 Ağu 2026'da "bir tane
     | signalbird anahtarı yeterli olmalı" denmişti; artık gerçekten öyle.
     |
     | Panel → Alan adları → [alan adı] → Anahtarlar. Anahtar bir kez görünür;
@@ -38,7 +38,7 @@ return [
     */
     'url' => env('SIGNALBIRD_URL', 'https://live.signalbird.io/api'),
 
-    /* Her kayda eklenen köken adı — hangi sunucudan geldiği. */
+    /* Her kayda eklenen köken adı - hangi sunucudan geldiği. */
     'source' => env('SIGNALBIRD_SOURCE', env('APP_ENV')),
 
     'timeout' => env('SIGNALBIRD_TIMEOUT', 5),
@@ -55,12 +55,12 @@ return [
     /*
     | Posta taşıyıcısı (`MAIL_MAILER=signalbird`) hangi ileti sınıfını
     | kullansın. Hukuki kapı: `commercial` iletide RFC 8058 çıkış zorunludur ve
-    | onu kampanya yolu üretir — bu taşıyıcıdan işlemsel posta çıkar.
+    | onu kampanya yolu üretir - bu taşıyıcıdan işlemsel posta çıkar.
     */
     'mail_class' => env('SIGNALBIRD_MAIL_CLASS', 'transactional'),
 
     /*
-    | Taşıyıcının GÖNDERİCİ KANALI (2 Eyl 2026) — From adresini panelde adresle
+    | Taşıyıcının GÖNDERİCİ KANALI (2 Eyl 2026) - From adresini panelde adresle
     | birlikte açılan `email` kanalı seçer (Telsiz'in radio('kanal') modeli).
     | Kanal adı SIR DEĞİLDİR; tercih edilen yer env değil KODDUR:
     |   config/mail.php → 'signalbird' => ['transport' => 'signalbird',

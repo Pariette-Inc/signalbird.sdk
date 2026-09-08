@@ -2,16 +2,16 @@ import { readFileSync } from 'node:fs'
 import { defineConfig } from 'tsup'
 
 /**
- * Giriş noktaları — her biri bir yüzey ya da bir çatı uyarlaması:
+ * Giriş noktaları - her biri bir yüzey ya da bir çatı uyarlaması:
  *
  *  - `index`        → sunucu (Node 18+): Telsiz (`SignalbirdClient`), Gönderim
  *                     (`SignalbirdMessaging`, `verifyWebhook`), Yönetim
  *                     (`SignalbirdManagement`)
  *  - `browser`      → tarayıcı Telsiz istemcisi (açık anahtar, sendBeacon)
  *  - `app`          → son kullanıcı yüzeyi: sohbet + push cihaz kaydı
- *                     (`SignalbirdApp`, `ChatSession`) — çatısız
+ *                     (`SignalbirdApp`, `ChatSession`) - çatısız
  *  - `embed`        → panel gömme: partner kendi ekranında Signalbird modülünü
- *                     çalıştırır (`createEmbed`) — çatısız, DOM'a bağımlı
+ *                     çalıştırır (`createEmbed`) - çatısız, DOM'a bağımlı
  *  - `react` `vue` `angular` `react-native`
  *                   → `app`'in üstüne oturan ince uyarlamalar; motor tektir
  *  - `signalbird`   → hazır sohbet widget'ı: tek dosya IIFE, global `Signalbird`,
@@ -22,7 +22,7 @@ import { defineConfig } from 'tsup'
  * `index`/`browser` ayrımı teknik değil güvenliktir; ayrıntı için
  * `src/browser/index.ts` başlığına bakın. Çatılar `external` bırakılır: paket
  * React'i ya da Vue'yu kendi içine gömerse müşterinin uygulamasında iki kopya
- * çalışır — React'te bu doğrudan çökme demektir.
+ * çalışır - React'te bu doğrudan çökme demektir.
  */
 const version = readFileSync(new URL('./VERSION', import.meta.url), 'utf8').trim()
 

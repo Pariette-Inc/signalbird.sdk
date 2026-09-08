@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Level — beş seviye. Fazlası eklenmez: kanal ayarını anlaşılır tutar.
+// Level - beş seviye. Fazlası eklenmez: kanal ayarını anlaşılır tutar.
 type Level string
 
 const (
@@ -18,7 +18,7 @@ const (
 	LevelCritical Level = "critical"
 )
 
-// Config — Telsiz istemcisinin ayarları.
+// Config - Telsiz istemcisinin ayarları.
 type Config struct {
 	// DomainKey, sunucu anahtarıdır (sb_secret_live_…). Bu anahtar GİZLİDİR ve
 	// tarayıcıya gömülemez.
@@ -35,7 +35,7 @@ type Config struct {
 	Debug        bool
 }
 
-// Event — toplu gönderimdeki tek satır.
+// Event - toplu gönderimdeki tek satır.
 type Event struct {
 	Key     string         `json:"key"`
 	Message string         `json:"message"`
@@ -44,7 +44,7 @@ type Event struct {
 	Source  string         `json:"source,omitempty"`
 }
 
-// Client — Telsiz (log yazma) istemcisi.
+// Client - Telsiz (log yazma) istemcisi.
 type Client struct {
 	http   *transport
 	source string
@@ -114,7 +114,7 @@ func (c *Client) Critical(ctx context.Context, key, message string, fields map[s
 	return c.Log(ctx, key, message, LevelCritical, fields)
 }
 
-// Batch — en fazla 100 kayıt, satır satır sonuç.
+// Batch - en fazla 100 kayıt, satır satır sonuç.
 //
 // Kısmi başarı normaldir (kota tam ortada dolabilir). Başarısız satırlar
 // YENİDEN DENENMEZ: aynı logu iki kez yazmak da bir maliyettir.

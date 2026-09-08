@@ -1,4 +1,4 @@
-"""Signalbird SDK — Python.
+"""Signalbird SDK - Python.
 
 Üç sunucu yüzeyi, üç istemci; anahtarları ve kapıları farklıdır:
 

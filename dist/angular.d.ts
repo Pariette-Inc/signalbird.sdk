@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 import { SignalbirdApp, AppConfig, ChatState, SessionInput, IdentifyInput, RegisterDeviceInput } from './app.js';
 
 /**
- * `signalbird/angular` — Angular servisi ve sağlayıcısı.
+ * `signalbird/angular` - Angular servisi ve sağlayıcısı.
  *
  * Dekoratör KULLANMAZ: `@Injectable()` yazsaydık paketin derlenmesi Angular
  * sürümüne bağlanırdı ve her büyük sürümde yeniden yayın gerekirdi. Bunun
@@ -12,7 +12,7 @@ import { SignalbirdApp, AppConfig, ChatState, SessionInput, IdentifyInput, Regis
  * RxJS bir `peerDependency`'dir (Angular zaten getirir).
  */
 
-/** DI belirteci — Angular'ın `InjectionToken`'ına sarılır (aşağıda). */
+/** DI belirteci - Angular'ın `InjectionToken`'ına sarılır (aşağıda). */
 declare const SIGNALBIRD_CONFIG = "SIGNALBIRD_CONFIG";
 /**
  * Uygulama başına tek örnek (`providedIn: 'root'` karşılığı).
@@ -27,7 +27,7 @@ declare class SignalbirdService {
     constructor(config: AppConfig);
     /** Sohbet durumu akışı. İlk abone olduğunda oturum başlar. */
     chat$(): Observable<ChatState>;
-    /** Panel açık mı — yoklama hızını belirler. */
+    /** Panel açık mı - yoklama hızını belirler. */
     setOpen(open: boolean): void;
     send(body: string, attachments?: unknown[]): Promise<unknown>;
     typing(isTyping: boolean): void;
@@ -48,7 +48,7 @@ declare class SignalbirdService {
 /**
  * `bootstrapApplication(App, { providers: [provideSignalbird({ publicKey })] })`
  *
- * Dönen nesne Angular'ın `Provider` biçimindedir ama tipi buraya gömülmez —
+ * Dönen nesne Angular'ın `Provider` biçimindedir ama tipi buraya gömülmez -
  * paket Angular'a derleme zamanı bağımlılık taşımaz.
  */
 declare function provideSignalbird(config: AppConfig): {

@@ -8,7 +8,7 @@ use Signalbird\Sdk\Messaging\MessagingClient;
 use Signalbird\Sdk\SignalbirdException;
 
 /**
- * `Signalbird::mail()` — zincirlenebilir e-posta gönderimi.
+ * `Signalbird::mail()` - zincirlenebilir e-posta gönderimi.
  *
  * Sınanan değişmezler:
  *  - ileti SINIFI zorunludur, varsayılanı yoktur (hukukî kapı)

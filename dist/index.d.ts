@@ -2,7 +2,7 @@
  * Telsiz (Radio) istemcisinin ortak tipleri.
  *
  * SDK'nın tek işi vardır: bir kanala mesaj yazmak. Bildirimin kime, hangi
- * kanaldan ve hangi saatte gideceği SUNUCUDA, kanal ayarlarında durur —
+ * kanaldan ve hangi saatte gideceği SUNUCUDA, kanal ayarlarında durur -
  * istemci bunu bilmez ve bilmemelidir. Aksi hâlde bildirim kuralını
  * değiştirmek için müşterinin kodunu yeniden yayınlaması gerekirdi.
  */
@@ -10,7 +10,7 @@
 type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 interface SignalbirdConfig {
     /**
-     * Gizli domain anahtarı (`sb_secret_live_…`) — `SIGNALBIRD_DOMAIN_KEY`.
+     * Gizli domain anahtarı (`sb_secret_live_…`) - `SIGNALBIRD_DOMAIN_KEY`.
      *
      * Bu anahtar GİZLİDİR ve tarayıcıya gömülemez: sunucu `Origin` başlığı taşıyan
      * istekleri reddeder (401 `SECRET_KEY_IN_BROWSER`). Tarayıcı için
@@ -18,7 +18,7 @@ interface SignalbirdConfig {
      *
      * v2 (1 Eyl 2026): eskiden `apiKey` idi ve yüzey başına ayrı bir anahtar
      * ailesi vardı (`sbr_live_`, `sb_`, `sbw_pub_`, `sbp_live_`). Hepsi tek
-     * anahtara indi — sözleşme:
+     * anahtara indi - sözleşme:
      * ../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md
      */
     domainKey: string;
@@ -26,7 +26,7 @@ interface SignalbirdConfig {
     baseUrl?: string;
     /** Her olaya eklenen köken adı (sunucu adı, servis adı). */
     source?: string;
-    /** İstek zaman aşımı (ms). Varsayılan 5000 — log göndermek isteği bekletmemeli. */
+    /** İstek zaman aşımı (ms). Varsayılan 5000 - log göndermek isteği bekletmemeli. */
     timeout?: number;
     /**
      * Hata fırlatılsın mı. Varsayılan `false`.
@@ -41,10 +41,10 @@ interface SignalbirdConfig {
 }
 interface LogInput {
     /**
-     * Modül anahtarı — panelde açtığınız kanalın adı (`penyuSatisBildirimi`).
+     * Modül anahtarı - panelde açtığınız kanalın adı (`penyuSatisBildirimi`).
      *
      * Gizli DEĞİLDİR ve kodun içinde durur: domain anahtarı olmadan hiçbir işe
-     * yaramaz. Tanımsız bir ad gönderirseniz kanal SESSİZ olarak açılır — kayıt
+     * yaramaz. Tanımsız bir ad gönderirseniz kanal SESSİZ olarak açılır - kayıt
      * düşmez, ama bildirim de gitmez; kuralı panelden siz koyarsınız.
      */
     key: string;
@@ -74,11 +74,11 @@ interface BatchResult {
 declare class SignalbirdError extends Error {
     readonly status: number;
     readonly code?: string | undefined;
-    /** Sunucunun ham yanıt gövdesi (varsa) — gönderim istemcisi doldurur. */
+    /** Sunucunun ham yanıt gövdesi (varsa) - gönderim istemcisi doldurur. */
     readonly body?: unknown | undefined;
-    constructor(message: string, status: number, code?: string | undefined, 
-    /** Sunucunun ham yanıt gövdesi (varsa) — gönderim istemcisi doldurur. */
-    body?: unknown | undefined);
+    constructor(message: string, status: number, code?: string | undefined,
+        /** Sunucunun ham yanıt gövdesi (varsa) - gönderim istemcisi doldurur. */
+        body?: unknown | undefined);
 }
 declare const DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 
@@ -117,7 +117,7 @@ declare class SignalbirdClient {
     /** Tek kayıt gönderir. */
     log(input: LogInput): Promise<LogResult>;
     /**
-     * Toplu gönderim — 100 kayda kadar.
+     * Toplu gönderim - 100 kayda kadar.
      *
      * Kısmi başarı normaldir (kota tam ortada dolabilir), o yüzden sonuç tek bir
      * durum değil satır satır döner.
@@ -133,7 +133,7 @@ declare class SignalbirdClient {
      *
      * Kancayı takıp süreci ÖLDÜRMEYE devam eder: `uncaughtException` sonrası
      * süreci ayakta tutmak, bozuk durumdaki bir uygulamayı çalıştırmaya devam
-     * etmek demektir — log göndermek bunu meşrulaştırmaz.
+     * etmek demektir - log göndermek bunu meşrulaştırmaz.
      */
     captureUncaught(key?: string): () => void;
     private send;
@@ -143,7 +143,7 @@ declare class SignalbirdClient {
 /**
  * Gönderim (Messaging) istemcisinin tipleri.
  *
- * Alan adları API ile birebir aynıdır (snake_case) — SDK, sunucunun döndüğünü
+ * Alan adları API ile birebir aynıdır (snake_case) - SDK, sunucunun döndüğünü
  * yeniden adlandırmaz. Böylece API dokümanındaki bir alan SDK'da da aynı adla
  * bulunur ve iki doküman arasında çeviri tablosu gerekmez.
  */
@@ -152,7 +152,7 @@ interface MessagingConfig {
     domainKey: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
-    /** İstek zaman aşımı (ms). Varsayılan 15000 — toplu kişi yükleme uzun sürebilir. */
+    /** İstek zaman aşımı (ms). Varsayılan 15000 - toplu kişi yükleme uzun sürebilir. */
     timeout?: number;
     /** Hata fırlatılsın mı. Varsayılan `false`: `ok:false` + `code` döner. */
     throwOnError?: boolean;
@@ -171,7 +171,7 @@ type SbResult$1<T> = {
     message: string;
     data?: unknown;
 };
-/** İleti sınıfı — API'de zorunludur ve varsayılanı YOKTUR (hukuki kapı). */
+/** İleti sınıfı - API'de zorunludur ve varsayılanı YOKTUR (hukuki kapı). */
 type MessageClass = 'transactional' | 'commercial';
 type Channel = 'email' | 'sms' | 'push';
 interface SendEmailInput {
@@ -266,11 +266,11 @@ interface CreateCampaignInput {
     name: string;
     channel: Channel;
     /**
-     * TXT ile doğrulanmış müşteri domaininin id'si — ZORUNLU. Doğrulanmamış
+     * TXT ile doğrulanmış müşteri domaininin id'si - ZORUNLU. Doğrulanmamış
      * domain adına kampanya açılamaz (`DOMAIN_NOT_VERIFIED`).
      */
     domain_id: number;
-    /** Hedef: `list_id` VEYA `segment_id` — ikisinden tam biri. */
+    /** Hedef: `list_id` VEYA `segment_id` - ikisinden tam biri. */
     list_id?: number;
     segment_id?: number;
     subject?: string;
@@ -372,7 +372,7 @@ declare class SignalbirdMessaging {
     sendEmail(input: SendEmailInput): Promise<SbResult$1<SendResult>>;
     sendSms(input: SendSmsInput): Promise<SbResult$1<SendResult>>;
     /**
-     * Otomasyon olayı — kendi sisteminizdeki bir olayı bildirir ve eşleşen
+     * Otomasyon olayı - kendi sisteminizdeki bir olayı bildirir ve eşleşen
      * akışı tetikler (§11). Signalbird olayın anlamını bilmez; adı sizindir.
      */
     track(input: {
@@ -390,7 +390,7 @@ declare class SignalbirdMessaging {
         canceled: number;
         contact_id: number;
     }>>;
-    /** SMS parça/karakter hesabı — kota harcamaz. */
+    /** SMS parça/karakter hesabı - kota harcamaz. */
     previewSms(body: string): Promise<SbResult$1<SmsPreview>>;
     sendPush(input: SendPushInput): Promise<SbResult$1<SendResult>>;
     listContacts(query?: ListContactsQuery): Promise<SbResult$1<Paginated$1<Contact>>>;
@@ -403,7 +403,7 @@ declare class SignalbirdMessaging {
      * 1000'lik parçalara bölünür ve SIRAYLA gönderilir (paralel değil: aynı
      * e-posta iki parçada da varsa yarış olmasın). Sonuçlar tek yanıtta
      * birleştirilir. Bir parça başarısız olursa o noktada durulur ve o ana kadar
-     * biriken sayımlar `data` içinde döner — çağıran kaç kişinin işlendiğini görür.
+     * biriken sayımlar `data` içinde döner - çağıran kaç kişinin işlendiğini görür.
      */
     bulkContacts(input: BulkContactsInput): Promise<SbResult$1<BulkContactsResult>>;
     listContactLists(): Promise<SbResult$1<ContactList[] | Paginated$1<ContactList>>>;
@@ -420,7 +420,7 @@ declare class SignalbirdMessaging {
      *   for await (const m of sdk.iterateCampaignMessages(42)) { … }
      *
      * Bir sayfa alınamazsa `SignalbirdError` fırlatır (sessiz yarım liste,
-     * "hepsi bu" sanılır — o daha tehlikeli).
+     * "hepsi bu" sanılır - o daha tehlikeli).
      */
     iterateCampaignMessages(id: number | string, query?: Omit<ListCampaignMessagesQuery, 'page'>): AsyncGenerator<Message, void, undefined>;
     listMessages(query?: ListMessagesQuery): Promise<SbResult$1<Paginated$1<Message>>>;
@@ -444,11 +444,11 @@ interface SbResult<T = unknown> {
  * Sözleşme: docs/CONTRACT.md § 12 ve
  * signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md.
  *
- * Alan adları API ile birebir aynıdır (snake_case) — SDK yeniden adlandırmaz.
+ * Alan adları API ile birebir aynıdır (snake_case) - SDK yeniden adlandırmaz.
  */
 
 interface PartnerConfig {
-    /** `sb_secret_live_…` — gizli domain anahtarı. Tarayıcıya İNMEZ. */
+    /** `sb_secret_live_…` - gizli domain anahtarı. Tarayıcıya İNMEZ. */
     domainKey: string;
     baseUrl?: string;
     timeout?: number;
@@ -463,7 +463,7 @@ interface PartnerOwnerInput {
     locale?: string;
 }
 interface CreateCompanyInput {
-    /** Partner'ın kendi tarafındaki müşteri kimliği — idempotens anahtarı. */
+    /** Partner'ın kendi tarafındaki müşteri kimliği - idempotens anahtarı. */
     external_id: string;
     name: string;
     owner: PartnerOwnerInput;
@@ -507,7 +507,7 @@ interface PartnerDomain {
     external_id: string;
     domain: string;
     verified_at: string | null;
-    /** `txt` | `partner` — partner beyanı kampanya için YETMEZ. */
+    /** `txt` | `partner` - partner beyanı kampanya için YETMEZ. */
     verified_via: string | null;
     can_send_campaigns: boolean;
     is_active: boolean;
@@ -546,7 +546,7 @@ interface UptimeReport {
     external_id?: string;
     monitored?: boolean;
     range: string;
-    /** Hiç kontrol yoksa `null` döner — %100 DEĞİL. */
+    /** Hiç kontrol yoksa `null` döner - %100 DEĞİL. */
     uptime: number | null;
     avg_response_ms: number | null;
     checks: number;
@@ -599,7 +599,7 @@ interface EmbedToken {
 }
 
 interface ManagementConfig {
-    /** Takım API anahtarı (`sb_…`) — `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
+    /** Takım API anahtarı (`sb_…`) - `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
     domainKey: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
@@ -621,13 +621,13 @@ type RadioLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 /** Modül anahtarı taşıyan modüller (`monitoring`/`servers` taşımaz). */
 type KeyedModule = 'logger' | 'email' | 'sms' | 'push' | 'chat';
 type ModuleKeyLevel = 'debug' | 'info' | 'warn' | 'error' | 'critical';
-/** Bildirim kanalı — seçim KANAL düzeyindedir, kişi başına değil. */
+/** Bildirim kanalı - seçim KANAL düzeyindedir, kişi başına değil. */
 type NotifyChannel = 'push' | 'email';
 /**
- * Modül anahtarı — kodun içine gömülen kanal adı.
+ * Modül anahtarı - kodun içine gömülen kanal adı.
  *
  * Gizli DEĞİLDİR: domain anahtarı olmadan hiçbir işe yaramaz. Domain
- * anahtarına referans da VERMEZ — anahtar yenilendiğinde bu kayıtlar
+ * anahtarına referans da VERMEZ - anahtar yenilendiğinde bu kayıtlar
  * bozulmasın diye (KEY_ARCHITECTURE §2).
  */
 interface ModuleKey {
@@ -749,7 +749,7 @@ interface ListChatMessagesQuery {
     include_internal?: boolean;
 }
 interface StartConversationInput {
-    /** Ziyaretçi ya da kişi — biri zorunlu. */
+    /** Ziyaretçi ya da kişi - biri zorunlu. */
     visitor_id?: string;
     contact_id?: number;
     body: string;
@@ -788,7 +788,7 @@ interface CannedReplyInput {
 type AppPlatform = 'web' | 'ios' | 'android' | 'other';
 interface AppDevice {
     id: number;
-    /** Maskeli token — tamamı hiçbir zaman dönmez. */
+    /** Maskeli token - tamamı hiçbir zaman dönmez. */
     token_masked?: string;
     platform?: string;
     provider?: string | null;
@@ -887,7 +887,7 @@ interface ChatReport {
     agents: ChatReportAgent[];
 }
 /**
- * Gömme jetonu isteği — MÜŞTERİNİN kendi paneli için.
+ * Gömme jetonu isteği - MÜŞTERİNİN kendi paneli için.
  *
  * Partner sürümünden (`EmbedTokenInput`) tek farkı kimliğin nasıl verildiği:
  * partner kendi sistemindeki dış kimliği (`user_external_id`) yollar, müşteri
@@ -903,7 +903,7 @@ interface TeamEmbedTokenInput {
 }
 
 /**
- * Yönetim (Management) istemcisi — sunucu tarafı.
+ * Yönetim (Management) istemcisi - sunucu tarafı.
  *
  * Müşterinin panelde tıklayarak yaptığı her şeyi kodla yapar: Telsiz projesi ve
  * kanalı açar, olay akışını okur, sohbet gelen kutusunu işler, uygulama kaydı
@@ -914,7 +914,7 @@ interface TeamEmbedTokenInput {
  *
  * Neden ayrı sınıf: Gönderim (`SignalbirdMessaging`) ileti gönderir ve kota
  * harcar; bu istemci yapılandırma değiştirir. Aynı anahtar ailesini kullanırlar
- * (`sb_…`) ama scope'ları ve hata kümeleri farklıdır — tek sınıfta birleşseydi
+ * (`sb_…`) ama scope'ları ve hata kümeleri farklıdır - tek sınıfta birleşseydi
  * "hangi scope gerekiyordu" sorusu her metotta yeniden sorulurdu.
  *
  * Sözleşme: docs/CONTRACT.md § 10
@@ -925,7 +925,7 @@ declare class SignalbirdManagement {
     constructor(config: ManagementConfig);
     /** Panelin Telsiz özeti: proje sayısı, günlük hacim, son olaylar. */
     radioSummary(): Promise<SbResult<Record<string, unknown>>>;
-    /** Olay akışı — kanal, seviye ve tarihe göre süzülür. */
+    /** Olay akışı - kanal, seviye ve tarihe göre süzülür. */
     radioEvents(query?: ListRadioEventsQuery): Promise<SbResult<Paginated<RadioEvent>>>;
     listModuleKeys(module: KeyedModule, query?: {
         domain_id?: number;
@@ -938,7 +938,7 @@ declare class SignalbirdManagement {
     /**
      * Kanal açar.
      *
-     * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir —
+     * `key` verilmezse başlıktan üretilir ve çakışırsa sonuna sayı eklenir -
      * "bu ad alınmış" hatasıyla geri dönmek, CI'da kanal açan bir betiği
      * durdururdu.
      */
@@ -967,7 +967,7 @@ declare class SignalbirdManagement {
     listConversationMessages(id: string, query?: ListChatMessagesQuery): Promise<SbResult<{
         messages: ChatMessage[];
     }>>;
-    /** Proaktif sohbet — ziyaretçi yazmadan ajan başlatır. */
+    /** Proaktif sohbet - ziyaretçi yazmadan ajan başlatır. */
     startConversation(input: StartConversationInput): Promise<SbResult<{
         conversation: ChatConversation;
     }>>;
@@ -993,7 +993,7 @@ declare class SignalbirdManagement {
         message: ChatMessage;
     }>>;
     deleteChatMessage(id: string, messageId: string): Promise<SbResult<unknown>>;
-    /** Tepki açma/kapama — aynı emoji ikinci kez gönderilirse kaldırılır. */
+    /** Tepki açma/kapama - aynı emoji ikinci kez gönderilirse kaldırılır. */
     reactToChatMessage(id: string, messageId: string, emoji: string): Promise<SbResult<{
         message: ChatMessage;
     }>>;
@@ -1029,14 +1029,14 @@ declare class SignalbirdManagement {
     deleteChatTrigger(id: number | string): Promise<SbResult<unknown>>;
     /**
      * Yanıt süresi, çözüm süresi, memnuniyet ve ajan kırılımı.
-     * Veri yoksa süreler `null` döner — 0 DEĞİL.
+     * Veri yoksa süreler `null` döner - 0 DEĞİL.
      */
     chatReport(range?: ChatReportRange): Promise<SbResult<ChatReport>>;
     /**
-     * Gömme jetonu — Signalbird ekranını KENDİ panelinizde göstermek için.
+     * Gömme jetonu - Signalbird ekranını KENDİ panelinizde göstermek için.
      *
      * 120 saniye yaşar ve TEK KULLANIMLIKTIR: dönen `url`'i doğrudan bir
-     * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR —
+     * iframe'e verin, saklamayın. Anahtarın `can_issue_embed` onayı ŞARTTIR -
      * scope sisteminden geriye kalan tek kapı, çünkü jeton 60 dakikalık bir
      * panel oturumuna çevriliyor.
      */
@@ -1046,7 +1046,7 @@ declare class SignalbirdManagement {
 }
 
 /**
- * Partner istemcisi — BEŞİNCİ yüzey.
+ * Partner istemcisi - BEŞİNCİ yüzey.
  *
  * Signalbird'ü kendi ürününün içinde satan sözleşmeli platform (veribenim,
  * submitcms) müşterisini bununla sağlar ve yetkilendirir: company + takım +
@@ -1090,7 +1090,7 @@ declare class SignalbirdPartner {
     }): Promise<SbResult<{
         company: PartnerCompany;
     }>>;
-    /** Askıya alır — SİLMEZ. Müşterinin izleme ve mesaj geçmişi durur. */
+    /** Askıya alır - SİLMEZ. Müşterinin izleme ve mesaj geçmişi durur. */
     suspendCompany(externalId: string): Promise<SbResult<{
         company: PartnerCompany;
     }>>;
@@ -1100,7 +1100,7 @@ declare class SignalbirdPartner {
     }>>;
     /**
      * Domain ekler ve (istenirse) izlemeye alır. Kayıt `verified_via:'partner'`
-     * ile doğar: izleme, sohbet ve push için yeter — **e-posta/SMS kampanyası
+     * ile doğar: izleme, sohbet ve push için yeter - **e-posta/SMS kampanyası
      * için TXT şarttır**. Yanıttaki `dns` kaydını yayınlayıp `verifyDomain`
      * çağırmak kapıyı açar.
      */
@@ -1117,7 +1117,7 @@ declare class SignalbirdPartner {
         deleted: boolean;
     }>>;
     domainUptime(externalId: string, range?: UptimeRange): Promise<SbResult<UptimeReport>>;
-    /** Tek istekte müşterinin tüm domainleri — liste ekranı N+1 atmasın. */
+    /** Tek istekte müşterinin tüm domainleri - liste ekranı N+1 atmasın. */
     companyUptime(companyExternalId: string, range?: UptimeRange): Promise<SbResult<{
         range: string;
         data: UptimeReport[];
@@ -1147,7 +1147,7 @@ declare class SignalbirdPartner {
     }>>;
     /**
      * Panel ekranını partner sayfasına gömmek için kısa ömürlü jeton üretir.
-     * 120 saniye yaşar ve TEK KULLANIMLIKTIR — jeton URL'de gider, log ve
+     * 120 saniye yaşar ve TEK KULLANIMLIKTIR - jeton URL'de gider, log ve
      * `Referer` başlığına düşer.
      */
     createEmbedToken(companyExternalId: string, input: EmbedTokenInput): Promise<SbResult<EmbedToken>>;
@@ -1156,11 +1156,11 @@ declare class SignalbirdPartner {
 declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: string | null | undefined, secret: string): boolean;
 
 /**
- * signalbird — sunucu tarafı giriş noktası.
+ * signalbird - sunucu tarafı giriş noktası.
  *
  * Next.js sunucu bileşenleri, API route'ları, Express/Fastify/NestJS ve düz
  * Node betikleri buradan alır. TARAYICI için `signalbird/browser`
- * kullanılır — gizli anahtar istemciye inmez.
+ * kullanılır - gizli anahtar istemciye inmez.
  *
  * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
  *  - `SignalbirdClient`     → Telsiz (log yazma), `sb_secret_live_…`
@@ -1168,10 +1168,10 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
  *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
  *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
  *  - `SignalbirdPartner`    → Partner (müşteri sağlama, modül yetkisi, gömme),
- *                             gizli anahtar — yalnız sözleşmeli platformlar
+ *                             gizli anahtar - yalnız sözleşmeli platformlar
  *
  * Son kullanıcı (ziyaretçi) yüzeyi ayrı giriş noktasındadır:
- * `signalbird/app` — ve onun çatı uyarlamaları `/react`, `/vue`,
+ * `signalbird/app` - ve onun çatı uyarlamaları `/react`, `/vue`,
  * `/angular`, `/react-native`.
  */
 
@@ -1190,7 +1190,7 @@ declare function resetSignalbird(): void;
 /**
  * Ortam değişkeninden kurulan paylaşımlı yönetim istemcisi.
  *
- * `SIGNALBIRD_DOMAIN_KEY` okunur (yoksa `SIGNALBIRD_DOMAIN_KEY` — ikisi de aynı
+ * `SIGNALBIRD_DOMAIN_KEY` okunur (yoksa `SIGNALBIRD_DOMAIN_KEY` - ikisi de aynı
  * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
  *
  *   import { management } from 'signalbird'

@@ -12,7 +12,7 @@ data class SignalbirdAppConfig(
 )
 
 /**
- * Son kullanıcı (uygulama) istemcisi — canlı sohbet + push cihaz kaydı.
+ * Son kullanıcı (uygulama) istemcisi - canlı sohbet + push cihaz kaydı.
  *
  * Müşterinin MÜŞTERİSİ için. Yalnız ziyaretçinin KENDİ verisine dokunur;
  * gönderim yapmaz, kişi listesi okumaz.
@@ -90,7 +90,7 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
             query = mapOf("after" to after, "limit" to limit),
         )
 
-    /** İlk mesajla konuşma açar. Kota burada harcanır — konuşma başına. */
+    /** İlk mesajla konuşma açar. Kota burada harcanır - konuşma başına. */
     suspend fun startConversation(body: String, clientId: String = UUID.randomUUID().toString()): SbResult =
         http.request("POST", "/v1/sdk/chat/conversations", mapOf("body" to body, "client_id" to clientId))
 
@@ -186,7 +186,7 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
         http.request("DELETE", "/v1/sdk/devices/${Transport.seg(token)}")
 
     /**
-     * Bildirime dokunuldu — açılma damgası.
+     * Bildirime dokunuldu - açılma damgası.
      *
      * Push'ta açılmayı yalnızca uygulama bilir: FCM "teslim ettim" der,
      * "kullanıcı dokundu" demez. Bildirim yükündeki `sb_message_id` değerini
@@ -200,7 +200,7 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
      *
      * Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine **sunucu**
      * karar verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket
-     * servisi kimseyi tanımaz, yalnız imzayı doğrular — bu yüzden imza
+     * servisi kimseyi tanımaz, yalnız imzayı doğrular - bu yüzden imza
      * `socket_id`e bağlıdır ve dar bir zaman penceresinde geçerlidir.
      *
      * Bağlantı başına bir kez çağrılır. Soket istemcisinin kendisi bu pakette

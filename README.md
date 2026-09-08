@@ -19,17 +19,17 @@ Bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
 | Dil / platform | Telsiz | Gönderim | Yönetim | Uygulama | Kurulum |
 |---|:--:|:--:|:--:|:--:|---|
 | Node.js / TypeScript | ✓ | ✓ | ✓ | ✓ | `npm i signalbird` |
-| Tarayıcı (düz JS) | ✓ | — | — | ✓ | `signalbird/browser` · `/app` |
+| Tarayıcı (düz JS) | ✓ | - | - | ✓ | `signalbird/browser` · `/app` |
 | React / Next.js | ✓ | ✓ | ✓ | ✓ | `signalbird/react` |
-| Vue 3 | ✓ | — | — | ✓ | `signalbird/vue` |
-| Angular | ✓ | — | — | ✓ | `signalbird/angular` |
-| React Native / Expo | ✓ | — | — | ✓ | `signalbird/react-native` |
-| PHP / Laravel | ✓ | ✓ | ✓ | — | `composer require pariette/signalbird` |
-| Python | ✓ | ✓ | ✓ | — | `pip install signalbird` |
-| Go | ✓ | ✓ | ✓ | — | `go get github.com/Pariette-Inc/signalbird.sdk` |
-| .NET / ASP.NET Core | ✓ | ✓ | ✓ | — | `dotnet add package Signalbird.Sdk` |
-| Swift (iOS) | ✓ | — | — | ✓ | SPM: `Signalbird` |
-| Kotlin (Android) | ✓ | — | — | ✓ | `io.signalbird:signalbird-sdk` |
+| Vue 3 | ✓ | - | - | ✓ | `signalbird/vue` |
+| Angular | ✓ | - | - | ✓ | `signalbird/angular` |
+| React Native / Expo | ✓ | - | - | ✓ | `signalbird/react-native` |
+| PHP / Laravel | ✓ | ✓ | ✓ | - | `composer require pariette/signalbird` |
+| Python | ✓ | ✓ | ✓ | - | `pip install signalbird` |
+| Go | ✓ | ✓ | ✓ | - | `go get github.com/Pariette-Inc/signalbird.sdk` |
+| .NET / ASP.NET Core | ✓ | ✓ | ✓ | - | `dotnet add package Signalbird.Sdk` |
+| Swift (iOS) | ✓ | - | - | ✓ | SPM: `Signalbird` |
+| Kotlin (Android) | ✓ | - | - | ✓ | `io.signalbird:signalbird-sdk` |
 
 Metot adları diller arasında **birebir** aynıdır; her dil kendi yazım
 geleneğini korur (`createRadioProject` / `create_radio_project` /
@@ -65,7 +65,7 @@ SIGNALBIRD_DOMAIN_KEY=sb_secret_live_…
 Takım anahtarı (`sb_…`) her şeyi kapsar: e-posta, SMS, push, kişi ve kampanya,
 sohbet, uygulama, domain, Telsiz log yazımı. Ne yapabileceğini anahtarın
 kapsamları belirler; panelde üretilirken seçersiniz. **Adres yazmanız
-gerekmez** — üretim kökü paketin içindedir.
+gerekmez** - üretim kökü paketin içindedir.
 
 Ayrı anahtar isteğe bağlıdır: bir sunucunun yalnız log yazıp gönderim
 yapamamasını istiyorsanız o sunucuya dar kapsamlı ikinci bir anahtar verirsiniz.
@@ -80,7 +80,7 @@ ve gizli olmadıkları için ayrı durmak zorundadırlar:
 
 Gizli anahtar tarayıcıya **gömülemez**: sunucu, `Origin` başlığı taşıyan bir
 istekte gizli anahtarı reddeder (`SECRET_KEY_IN_BROWSER`). Bu bir kolaylık
-değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesindir.
+değil, kasıtlı bir duvardır - anahtar bir kez istemciye indiğinde herkesindir.
 
 ## Kurulum
 
@@ -97,7 +97,7 @@ değil, kasıtlı bir duvardır — anahtar bir kez istemciye indiğinde herkesi
 | Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.5.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>` |
 
-> Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır — ayrı SDK reposu ya da
+> Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır - ayrı SDK reposu ya da
 > dil başına sürüm yoktur.
 
 ## Node.js / TypeScript
@@ -146,7 +146,7 @@ const result = await signalbird().batch([
 ### Next.js
 
 Sunucu tarafında (route handler, server action, `app/api/**`) doğrudan
-`signalbird` kullanılır. **İstemci bileşenlerinde kullanmayın** — anahtar
+`signalbird` kullanılır. **İstemci bileşenlerinde kullanmayın** - anahtar
 paketle birlikte tarayıcıya iner.
 
 ```ts
@@ -183,7 +183,7 @@ sb.error('browser', 'sepet güncellenemedi', { cartId })
 Kayıtlar tek tek değil, **toplu** gider (varsayılan 3 saniyede bir) ve sekme
 kapanırken `sendBeacon` ile boşaltılır.
 
-**React** — `app/providers.tsx` ya da `main.tsx`:
+**React** - `app/providers.tsx` ya da `main.tsx`:
 
 ```tsx
 useEffect(() => {
@@ -192,14 +192,14 @@ useEffect(() => {
 }, [])
 ```
 
-**Vue** — `main.ts`:
+**Vue** - `main.ts`:
 
 ```ts
 const sb = initSignalbird({ publicKey: import.meta.env.VITE_SIGNALBIRD_DOMAIN_KEY })
 app.config.errorHandler = (err) => sb.error('browser', String(err))
 ```
 
-**Angular** — `ErrorHandler` sağlayıcısı:
+**Angular** - `ErrorHandler` sağlayıcısı:
 
 ```ts
 @Injectable()
@@ -232,7 +232,7 @@ SIGNALBIRD_DOMAIN_KEY=sb_secret_live_…
 SIGNALBIRD_SOURCE=api-01
 ```
 
-**Laravel'in kendi loglarını Telsiz'e bağlamak** — `config/logging.php`:
+**Laravel'in kendi loglarını Telsiz'e bağlamak** - `config/logging.php`:
 
 ```php
 'signalbird' => [
@@ -262,7 +262,7 @@ Signalbird::error('api', 'veritabanı bağlantısı koptu');
   geçerli bir sebep değildir. Geliştirme sırasında `throwOnError: true`.
 - **Tanımsız kanal düşürülmez.** İlk `log('odeme-hatasi', …)` çağrısında kanal
   kendiliğinden açılır ve panelde "otomatik açıldı" işaretiyle görünür. Yeni
-  kanal **sessizdir** — kuralı ekip koyar.
+  kanal **sessizdir** - kuralı ekip koyar.
 - **Seviye kanalın varsayılanını ezer.** `level` göndermezseniz kanalın kendi
   seviyesi geçerlidir.
 - **Kritik seviye sessiz saatleri deler.** Gece üçte ölen servis sabahı bekleyemez.
@@ -272,7 +272,7 @@ Signalbird::error('api', 'veritabanı bağlantısı koptu');
 ## Gönderim (Messaging)
 
 Takım API anahtarı (`sb_…`, panelde **Konsol → API anahtarları**, scope'lu)
-ile çalışır. Telsiz anahtarı burada geçmez — istemci kurulurken
+ile çalışır. Telsiz anahtarı burada geçmez - istemci kurulurken
 `WRONG_KEY_TYPE` ile reddeder. Yalnız sunucuda kullanılır.
 
 Node:
@@ -370,7 +370,7 @@ import { management } from 'signalbird'
 // Yeni ortam kurulumu: proje aç, kanalını tanımla, anahtarı sakla
 const { data } = await management().createRadioProject({ name: 'ödeme-servisi' })
 
-// `secret` YALNIZ burada döner — sunucuda yalnız özeti saklanır
+// `secret` YALNIZ burada döner - sunucuda yalnız özeti saklanır
 await vault.write('SIGNALBIRD_DOMAIN_KEY', data!.secret)
 
 await management().createRadioChannel(data!.project.id, {
@@ -405,7 +405,7 @@ const { data } = await management().embedToken({ module: 'chat' })
 // data.url → 120 saniyelik, TEK KULLANIMLIK adres; doğrudan <iframe>'e verin
 ```
 
-Anahtar `embed:issue` kapsamı ister — jeton 60 dakikalık bir panel oturumuna
+Anahtar `embed:issue` kapsamı ister - jeton 60 dakikalık bir panel oturumuna
 çevrildiği için bu kapsam bilerek ayrıdır.
 
 Aynısı PHP, Python, Go ve .NET'te birebir aynı metot adlarıyla:
@@ -428,7 +428,7 @@ await management.CreateRadioProjectAsync(new { name = "ödeme-servisi" });
 
 Tam liste (40 metot): `docs/CONTRACT.md § 10`.
 
-## Partner — müşteri sağlama
+## Partner - müşteri sağlama
 
 Signalbird'ü kendi ürününüzün içinde satıyorsanız (sözleşmeli platform) bu yüzey
 sizindir: müşteri hesabı açar, domain ekleyip izlemeye alır, uptime okur, ödeme
@@ -439,7 +439,7 @@ import { SignalbirdPartner } from 'signalbird'
 
 const partner = new SignalbirdPartner({ domainKey: process.env.SIGNALBIRD_DOMAIN_KEY! })
 
-// Müşteri açıldı — idempotent: aynı external_id ikinci kez yeni hesap AÇMAZ
+// Müşteri açıldı - idempotent: aynı external_id ikinci kez yeni hesap AÇMAZ
 const { data } = await partner.createCompany({
   external_id: 'sc_9911',
   name: 'Acme',
@@ -465,7 +465,7 @@ const embed = await partner.createEmbedToken('sc_9911', {
 })
 // → <iframe src={embed.data.url} />
 
-// Gönderilen her şeyin durumu — kendi panelinizde çizmek için (salt okur)
+// Gönderilen her şeyin durumu - kendi panelinizde çizmek için (salt okur)
 const log = await partner.listMessages('sc_9911', { channel: 'email', status: 'delivered' })
 const one = await partner.getMessage('sc_9911', 'm_01J…')       // olay zaman çizelgesi
 const sum = await partner.messageSummary('sc_9911', '7d')       // kanal bazlı özet
@@ -479,10 +479,10 @@ PHP'de `Signalbird::partner()->createCompany([...])`.
 İki kural: **anahtar tarayıcıya inmez** ve **TXT'siz domain kampanya
 gönderemez** (izleme, sohbet ve push açıktır). Ayrıntı: `docs/CONTRACT.md § 12`.
 
-Mesaj uçları **salt okurdur**: alıcı maskeli döner, gövde hiç dönmez — gövde
+Mesaj uçları **salt okurdur**: alıcı maskeli döner, gövde hiç dönmez - gövde
 zaten saklanmıyor.
 
-## Gönderim — müşterinin kendi sisteminden
+## Gönderim - müşterinin kendi sisteminden
 
 Bir platformun (SubmitCMS, veribenim…) müşterisiyseniz kendi sunucunuzdan da
 gönderim yapabilirsiniz. Gereken tek şey **kendi takım anahtarınızdır**
@@ -537,7 +537,7 @@ istemiyorsanız ikincisi.
 3. **Anahtar sunucuda kalır.** Tarayıcıya ya da mobil uygulamaya konmaz;
    oralar için açık uygulama anahtarı (`sb_public_live_…`) vardır.
 
-## Uygulama (App) — kendi sohbet arayüzünüz
+## Uygulama (App) - kendi sohbet arayüzünüz
 
 Hazır widget yerine kendi arayüzünüzü yazmak, ya da sohbeti **mobil
 uygulamanıza** koymak istiyorsanız bu yüzey içindir. Açık uygulama anahtarı
@@ -645,10 +645,10 @@ Signalbird.destroy()
 çalışır, sayfanızın CSS'iyle çakışmaz; < 20 KB gzip. Ayrıntı:
 `docs/CONTRACT.md § 9` ve https://signalbird.io/sdk/widget.
 
-## Gömme (embed) — Signalbird ekranını kendi panelinizde çalıştırın
+## Gömme (embed) - Signalbird ekranını kendi panelinizde çalıştırın
 
 Partner (veribenim, submitcms, yeni ortaklar) Signalbird modülünü kendi
-panelinin içinde gösterir. Ekran kopyalanmaz — **çalışan ekranın kendisi**
+panelinin içinde gösterir. Ekran kopyalanmaz - **çalışan ekranın kendisi**
 gelir; Signalbird'de güncellenen her şey partner panelinde de anında günceldir.
 
 ```html
@@ -693,7 +693,7 @@ Sunucu tarafı tek çağrıdır (`Signalbird::partner()->createEmbedToken(...)`,
 | `CHANNEL_NOT_ALLOWED` | Tarayıcı anahtarı bu kanala yazamaz |
 | `MODULE_DISABLED` | Paketinizde Telsiz (`logger`) modülü yok |
 | `LIMIT_REACHED` | Aylık kayıt limitiniz doldu |
-| `CHANNEL_DISABLED` | Kanal kapalı — kayıt yazılmaz, kota da harcanmaz |
+| `CHANNEL_DISABLED` | Kanal kapalı - kayıt yazılmaz, kota da harcanmaz |
 
 Gönderim ve Yönetim istemcilerine özgü: `WRONG_KEY_TYPE` (kurulumda),
 `API_KEY_INVALID`, `API_KEY_SCOPE` (anahtarda gereken scope yok),
@@ -701,5 +701,5 @@ Gönderim ve Yönetim istemcilerine özgü: `WRONG_KEY_TYPE` (kurulumda),
 `LIST_NOT_FOUND`, `MODULE_DISABLED`, `NETWORK_ERROR`, `TIMEOUT`, `HTTP_<durum>`.
 
 Uygulama yüzeyi ve widget: `VISITOR_INVALID` (yerel kimlik silinir, yeni
-oturum açılır), `CHAT_UNAVAILABLE` (kota — "sohbet kullanılamıyor" bandı),
+oturum açılır), `CHAT_UNAVAILABLE` (kota - "sohbet kullanılamıyor" bandı),
 `NOT_INITIALIZED`.

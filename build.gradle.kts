@@ -1,4 +1,4 @@
-// Signalbird SDK — Kotlin/Android manifesti.
+// Signalbird SDK - Kotlin/Android manifesti.
 //
 // Manifest KÖKTE durur (Gradle zaten kökte arar), kaynak
 // `src/kotlin/src/main/kotlin/` altındadır; `sourceSets` ile gösterilir ki
@@ -24,7 +24,7 @@ dependencies {
     // Tek dış bağımlılık coroutines'tir ve her Android projesinde zaten vardır.
     // JSON için `org.json` kullanılır: Android'in kendi kütüphanesinde bulunur,
     // JVM tarafında ise aşağıdaki küçük paket sağlar. OkHttp/Retrofit/Moshi
-    // dayatmıyoruz — bir SDK'nın müşterinin ağ ve serileştirme yığınını
+    // dayatmıyoruz - bir SDK'nın müşterinin ağ ve serileştirme yığınını
     // seçmesi, sürüm çakışmalarının en sık sebebidir.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     compileOnly("org.json:json:20240303")
@@ -55,7 +55,7 @@ publishing {
 
             pom {
                 name.set("Signalbird SDK")
-                description.set("Signalbird SDK — canlı sohbet, push cihaz kaydı ve Telsiz (log) istemcisi")
+                description.set("Signalbird SDK - canlı sohbet, push cihaz kaydı ve Telsiz (log) istemcisi")
                 url.set("https://signalbird.io/sdk")
 
                 licenses {

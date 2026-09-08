@@ -1,5 +1,5 @@
 /**
- * `signalbird/vue` — Vue 3 eklentisi ve composable'ları.
+ * `signalbird/vue` - Vue 3 eklentisi ve composable'ları.
  *
  * React uyarlamasıyla aynı `ChatSession` motorunu kullanır; buradaki tek iş
  * durumu Vue'nun tepkimeli sistemine bağlamaktır.
@@ -25,7 +25,7 @@ export const signalbirdPlugin = {
   },
 };
 
-/** Ham istemci — push kaydı, kimlik, özel çağrılar için. */
+/** Ham istemci - push kaydı, kimlik, özel çağrılar için. */
 export function useSignalbird(): SignalbirdApp {
   const client = inject(SIGNALBIRD_KEY, null);
 
@@ -37,7 +37,7 @@ export function useSignalbird(): SignalbirdApp {
 }
 
 export interface UseChatOptions {
-  /** Panel açık mı — `ref` verilirse değişimi izlenir. */
+  /** Panel açık mı - `ref` verilirse değişimi izlenir. */
   open?: Ref<boolean> | boolean;
   visitor?: SessionInput;
 }

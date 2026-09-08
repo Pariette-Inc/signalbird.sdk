@@ -1,5 +1,5 @@
 /**
- * signalbird/browser — tarayıcı istemcisi.
+ * signalbird/browser - tarayıcı istemcisi.
  *
  * Ayrı bir giriş noktası olmasının sebebi teknik değil, GÜVENLİKTİR: sunucu
  * anahtarı istemciye gömülemez ve sunucu `Origin` başlığı taşıyan bir istekte
@@ -51,7 +51,7 @@ declare class SignalbirdBrowser {
 }
 /** Uygulama başlangıcında bir kez çağrılır. */
 declare function initSignalbird(config: BrowserConfig): SignalbirdBrowser;
-/** Kurulmamışsa sessizce yok sayar — log çağrısı uygulamayı çökertmemeli. */
+/** Kurulmamışsa sessizce yok sayar - log çağrısı uygulamayı çökertmemeli. */
 declare function signalbird(): SignalbirdBrowser | null;
 
 export { type BrowserConfig, type Level, SignalbirdBrowser, initSignalbird, signalbird };

@@ -1,6 +1,6 @@
 {
   "name": "pariette/signalbird",
-  "description": "Signalbird SDK — Telsiz (Radio), Gönderim (Messaging), Yönetim (Management) ve Partner istemcisi (PHP / Laravel)",
+  "description": "Signalbird SDK - Telsiz (Radio), Gönderim (Messaging), Yönetim (Management) ve Partner istemcisi (PHP / Laravel)",
   "type": "library",
   "keywords": [
     "signalbird",

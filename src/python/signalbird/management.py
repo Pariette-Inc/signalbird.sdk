@@ -1,4 +1,4 @@
-"""Yönetim (Management) istemcisi — sunucu tarafı.
+"""Yönetim (Management) istemcisi - sunucu tarafı.
 
 Müşterinin panelde tıklayarak yaptığı her şeyi kodla yapar: Telsiz projesi ve
 kanalı açar, olay akışını okur, sohbet gelen kutusunu işler, uygulama kaydı ve
@@ -91,7 +91,7 @@ class SignalbirdManagement:
         return self._http.request("GET", f"/v1/chat/conversations/{seg(id)}/messages", None, query)
 
     def start_conversation(self, input: Mapping[str, Any]) -> Result:
-        """Proaktif sohbet — ziyaretçi yazmadan ajan başlatır."""
+        """Proaktif sohbet - ziyaretçi yazmadan ajan başlatır."""
         return self._http.request("POST", "/v1/chat/conversations", input)
 
     def update_conversation(self, id: str, input: Mapping[str, Any]) -> Result:
@@ -177,17 +177,17 @@ class SignalbirdManagement:
     def chat_report(self, range: str = "30d") -> Result:
         """Yanıt/çözüm süresi, memnuniyet, ajan kırılımı.
 
-        Veri yoksa süreler ``None`` döner — 0 DEĞİL.
+        Veri yoksa süreler ``None`` döner - 0 DEĞİL.
         """
         return self._http.request("GET", "/v1/chat/reports", None, {"range": range})
 
     # ── Uygulamalar ──────────────────────────────────────────────────────
 
     # Uygulama uçları KALDIRILDI (1 Eyl 2026): sohbet ve push birer modül
-    # anahtarıdır — list_module_keys('chat'), list_module_keys('push').
+    # anahtarıdır - list_module_keys('chat'), list_module_keys('push').
 
     def embed_token(self, input: Mapping[str, Any]) -> Result:
-        """Gömme jetonu — Signalbird ekranını kendi panelinizde göstermek için.
+        """Gömme jetonu - Signalbird ekranını kendi panelinizde göstermek için.
 
         120 saniye yaşar ve tek kullanımlıktır; anahtar `embed:issue` kapsamı ister.
         """

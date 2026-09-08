@@ -2,7 +2,7 @@ package signalbird
 
 import "context"
 
-// Management — Yönetim istemcisi.
+// Management - Yönetim istemcisi.
 //
 // Müşterinin panelde tıklayarak yaptığı her şeyi kodla yapar: Telsiz projesi
 // ve kanalı, sohbet gelen kutusu, uygulama kaydı ve cihaz listesi.
@@ -50,12 +50,12 @@ func (m *Management) GetModuleKey(ctx context.Context, module string, id any) (R
 	return m.http.request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys/"+seg(id), nil, nil)
 }
 
-// CreateModuleKey — `key` verilmezse başlıktan üretilir; çakışırsa sayı eklenir.
+// CreateModuleKey - `key` verilmezse başlıktan üretilir; çakışırsa sayı eklenir.
 func (m *Management) CreateModuleKey(ctx context.Context, module string, input any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/modules/"+seg(module)+"/keys", input, nil)
 }
 
-// UpdateModuleKey — `key` DEĞİŞTİRİLEBİLİR: eski ad 30 gün daha kabul edilir.
+// UpdateModuleKey - `key` DEĞİŞTİRİLEBİLİR: eski ad 30 gün daha kabul edilir.
 func (m *Management) UpdateModuleKey(ctx context.Context, module string, id any, input any) (Result, error) {
 	return m.http.request(ctx, "PATCH", "/v1/modules/"+seg(module)+"/keys/"+seg(id), input, nil)
 }
@@ -64,7 +64,7 @@ func (m *Management) DeleteModuleKey(ctx context.Context, module string, id any)
 	return m.http.request(ctx, "DELETE", "/v1/modules/"+seg(module)+"/keys/"+seg(id), nil, nil)
 }
 
-// ListModuleKeyDevices — push kanalının cihazları; token MASKELİ döner.
+// ListModuleKeyDevices - push kanalının cihazları; token MASKELİ döner.
 func (m *Management) ListModuleKeyDevices(ctx context.Context, module string, id any, query Query) (Result, error) {
 	return m.http.request(ctx, "GET", "/v1/modules/"+seg(module)+"/keys/"+seg(id)+"/devices", nil, query)
 }
@@ -87,12 +87,12 @@ func (m *Management) GetConversation(ctx context.Context, id string) (Result, er
 	return m.http.request(ctx, "GET", "/v1/chat/conversations/"+seg(id), nil, nil)
 }
 
-// ListConversationMessages — after imleci cm_… mesaj kimliğidir.
+// ListConversationMessages - after imleci cm_… mesaj kimliğidir.
 func (m *Management) ListConversationMessages(ctx context.Context, id string, query Query) (Result, error) {
 	return m.http.request(ctx, "GET", "/v1/chat/conversations/"+seg(id)+"/messages", nil, query)
 }
 
-// StartConversation — proaktif sohbet; ziyaretçi yazmadan ajan başlatır.
+// StartConversation - proaktif sohbet; ziyaretçi yazmadan ajan başlatır.
 func (m *Management) StartConversation(ctx context.Context, input map[string]any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/chat/conversations", input, nil)
 }
@@ -105,7 +105,7 @@ func (m *Management) SetConversationStatus(ctx context.Context, id, status strin
 	return m.http.request(ctx, "POST", "/v1/chat/conversations/"+seg(id)+"/status", map[string]any{"status": status}, nil)
 }
 
-// AssignConversation — userID 0 ise anahtarın sahibine atanır.
+// AssignConversation - userID 0 ise anahtarın sahibine atanır.
 func (m *Management) AssignConversation(ctx context.Context, id string, userID int) (Result, error) {
 	var value any
 
@@ -124,7 +124,7 @@ func (m *Management) SetTyping(ctx context.Context, id string, isTyping bool) (R
 	return m.http.request(ctx, "POST", "/v1/chat/conversations/"+seg(id)+"/typing", map[string]any{"is_typing": isTyping}, nil)
 }
 
-// Reply — is_internal true ise iç nottur ve ziyaretçiye ASLA gitmez.
+// Reply - is_internal true ise iç nottur ve ziyaretçiye ASLA gitmez.
 func (m *Management) Reply(ctx context.Context, id string, input map[string]any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/chat/conversations/"+seg(id)+"/messages", input, nil)
 }
@@ -137,7 +137,7 @@ func (m *Management) DeleteChatMessage(ctx context.Context, id, messageID string
 	return m.http.request(ctx, "DELETE", "/v1/chat/conversations/"+seg(id)+"/messages/"+seg(messageID), nil, nil)
 }
 
-// ReactToChatMessage — aynı emoji ikinci kez gönderilirse tepki kaldırılır.
+// ReactToChatMessage - aynı emoji ikinci kez gönderilirse tepki kaldırılır.
 func (m *Management) ReactToChatMessage(ctx context.Context, id, messageID, emoji string) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/chat/conversations/"+seg(id)+"/messages/"+seg(messageID)+"/reactions", map[string]any{"emoji": emoji}, nil)
 }
@@ -194,7 +194,7 @@ func (m *Management) DeleteChatTrigger(ctx context.Context, id any) (Result, err
 // ── Sohbet: rapor ────────────────────────────────────────────────────────
 
 // ChatReport yanıt/çözüm süresi, memnuniyet ve ajan kırılımını döner.
-// Veri yoksa süreler null döner — 0 DEĞİL.
+// Veri yoksa süreler null döner - 0 DEĞİL.
 func (m *Management) ChatReport(ctx context.Context, rng string) (Result, error) {
 	if rng == "" {
 		rng = "30d"
@@ -204,7 +204,7 @@ func (m *Management) ChatReport(ctx context.Context, rng string) (Result, error)
 }
 
 // Uygulama uçları KALDIRILDI (1 Eyl 2026): sohbet ve push birer modül
-// anahtarıdır — ListModuleKeys(ctx, "chat", nil).
+// anahtarıdır - ListModuleKeys(ctx, "chat", nil).
 
 func (m *Management) EmbedToken(ctx context.Context, input map[string]any) (Result, error) {
 	return m.http.request(ctx, "POST", "/v1/embed/tokens", input, nil)

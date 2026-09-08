@@ -1,5 +1,5 @@
 /**
- * signalbird/embed — panel ekranlarını başka bir panelin içinde çalıştıran
+ * signalbird/embed - panel ekranlarını başka bir panelin içinde çalıştıran
  * yüzey. Ayrıntı için `element.ts` ve `types.ts` başlıklarına bakın.
  *
  *   import { createEmbed } from 'signalbird/embed'

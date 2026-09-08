@@ -10,10 +10,10 @@ interface SignalbirdProviderProps extends AppConfig {
  * (ortam değişimi, çoklu marka) yeniden kurulur.
  */
 declare function SignalbirdProvider({ children, ...config }: SignalbirdProviderProps): react.FunctionComponentElement<react.ProviderProps<SignalbirdApp | null>>;
-/** Ham istemci — push kaydı, kimlik, özel çağrılar için. */
+/** Ham istemci - push kaydı, kimlik, özel çağrılar için. */
 declare function useSignalbird(): SignalbirdApp;
 interface UseChatOptions {
-    /** Panel açık mı — yoklama hızını belirler (açık 3 s, kapalı merdiven). */
+    /** Panel açık mı - yoklama hızını belirler (açık 3 s, kapalı merdiven). */
     open?: boolean;
     /** Oturum kurulurken kullanılacak ziyaretçi bilgisi (ön-form ya da giriş). */
     visitor?: SessionInput;
@@ -31,11 +31,11 @@ interface UseChatResult extends ChatState {
 /**
  * Sohbet durumu + eylemleri.
  *
- * `open` değiştiğinde oturum yeniden KURULMAZ, yalnız yoklama hızı değişir —
+ * `open` değiştiğinde oturum yeniden KURULMAZ, yalnız yoklama hızı değişir -
  * paneli her açışta baştan yüklemek, konuşmayı kaybetmiş gibi hissettirirdi.
  */
 declare function useChat(options?: UseChatOptions): UseChatResult;
-/** Rozet için okunmamış sayısı — sohbet arayüzü açılmadan da çalışır. */
+/** Rozet için okunmamış sayısı - sohbet arayüzü açılmadan da çalışır. */
 declare function useUnreadCount(): number;
 /** Kullanıcı giriş yaptığında çağrılır; ziyaretçiyi kişi kaydına bağlar. */
 declare function useIdentify(input: IdentifyInput | null | undefined): void;

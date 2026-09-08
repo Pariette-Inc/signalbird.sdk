@@ -1,5 +1,5 @@
 /**
- * Yeni mesaj sesi — WebAudio ile üretilen kısa iki tonlu "bip". Ses dosyası
+ * Yeni mesaj sesi - WebAudio ile üretilen kısa iki tonlu "bip". Ses dosyası
  * yoktur: paket tek JS'tir, ek istek yapmaz.
  *
  * Tarayıcılar kullanıcı etkileşimi olmadan sesi engeller; `AudioContext`

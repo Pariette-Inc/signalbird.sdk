@@ -1,5 +1,5 @@
 /**
- * `signalbird/react-native` — Expo ve düz React Native.
+ * `signalbird/react-native` - Expo ve düz React Native.
  *
  * React uyarlamasının aynısı, iki farkla ve ikisi de platform gereğidir:
  *
@@ -7,7 +7,7 @@
  *     `expo-secure-store` dışarıdan verilir. Ziyaretçi sırrı cihazda kalmazsa
  *     kullanıcı uygulamayı her açtığında sohbet geçmişini kaybeder.
  *  2. **Görünürlük `AppState`'tir.** `document.visibilityState` yoktur; arka
- *     plandaki uygulamada yoklama turu atlanır — aksi hâlde SDK pil yer.
+ *     plandaki uygulamada yoklama turu atlanır - aksi hâlde SDK pil yer.
  *
  * React ve react-native `peerDependency`'dir.
  */
@@ -34,7 +34,7 @@ export function asyncStorageAdapter(store: {
 }
 
 export interface NativeChatOptions {
-  /** Sohbet ekranı önde mi — yoklama hızını belirler. */
+  /** Sohbet ekranı önde mi - yoklama hızını belirler. */
   open?: boolean;
   visitor?: SessionInput;
   /**
@@ -56,7 +56,7 @@ export interface NativeChatResult extends ChatState {
   reset(): void;
 }
 
-/** İstemciyi kurar. Depoyu vermeyi UNUTMAYIN — bellekte kalırsa oturum uçar. */
+/** İstemciyi kurar. Depoyu vermeyi UNUTMAYIN - bellekte kalırsa oturum uçar. */
 export function createSignalbirdApp(config: AppConfig): SignalbirdApp {
   return new SignalbirdApp(config);
 }

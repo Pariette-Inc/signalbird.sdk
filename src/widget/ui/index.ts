@@ -2,7 +2,7 @@
  * Widget arayüzü: Shadow DOM host, balon, karşılama kartı, mesaj önizlemesi,
  * panel ve görünümler (ön-form / sohbet / puanlama / teşekkür).
  *
- * Durum TUTMAZ — denetleyici (`chat.ts`) durumu verir, arayüz çizer ve
+ * Durum TUTMAZ - denetleyici (`chat.ts`) durumu verir, arayüz çizer ve
  * kullanıcı eylemlerini geri bildirir. Bu sınırın korunması bilinçli: çekirdek
  * (api/store/poller/chat) 2 Eyl 2026 yeniden yazımında hiç değişmedi, yalnız
  * bu katman söküldü ve baştan kuruldu.
@@ -38,7 +38,7 @@ export interface UIActions extends MessageActions {
   submitPrechat(name: string, email: string, topic: string | null): void;
   skipPrechat(topic: string | null): void;
   rate(stars: number, comment: string): void;
-  /** Balonu tamamen gizle — ziyaretçinin "bir daha görünme" demesi. */
+  /** Balonu tamamen gizle - ziyaretçinin "bir daha görünme" demesi. */
   dismiss(): void;
   endChat(): void;
   newChat(): void;
@@ -81,7 +81,7 @@ export interface AttentionPreview {
 /*
  * İzinli türler SUNUCUDAN gelir (`chat.attachment_mimes`, 2 Eyl 2026).
  *
- * Buradaki kontrol yalnız erken uyarıdır — 8 MB'lık bir dosyayı yükletip sonra
+ * Buradaki kontrol yalnız erken uyarıdır - 8 MB'lık bir dosyayı yükletip sonra
  * reddetmek ziyaretçinin bağlantısını boşuna harcar. ASIL kapı sunucudadır ve
  * orada MIME dosyanın İÇERİĞİNDEN okunur: `zararli.exe` adını `resim.png`
  * yapmak buradan geçse de oradan geçmez.
@@ -93,7 +93,7 @@ const FALLBACK_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 /** Sunucunun bildirmediği durumda kullanılacak tavan. */
 const FALLBACK_MAX_CHARS = 420;
 
-/** Sayaç yalnız son bu kadar karakterde görünür — sürekli duran sayı baskıdır. */
+/** Sayaç yalnız son bu kadar karakterde görünür - sürekli duran sayı baskıdır. */
 const COUNTER_THRESHOLD = 60;
 
 /** Karşılama kartının açılma gecikmesi. Hemen çıkarsa reklam gibi okunuyor. */
@@ -155,7 +155,7 @@ export class UI {
   /**
    * Sayfa içi biçim (5 Eyl 2026).
    *
-   * Kap yoksa inline istenmiş olsa bile FALSE kalır ve widget balona döner —
+   * Kap yoksa inline istenmiş olsa bile FALSE kalır ve widget balona döner -
    * yanlış bir seçici yüzünden sohbetin hiç görünmemesi en kötü sonuçtu.
    */
   private readonly inline: boolean;
@@ -177,7 +177,7 @@ export class UI {
     /*
      * `auto` seçildiyse sayfanın tercihi CANLI izlenir: ziyaretçi işletim
      * sistemini gece moduna aldığında panel de döner. Yalnız `auto` için
-     * dinlenir — 'light'/'dark' bir KARARDIR, sistem onu ezmemeli.
+     * dinlenir - 'light'/'dark' bir KARARDIR, sistem onu ezmemeli.
      */
     if (o.settings.theme === 'auto' && typeof matchMedia === 'function') {
       const mq = matchMedia('(prefers-color-scheme: dark)');
@@ -275,13 +275,13 @@ export class UI {
 
     this.enableDrop();
 
-    // Escape paneli kapatır — modal olmayan ama tam ekranı kaplayan bir
+    // Escape paneli kapatır - modal olmayan ama tam ekranı kaplayan bir
     // yüzeyde beklenen davranış budur.
     this.onKey = this.onKey.bind(this);
     this.onViewport = this.onViewport.bind(this);
   }
 
-  /** Tarayıcıda saklanan tercihin anahtarı — müşteri başınadır. */
+  /** Tarayıcıda saklanan tercihin anahtarı - müşteri başınadır. */
   private key(name: string): string {
     return `${name}_${this.o.publicKey}`;
   }
@@ -298,7 +298,7 @@ export class UI {
 
     /*
      * Inline biçimde panel HEP açıktır: balon yok, kapatma yok. Escape ile
-     * kapanmasını da dinlemeyiz — kullanıcı sayfanın içindeki bir formu
+     * kapanmasını da dinlemeyiz - kullanıcı sayfanın içindeki bir formu
      * kapatmaya çalışırken sohbeti kaybetmesin.
      */
     if (this.inline) {
@@ -323,7 +323,7 @@ export class UI {
 
   // ══ Genel durum ═════════════════════════════════════════════════════
 
-  /** Balon gizli mi — `dismiss` sonrası. Widget DOM'da kalır, görünmez olur. */
+  /** Balon gizli mi - `dismiss` sonrası. Widget DOM'da kalır, görünmez olur. */
   setDismissed(hidden: boolean): void {
     this.wrap.classList.toggle('hidden', hidden);
     if (hidden) this.hideTeaser(false);
@@ -344,7 +344,7 @@ export class UI {
 
   setOpen(open: boolean): void {
     // Inline panelin kapalı hâli yoktur; denetleyici yine de çağırabilir
-    // (ör. sohbet bitince) — orada kapanmak boş bir kutu bırakırdı.
+    // (ör. sohbet bitince) - orada kapanmak boş bir kutu bırakırdı.
     if (this.inline) {
       this.wrap.classList.add('open');
       return;
@@ -381,7 +381,7 @@ export class UI {
   }
 
   /**
-   * "Bana bak" — yeni mesaj geldi, panel kapalı.
+   * "Bana bak" - yeni mesaj geldi, panel kapalı.
    *
    * Üç sinyal üst üste biner ve üçü de ayrı işe bakar:
    *   • yaylanma → sessiz sekmede görülen tek hareket,
@@ -457,15 +457,15 @@ export class UI {
     const email = field('email', t.email, defaults.email || '', 'email');
 
     /*
-     * Konu seçimi HER ZAMAN isteğe bağlıdır — ön-form zorunlu olsa bile.
+     * Konu seçimi HER ZAMAN isteğe bağlıdır - ön-form zorunlu olsa bile.
      * Konusunu bilmeyen ziyaretçiyi kapıda tutmak, gelmeyecek bir mesaj
      * demektir; sınıflandırmayı ajan sonradan düzeltebilir.
      */
     const topics = this.o.topics || [];
     const select = topics.length
       ? h('select', { 'aria-label': t.topicLabel },
-          h('option', { value: '' }, t.topicPlaceholder),
-          ...topics.map((topic) => h('option', { value: topic.slug }, topic.name)))
+        h('option', { value: '' }, t.topicPlaceholder),
+        ...topics.map((topic) => h('option', { value: topic.slug }, topic.name)))
       : null;
     const topicField = select
       ? h('div', { class: 'fld' }, select, h('label', null, t.topicLabel), h('span', { class: 'cv' }, icon('chevron', 16)))
@@ -763,7 +763,7 @@ export class UI {
        * kötü. bunu da kaliteli bir imzaya çevir").
        *
        * Düz bir cümle yerine gerçek bir imza: kuş işareti + kelime işareti.
-       * "… ile" kalıbı KALDIRILDI — imza cümle kurmaz, isim söyler; üstelik o
+       * "… ile" kalıbı KALDIRILDI - imza cümle kurmaz, isim söyler; üstelik o
        * kalıp her dilde ayrı bir dilbilgisi sorunuydu. Tam cümle `title`
        * içinde durur, ekran okuyucu ve fare üstünde görünür.
        */
@@ -865,7 +865,7 @@ export class UI {
     /*
      * `maxLength` yalnız KULLANICI girişini kırpar; değer programatik
      * atandığında (ev sahibi sayfanın betiği, otomasyon, tarayıcı eklentisi)
-     * sınırı aşabilir. Gönder düğmesi o hâlde de kapalı kalır — sunucudan 422
+     * sınırı aşabilir. Gönder düğmesi o hâlde de kapalı kalır - sunucudan 422
      * almak, düğmenin en baştan basılmaması kadar iyi bir cevap değil.
      */
     this.sendBtn.disabled = empty || this.textarea.value.length > this.maxChars;
@@ -873,7 +873,7 @@ export class UI {
   }
 
   /**
-   * Kalan karakter — yalnız sınıra YAKLAŞINCA görünür.
+   * Kalan karakter - yalnız sınıra YAKLAŞINCA görünür.
    *
    * Sürekli duran bir sayaç, kısa yazmayı bir kural gibi gösterir ve sohbetin
    * tonunu bozar. Son 60 karakterde belirmesi yeter: kullanıcı sınırı ancak o
@@ -982,10 +982,10 @@ export class UI {
   }
 
   /**
-   * Karşılama kartı — ziyaretçi sayfada bir süre kaldıktan sonra BİR KEZ.
+   * Karşılama kartı - ziyaretçi sayfada bir süre kaldıktan sonra BİR KEZ.
    *
    * Üç kapıdan geçer: (1) daha önce kapatılmamış olacak, (2) ziyaretçi
-   * paneli bu tarayıcıda hiç açmamış olacak — açmışsa zaten bizi biliyor,
+   * paneli bu tarayıcıda hiç açmamış olacak - açmışsa zaten bizi biliyor,
    * (3) balon görünür olacak. Kapatma kararı tarayıcıda saklanır; bu bir
    * hesap ayarı değil, bu cihazdaki bu kişinin tercihi.
    */
@@ -1051,7 +1051,7 @@ export class UI {
     return Number.isFinite(n) && n > 0 ? n : FALLBACK_MAX_CHARS;
   }
 
-  /** Boş ekrandaki hazır başlangıçlar — panelin verdiği konu adları. */
+  /** Boş ekrandaki hazır başlangıçlar - panelin verdiği konu adları. */
   private quickStarters(): string[] {
     return (this.o.topics || []).slice(0, 4).map((t) => t.name).filter(Boolean);
   }
@@ -1063,7 +1063,7 @@ export class UI {
    *
    * `visualViewport` klavyenin kapladığı yüksekliği verir; `--sb-kb` ile panel
    * boyu ondan düşülür. Bu olmadan iOS'ta kompozitör klavyenin ALTINDA kalıyor
-   * ve kullanıcı ne yazdığını göremiyordu — mobil şikâyetinin en somut hâli.
+   * ve kullanıcı ne yazdığını göremiyordu - mobil şikâyetinin en somut hâli.
    */
   private bindViewport(): void {
     const vv = visualViewport();
@@ -1192,7 +1192,7 @@ export class UI {
    * Balondaki işaret: müşterinin logosu, Signalbird kuşu ya da klasik sohbet
    * baloncuğu. Panelden seçilir (`chat.launcher_icon`).
    *
-   * Logo seçilip URL girilmemişse kuşa düşülür — boş bir daire, marka
+   * Logo seçilip URL girilmemişse kuşa düşülür - boş bir daire, marka
    * yönetiminin yarım kaldığını ziyaretçiye ilan etmekten iyidir.
    */
   private launcherMark(): Node {
@@ -1219,7 +1219,7 @@ export class UI {
   //
   // Seçim `localStorage`'da durur ve ziyaretçiye özeldir: müşterinin panelden
   // verdiği `position` bir BAŞLANGIÇTIR, kural değil. Mobilde ikisi de kapalı
-  // (panel zaten tam ekran) — orada sürükleme, kaydırmayı çalardı.
+  // (panel zaten tam ekran) - orada sürükleme, kaydırmayı çalardı.
 
   private restoreGeometry(): void {
     const g = readGeometry();
@@ -1309,7 +1309,7 @@ export class UI {
   }
 }
 
-/** Yüzen etiketli alan — etiket yazarken kaybolmaz, küçülüp yukarı çıkar. */
+/** Yüzen etiketli alan - etiket yazarken kaybolmaz, küçülüp yukarı çıkar. */
 function field(type: string, label: string, value: string, autocomplete: string) {
   const input = h('input', { type, value, autocomplete, placeholder: ' ' });
   if (value) input.classList.add('has');
@@ -1345,7 +1345,7 @@ function writeGeometry(g: Geometry): void {
   try {
     localStorage.setItem(GEO_KEY, JSON.stringify(g));
   } catch {
-    /* özel sekmede yazılamaz — panel yine çalışır, hatırlamaz */
+    /* özel sekmede yazılamaz - panel yine çalışır, hatırlamaz */
   }
 }
 
@@ -1385,7 +1385,7 @@ function prefersDark(theme: unknown): boolean {
   return matchMedia('(prefers-color-scheme: dark)').matches;
 }
 
-/** Yalnız #hex ya da rgb()/hsl() kabul edilir — stil enjeksiyonu olmasın. */
+/** Yalnız #hex ya da rgb()/hsl() kabul edilir - stil enjeksiyonu olmasın. */
 function safeColor(color: string | undefined): string {
   return color && /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%]+\))$/i.test(color) ? color : '#4f46e5';
 }

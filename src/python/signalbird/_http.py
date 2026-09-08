@@ -2,7 +2,7 @@
 
 Bağımlılığı yoktur: standart kütüphanenin ``urllib``'i kullanılır. Bir SDK'nın
 ``requests`` sürümü dayatması, müşterinin bağımlılık çözümlemesini kilitleyen
-en sık sebeptir — bir log/gönderim kütüphanesi bunu yapmamalı.
+en sık sebeptir - bir log/gönderim kütüphanesi bunu yapmamalı.
 
 Zarf ve hata kodları diğer dillerle BİREBİR aynıdır (docs/CONTRACT.md § 8.2).
 """
@@ -124,7 +124,7 @@ class Transport:
             status = int(error.code)
 
             # API `{message, code}` döner; Laravel doğrulama hatası `{message,
-            # errors}` döner (kodsuz) — onu VALIDATION_ERROR sayarız.
+            # errors}` döner (kodsuz) - onu VALIDATION_ERROR sayarız.
             code = None
             message = None
 
@@ -157,7 +157,7 @@ class Transport:
 
     def _fail(self, status: int, code: str, message: str, data: Any) -> Result:
         if self.throw_on_error:
-            raise SignalbirdError(f"Signalbird: {code} — {message}", status, code, data)
+            raise SignalbirdError(f"Signalbird: {code} - {message}", status, code, data)
 
         if self.debug:
             print(f"[signalbird] {code} (HTTP {status}): {message}")
@@ -183,5 +183,5 @@ def _drop_none(body: Mapping[str, Any]) -> dict:
 
 
 def seg(value: Any) -> str:
-    """Yol parçası — kimlikler URL'e gömülmeden önce kodlanır."""
+    """Yol parçası - kimlikler URL'e gömülmeden önce kodlanır."""
     return urllib.parse.quote(str(value), safe="")

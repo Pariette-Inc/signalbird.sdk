@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// PartnerConfig — partner istemcisinin kurulumu.
+// PartnerConfig - partner istemcisinin kurulumu.
 type PartnerConfig struct {
 	// DomainKey, sözleşmeli partner anahtarıdır (sb_secret_live_…). Takım anahtarı
 	// (sb_…) burada çalışmaz ve kurulum anında reddedilir.
@@ -18,7 +18,7 @@ type PartnerConfig struct {
 	Debug        bool
 }
 
-// Partner — BEŞİNCİ yüzey.
+// Partner - BEŞİNCİ yüzey.
 //
 // Signalbird'ü kendi ürününün içinde satan sözleşmeli platform (veribenim,
 // submitcms) müşterisini bununla sağlar ve yetkilendirir.
@@ -75,7 +75,7 @@ func (p *Partner) UpdateCompany(ctx context.Context, externalID string, input ma
 	return p.http.request(ctx, "PATCH", "/v1/partner/companies/"+seg(externalID), input, nil)
 }
 
-// SuspendCompany askıya alır — SİLMEZ. İzleme ve mesaj geçmişi durur.
+// SuspendCompany askıya alır - SİLMEZ. İzleme ve mesaj geçmişi durur.
 func (p *Partner) SuspendCompany(ctx context.Context, externalID string) (Result, error) {
 	return p.http.request(ctx, "DELETE", "/v1/partner/companies/"+seg(externalID), nil, nil)
 }
@@ -89,7 +89,7 @@ func (p *Partner) RotateKey(ctx context.Context, externalID, keyType string) (Re
 
 // AddDomain domain ekler ve (istenirse) izlemeye alır.
 //
-// Kayıt verified_via='partner' ile doğar: izleme, sohbet ve push için yeter —
+// Kayıt verified_via='partner' ile doğar: izleme, sohbet ve push için yeter -
 // e-posta/SMS KAMPANYASI için TXT şarttır. Yanıttaki dns kaydını yayınlayıp
 // VerifyDomain çağırmak kapıyı açar.
 func (p *Partner) AddDomain(ctx context.Context, companyExternalID string, input map[string]any) (Result, error) {
@@ -112,12 +112,12 @@ func (p *Partner) RemoveDomain(ctx context.Context, externalID string) (Result, 
 	return p.http.request(ctx, "DELETE", "/v1/partner/domains/"+seg(externalID), nil, nil)
 }
 
-// DomainUptime — rng boşsa 24h. Hiç kontrol yoksa uptime null döner, %100 DEĞİL.
+// DomainUptime - rng boşsa 24h. Hiç kontrol yoksa uptime null döner, %100 DEĞİL.
 func (p *Partner) DomainUptime(ctx context.Context, externalID, rng string) (Result, error) {
 	return p.http.request(ctx, "GET", "/v1/partner/domains/"+seg(externalID)+"/uptime", nil, uptimeQuery(rng))
 }
 
-// CompanyUptime tek istekte tüm domainleri döner — liste ekranı N+1 atmasın.
+// CompanyUptime tek istekte tüm domainleri döner - liste ekranı N+1 atmasın.
 func (p *Partner) CompanyUptime(ctx context.Context, companyExternalID, rng string) (Result, error) {
 	return p.http.request(ctx, "GET", "/v1/partner/companies/"+seg(companyExternalID)+"/uptime", nil, uptimeQuery(rng))
 }
@@ -161,7 +161,7 @@ func (p *Partner) ListModules(ctx context.Context, companyExternalID string) (Re
 	return p.http.request(ctx, "GET", "/v1/partner/companies/"+seg(companyExternalID)+"/modules", nil, nil)
 }
 
-// GrantModule — "bu müşteri şu modül için ödeme yaptı, kullanabilir".
+// GrantModule - "bu müşteri şu modül için ödeme yaptı, kullanabilir".
 func (p *Partner) GrantModule(ctx context.Context, companyExternalID string, input map[string]any) (Result, error) {
 	return p.http.request(ctx, "POST", "/v1/partner/companies/"+seg(companyExternalID)+"/modules", input, nil)
 }
@@ -192,7 +192,7 @@ func (p *Partner) RemoveUser(ctx context.Context, companyExternalID, userExterna
 // ── Gömme ──────────────────────────────────────────────────────────────
 
 // CreateEmbedToken panel ekranını partner sayfasına gömmek için kısa ömürlü
-// jeton üretir: 120 saniye yaşar ve TEK KULLANIMLIKTIR — jeton URL'de gider,
+// jeton üretir: 120 saniye yaşar ve TEK KULLANIMLIKTIR - jeton URL'de gider,
 // log ve Referer başlığına düşer.
 func (p *Partner) CreateEmbedToken(ctx context.Context, companyExternalID string, input map[string]any) (Result, error) {
 	return p.http.request(ctx, "POST", "/v1/partner/companies/"+seg(companyExternalID)+"/embed", input, nil)

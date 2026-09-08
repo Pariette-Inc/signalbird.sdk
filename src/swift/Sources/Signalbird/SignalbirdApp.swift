@@ -23,7 +23,7 @@ public struct SignalbirdAppConfig {
     }
 }
 
-/// Son kullanıcı (uygulama) istemcisi — canlı sohbet + push cihaz kaydı.
+/// Son kullanıcı (uygulama) istemcisi - canlı sohbet + push cihaz kaydı.
 ///
 /// Müşterinin MÜŞTERİSİ için: uygulama kullanıcısı. Yalnız ziyaretçinin KENDİ
 /// verisine dokunur; gönderim yapmaz, kişi listesi okumaz.
@@ -43,7 +43,7 @@ public final class SignalbirdApp: @unchecked Sendable {
     /// Aktör olsaydı başlık kurulumu (her istekte sırrı okumak) aktör
     /// yalıtımını delmek zorunda kalırdı ve Swift 6'da derlenmezdi. Paylaşılan
     /// durum tek bir küçük kutudadır (`VisitorStore`) ve o kutu kendi kilidini
-    /// taşır — bu, sohbet istemcisinin tamamını aktöre hapsetmekten hem daha
+    /// taşır - bu, sohbet istemcisinin tamamını aktöre hapsetmekten hem daha
     /// basit hem SwiftUI'dan çağırması daha kolaydır.
     public init(config: SignalbirdAppConfig) throws {
         guard !config.publicKey.isEmpty else {
@@ -131,7 +131,7 @@ public final class SignalbirdApp: @unchecked Sendable {
         )
     }
 
-    /// İlk mesajla konuşma açar. Kota burada harcanır — konuşma başına.
+    /// İlk mesajla konuşma açar. Kota burada harcanır - konuşma başına.
     public func startConversation(body: String, clientID: String = UUID().uuidString) async throws -> SbResult {
         try await http.request("POST", "/v1/sdk/chat/conversations", body: ["body": body, "client_id": clientID])
     }
@@ -234,7 +234,7 @@ public final class SignalbirdApp: @unchecked Sendable {
         try await http.request("DELETE", "/v1/sdk/devices/\(Transport.seg(token))")
     }
 
-    /// Bildirime dokunuldu — açılma damgası.
+    /// Bildirime dokunuldu - açılma damgası.
     ///
     /// Push'ta açılmayı yalnızca uygulama bilir: APNs "teslim ettim" der,
     /// "kullanıcı dokundu" demez. Bildirim yükündeki `sb_message_id`
@@ -247,7 +247,7 @@ public final class SignalbirdApp: @unchecked Sendable {
     ///
     /// Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine **sunucu**
     /// karar verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket
-    /// servisi kimseyi tanımaz, yalnız imzayı doğrular — bu yüzden imza
+    /// servisi kimseyi tanımaz, yalnız imzayı doğrular - bu yüzden imza
     /// `socket_id`e bağlıdır ve dar bir zaman penceresinde geçerlidir.
     ///
     /// Bağlantı başına bir kez çağrılır. Soket istemcisinin kendisi bu

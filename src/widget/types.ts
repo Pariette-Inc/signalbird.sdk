@@ -6,13 +6,13 @@
  */
 
 export interface InitOptions {
-  /** Açık domain anahtarı (`sb_public_live_…`) — kimliği doğrular. */
+  /** Açık domain anahtarı (`sb_public_live_…`) - kimliği doğrular. */
   publicKey: string;
-  /** Sohbet kanalı (`chat` modül anahtarı) — hangi widget, hangi gelen kutusu. */
+  /** Sohbet kanalı (`chat` modül anahtarı) - hangi widget, hangi gelen kutusu. */
   chatKey?: string;
   /** Varsayılan https://live.signalbird.io/api */
   baseUrl?: string;
-  /** 'tr' | 'en' — verilmezse uygulama ayarı → navigator.language */
+  /** 'tr' | 'en' - verilmezse uygulama ayarı → navigator.language */
   locale?: string;
   /** Sayfa yüklenirken zaten bilinen kullanıcı (login sonrası). */
   user?: IdentifyInput;
@@ -82,14 +82,14 @@ export interface ChatSettings {
   max_message_chars?: number;
 
   /**
-   * Ziyaretçinin yükleyebileceği MIME türleri — sunucudaki listenin aynısı.
+   * Ziyaretçinin yükleyebileceği MIME türleri - sunucudaki listenin aynısı.
    * Joker YOKTUR ve bu güvenlik kararıdır: `image/*` betik çalıştırabilen
    * `image/svg+xml`'i de içine alırdı.
    */
   attachment_mimes?: string[];
 
   /**
-   * Marka — panelden yönetilir (29 Ağu 2026).
+   * Marka - panelden yönetilir (29 Ağu 2026).
    *
    * `logo_url` başlık avatarında ve (seçilmişse) balonda kullanılır;
    * `theme` widget'ın KENDİ yüzeyi içindir, sayfanınkini değiştirmez;
@@ -116,7 +116,7 @@ export interface ChatSettings {
    * `bubble`  : köşedeki küçük pencere (varsayılan).
    * `sidebar` : ekran boyu, kenara yaslı çekmece.
    * `inline`  : sayfanın İÇİNDE, verilen kabın içinde. Balon, açma/kapama,
-   *             sürükleme ve sayfa kaydırma kilidi yoktur — destek sayfasının
+   *             sürükleme ve sayfa kaydırma kilidi yoktur - destek sayfasının
    *             gövdesi sohbettir.
    *
    * `position` ilk ikisinde geçerlidir.
@@ -127,7 +127,7 @@ export interface ChatSettings {
   inline_selector?: string | null;
 
   /**
-   * Ziyaretçinin gördüğü ajan adı — kanal ayarı. Sunucu adları ZATEN buna
+   * Ziyaretçinin gördüğü ajan adı - kanal ayarı. Sunucu adları ZATEN buna
    * göre çözer; alan burada bilgi olarak durur (panelin ayarı okuyan kodu
    * aynı tipi kullanıyor).
    */
@@ -166,25 +166,25 @@ export interface TopicOption {
 }
 
 /**
- * Canlı bağlantı bilgisi — YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan
+ * Canlı bağlantı bilgisi - YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan
  * taraf hiçbir şey göremez, odaya girmek imza ister ve imzayı API verir.
  *
  * Gömme etiketine yazılmaz: adres değişirse müşterinin sitesindeki tek satır
  * yeniden düzenlenmek zorunda kalmasın. `enabled:false` ise widget polling ile
- * çalışır — canlı bağlantı bir iyileştirmedir, onsuz da sistem tamdır.
+ * çalışır - canlı bağlantı bir iyileştirmedir, onsuz da sistem tamdır.
  */
 export interface RealtimeInfo {
   enabled: boolean;
-  /** `https://ws.signalbird.io` — soket servisinin public adresi. */
+  /** `https://ws.signalbird.io` - soket servisinin public adresi. */
   url?: string;
 }
 
 export interface Bootstrap {
   /**
-   * SDK sözleşmesinde alanın adı `channel` (1 Eyl 2026 — konuşma bir
+   * SDK sözleşmesinde alanın adı `channel` (1 Eyl 2026 - konuşma bir
    * "uygulamaya" değil kanala aittir). `app` ESKİ sunucular içindir; widget
    * ikisini de okur. 3 Eyl'e kadar widget yalnız `app` okuyordu ve yeni
-   * sunucuda HİÇ çizilmiyordu — canlı chat bu yüzden hiç açılmadı.
+   * sunucuda HİÇ çizilmiyordu - canlı chat bu yüzden hiç açılmadı.
    */
   channel?: SdkApp;
   /** @deprecated eski sunucu alanı; `channel` yoksa okunur. */
@@ -266,7 +266,7 @@ export interface Message {
   type: 'text' | 'image' | 'file' | 'system';
   body: string | null;
   /**
-   * Anlık çeviri — ziyaretçinin diline (28 Ağu 2026).
+   * Anlık çeviri - ziyaretçinin diline (28 Ağu 2026).
    *
    * Ziyaretçi ÇEVİRİYİ okur; orijinal gövde de gelir ama widget onu
    * göstermez. Ajanın Türkçe yazdığını bilmek ziyaretçinin işine yaramaz,
@@ -284,7 +284,7 @@ export interface Message {
   deleted_at?: string | null;
   /**
    * Sunucu meta'sı. `options`: kanal ajanının sunduğu dokunulabilir
-   * seçenekler — `url` varsa sayfa açılır, yoksa `value ?? label` ziyaretçinin
+   * seçenekler - `url` varsa sayfa açılır, yoksa `value ?? label` ziyaretçinin
    * mesajı olarak gönderilir.
    */
   meta?: MessageMeta | null;

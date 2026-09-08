@@ -27,7 +27,7 @@ public sealed class SignalbirdOptions
     /// <summary>Her olaya eklenen köken adı (sunucu ya da servis adı).</summary>
     public string? Source { get; set; }
 
-    /// <summary>Varsayılan 5 sn — bir log çağrısı isteği bekletmemeli.</summary>
+    /// <summary>Varsayılan 5 sn - bir log çağrısı isteği bekletmemeli.</summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>Varsayılan kapalı: telsiz erişilemezse ödeme akışı çökmemeli.</summary>
@@ -48,7 +48,7 @@ public sealed class LogEvent
 }
 
 /// <summary>
-/// Telsiz (Radio) istemcisi — log ve olay yazar.
+/// Telsiz (Radio) istemcisi - log ve olay yazar.
 ///
 /// <para>Sözleşme: docs/CONTRACT.md § 1–7</para>
 /// </summary>

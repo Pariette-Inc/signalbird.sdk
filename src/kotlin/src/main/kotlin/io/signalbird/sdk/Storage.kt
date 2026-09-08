@@ -8,7 +8,7 @@ import kotlin.concurrent.withLock
  * Ziyaretçi kimliğinin saklandığı yer.
  *
  * Android'de `SharedPreferences` sarmalayın. Sır cihazda kalmazsa kullanıcı
- * uygulamayı her açtığında sohbet geçmişini kaybeder — bu yüzden saklama
+ * uygulamayı her açtığında sohbet geçmişini kaybeder - bu yüzden saklama
  * zorunludur, isteğe bağlı değil.
  */
 interface SignalbirdStorage {

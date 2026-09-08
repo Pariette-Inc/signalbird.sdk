@@ -7,7 +7,7 @@ namespace Signalbird\Sdk\Messaging;
  *
  * Signalbird her teslimatı `X-Signalbird-Signature: sha256=<hex>` başlığıyla
  * imzalar: `hex(hmac_sha256(raw_body, secret))`. Doğrulama HAM gövde üzerinde
- * yapılmalıdır — JSON'u ayrıştırıp yeniden serileştirmek anahtar sırasını
+ * yapılmalıdır - JSON'u ayrıştırıp yeniden serileştirmek anahtar sırasını
  * değiştirir ve imzayı bozar. Laravel'de `$request->getContent()`, düz PHP'de
  * `file_get_contents('php://input')` ham gövdeyi verir.
  *
@@ -21,7 +21,7 @@ final class Webhook
             return false;
         }
 
-        // "sha256=abcd…" — başka algoritma ya da biçim kabul edilmez.
+        // "sha256=abcd…" - başka algoritma ya da biçim kabul edilmez.
         if (! preg_match('/^\s*sha256=([a-f0-9]+)\s*$/i', $signatureHeader, $match)) {
             return false;
         }

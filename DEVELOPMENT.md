@@ -1,10 +1,10 @@
-# Geliştirme Kaydı — signalbird.sdk
+# Geliştirme Kaydı - signalbird.sdk
 
-## 2026-09-05 — Sayfa içi (inline) sohbet ve kanala ait ajan adı
+## 2026-09-05 - Sayfa içi (inline) sohbet ve kanala ait ajan adı
 
 Ahmet: "Sohbet sistemi inline veya popup olabilsin. Bir site ikisini de
 kullanabilsin isterse." Ayrıca sohbet penceresinde ziyaretçiye "Pariette Admin"
-görünüyordu — görünen ad panelden yönetilmeliydi.
+görünüyordu - görünen ad panelden yönetilmeliydi.
 
 **Widget** (`src/widget`):
 - `layout: 'inline'` eklendi. Panel sabitlenmiş değil, verilen kabın içine
@@ -12,10 +12,10 @@ görünüyordu — görünen ad panelden yönetilmeliydi.
   boyutlandırma ve sayfa kaydırma kilidi kapalıdır; sohbet kendiliğinden açık
   gelir.
 - Kap sırası: `init({container})` → kanal ayarındaki `inline_selector` →
-  `#signalbird-chat`. Bulunamazsa inline isteği DÜŞÜRÜLÜR ve balona dönülür —
+  `#signalbird-chat`. Bulunamazsa inline isteği DÜŞÜRÜLÜR ve balona dönülür -
   yanlış bir seçici yüzünden sohbetin hiç görünmemesi en kötü sonuçtu.
 - `Signalbird.inline(target, options?)`: ana denetleyiciden ayrı bir sohbet
-  başlatır. "Bir site ikisini de kullansın" isteği budur — genel kurulum
+  başlatır. "Bir site ikisini de kullansın" isteği budur - genel kurulum
   balonu çizerken destek sayfası kendi kabına sayfa içi sohbeti koyar. Aynı
   kaba ikinci kez çizilmez, `destroy()` hepsini söker.
 - Tek satırlık kurulumda `data-layout` / `data-container` nitelikleri.
@@ -27,27 +27,27 @@ görünüyordu — görünen ad panelden yönetilmeliydi.
 Ajan adı çözümü SUNUCUDADIR (`agent_display_name`, signalbird.api
 `ChatPresenter`); widget bir ad hesaplamaz, tipte yalnız bilgi olarak durur.
 
-## 2026-09-03 (2) — publish.yml: "Yayınla" adımları HİÇ çalışmamış
+## 2026-09-03 (2) - publish.yml: "Yayınla" adımları HİÇ çalışmamış
 
 Ahmet "npm publish gerekiyor mu?" diye sorunca çıktı: v2.3.0/2.3.1/2.3.2
-yayın koşularının ÜÇÜNDE de npm "Yayınla" adımı `skipped` — iş akışı yeşil
+yayın koşularının ÜÇÜNDE de npm "Yayınla" adımı `skipped` - iş akışı yeşil
 bitiyor ama hiçbir şey basmıyordu (npm'deki eski sürümler elle basılmıştı;
 PyPI'da hiç sürüm yok). Sebep: `if: env.NODE_AUTH_TOKEN != ''` koşulundaki
 jeton ADIMIN KENDİ `env:` bloğundaydı ve GitHub `if`'i o env devreye girmeden
-değerlendirir — koşul her zaman boş, adım her zaman atlanıyordu. PyPI ve
+değerlendirir - koşul her zaman boş, adım her zaman atlanıyordu. PyPI ve
 NuGet işlerinde de aynı kalıp vardı.
 
 Düzeltme: jetonlar JOB seviyesine taşındı (job env'i adım `if`'inde görünür).
-"Jeton tanımsızsa adım atlanır" davranışı korunuyor — artık gerçekten jetona
+"Jeton tanımsızsa adım atlanır" davranışı korunuyor - artık gerçekten jetona
 bakarak. Packagist etkilenmedi (webhook, v2.3.2 orada). Bekleyen sürümler için
 tag yeniden koşturulur: `gh workflow run publish --ref v2.3.2`.
 
-## 2026-09-03 — v2.3.2: KRİTİK — bootstrap sözleşme uyumsuzluğu (canlı chat hiç açılmıyordu)
+## 2026-09-03 - v2.3.2: KRİTİK - bootstrap sözleşme uyumsuzluğu (canlı chat hiç açılmıyordu)
 
 Sunucu 1 Eyl'den beri bootstrap yanıtında `channel` gönderiyor (KEY_ARCHITECTURE
 kararı, BootstrapController'da yorumla bile yazılmış); widget ve app yüzeyi ise
 hâlâ `app` okuyordu. Sonuç: bootstrap 200 dönüyor, widget "bootstrap failed"
-deyip SESSİZCE hiç çizilmiyordu — penyu.io'da canlı chat bu yüzden hiç
+deyip SESSİZCE hiç çizilmiyordu - penyu.io'da canlı chat bu yüzden hiç
 açılmadı (3 Eyl, Ahmet canlıda yakaladı; teşhis canlı sayfada fetch-alias
 deneyiyle doğrulandı, düzeltme sonrası balon + ön-form + mesaj gönderimi
 uçtan uca çalıştı).
@@ -57,32 +57,32 @@ uçtan uca çalıştı).
 - Tipler: `Bootstrap.channel` / `BootstrapResult.channel` asıl alan; `app`
   @deprecated. `BootstrapChannel` ayrı tipe çıktı.
 
-## 2026-09-02 — v2.3.1: taşıyıcıya gönderici kanalı + Go derleme onarımı
+## 2026-09-02 - v2.3.1: taşıyıcıya gönderici kanalı + Go derleme onarımı
 
 - `MAIL_MAILER=signalbird` taşıyıcısı artık gönderici kanalı taşıyor:
   `config/mail.php` → `'signalbird' => ['transport' => 'signalbird',
-  'channel' => 'noreply']` (KODA yazılır, env değil — kanal adı sır değildir).
+  'channel' => 'noreply']` (KODA yazılır, env değil - kanal adı sır değildir).
   Kanal `module_key` olarak gövdede gider; From adresini sunucu, panelde
   adresle birlikte açılan `email` kanalından çözer. Kanalsız kurulum eski
   davranışta (varsayılan gönderen adres). `signalbird.mail_channel` config
   anahtarı da var (env isteyene).
-- Go: `management.go` `http.Request` → `http.request` — 1 Eyl "yeni versiyon"
+- Go: `management.go` `http.Request` → `http.request` - 1 Eyl "yeni versiyon"
   commit'inden kalan derleme hatası; v2.3.0 tag'inde Go yüzeyi derlenmiyordu,
   CI vet bunu yakaladı.
 - CONTRACT §8: `sendEmail` alanlarına `attachments`/`module_key`/
   `sending_address_id` eklendi, §8.3.1'e kanal + ek bölümü yazıldı.
 
-## 2026-09-02 — v2.3.0: e-posta ekleri + gönderici kanalı (`sendMail`)
+## 2026-09-02 - v2.3.0: e-posta ekleri + gönderici kanalı (`sendMail`)
 
-**Ekler:** `SignalbirdTransport` artık düz ekleri REDDETMİYOR — base64 olarak
+**Ekler:** `SignalbirdTransport` artık düz ekleri REDDETMİYOR - base64 olarak
 `attachments` alanında API'ye taşır (mesajla saklanır, düğüm multipart/mixed
 üretir; sunucu sınırı toplam 7 MB çözülmüş, `ATTACHMENTS_TOO_LARGE`).
-CID/inline gömme hâlâ açıkça reddedilir (multipart/related düğümde yok) —
+CID/inline gömme hâlâ açıkça reddedilir (multipart/related düğümde yok) -
 görseli barındırıp https ile kullanın. `MailBuilder`a `attach(filename,
 content, mime)` ve `attachFile(path)` eklendi. `sendEmail(input)` tüm
 dillerde geçiş yaptığı için `attachments` alanı diğer dillerde de çalışır.
 
-**Gönderici kanalı (Ahmet, 2 Eyl):** yeni anahtar YOK — kimlik domain
+**Gönderici kanalı (Ahmet, 2 Eyl):** yeni anahtar YOK - kimlik domain
 anahtarında, davranış kanalda (Telsiz `radio('kanal')` modeli):
 
 ```php
@@ -96,7 +96,7 @@ Signalbird::sendMail('noReply')
 gövdede gider, sunucu From adresini kanaldan çözer (module-key:email?,
 panelde adresle birlikte açılır). `body()` = `html()` takma adı.
 
-## 2026-09-02 — v2.2.2: mesaj uzunluğu tavanı ve dosya türleri
+## 2026-09-02 - v2.2.2: mesaj uzunluğu tavanı ve dosya türleri
 
 Sözleşme: `docs/CONTRACT.md` § 9.4.
 
@@ -107,14 +107,14 @@ olmalı her şey."
 
 - **Tavan sunucudan gelir** (`channel.chat.max_message_chars`, varsayılan 420).
   Widget'a sayı gömülmedi: iki yerde tutulan bir sınır, birini değiştirip
-  diğerini unutmak demekti — ziyaretçi yazabildiğini sanıp 422 alırdı.
+  diğerini unutmak demekti - ziyaretçi yazabildiğini sanıp 422 alırdı.
   `maxlength` yazmayı ve yapıştırmayı kırpar, son 60 karakterde sayaç belirir,
   sınır aşılıysa gönder düğmesi kapanır (değer programatik atanmış olabilir).
 - **İzinli türler de sunucudan gelir** (`channel.chat.attachment_mimes`).
   Dosya seçicinin `accept`'i ve yerel ön kontrol o listeden kurulur; sabit
   regex kaldırıldı.
 
-## 2026-09-02 — v2.2.1: ziyaretçinin GERÇEK tarayıcı dili
+## 2026-09-02 - v2.2.1: ziyaretçinin GERÇEK tarayıcı dili
 
 Sözleşme: `docs/CONTRACT.md` § 9.4.
 
@@ -126,12 +126,12 @@ olamıyor ve sunucudaki çeviri (14 dil) o dili hiç göremiyordu.
 
 Artık ham etiket gidiyor (`navigator.languages[0]` → `de-DE`); sunucu
 `substr(0,2)` ile normalleştiriyor ve desteklemediği dili zaten eliyor.
-Arayüz dili değişmedi — o hâlâ iki dil.
+Arayüz dili değişmedi - o hâlâ iki dil.
 
 Karşılığı `signalbird.api` tarafındaki `users.chat_language` /
 `users.browser_language` çalışmasıdır (bkz. o reponun DEVELOPMENT.md'si).
 
-## 2026-09-02 — v2.2.0: widget arayüzü sıfırdan ("Aurora")
+## 2026-09-02 - v2.2.0: widget arayüzü sıfırdan ("Aurora")
 
 Sözleşme: `docs/CONTRACT.md` § 9.4.
 
@@ -141,7 +141,7 @@ ettirebilmesi konusunda çok kötü… modern ve kimsenin görmediği bilmediği
 harika bişey istiyorum."*
 
 **Değişen yalnız `src/widget/ui/`.** Çekirdek (`api.ts`, `store.ts`,
-`poller.ts`, `chat.ts`, `socket`, `i18n`) korundu — iyimser gönderim, imleçli
+`poller.ts`, `chat.ts`, `socket`, `i18n`) korundu - iyimser gönderim, imleçli
 polling, çeviri, ek dosya ve puanlama akışları yeniden yazılmadı. `chat.ts`'te
 tek satırlık bir değişiklik var: `ui.attention()` artık mesaj önizlemesini de
 taşıyor (özet listesi `last_message_preview`'i zaten getiriyordu, ek istek yok).
@@ -160,21 +160,21 @@ süresi ve `topics`ten türeyen hazır başlangıç çipleri. Çip dokunuşu do�
 mesaj gönderir.
 
 **4. Mobil.** `100dvh`, `env(safe-area-inset-*)`, `visualViewport` ile klavye
-takibi (kompozitör artık klavyenin altında kalmıyor — şikâyetin en somut hâli),
+takibi (kompozitör artık klavyenin altında kalmıyor - şikâyetin en somut hâli),
 sayfa kaydırma kilidi, tepedeki tutamakla aşağı sürükleyerek kapatma, 16px
 yazı alanı (iOS yakınlaştırmasın).
 
 **5. Sohbet.** Mesaj gruplama (aynı gönderen, 5 dk), emoji seçici, "en alta in"
-düğmesi, bağlantıların tıklanır olması (`innerHTML` KULLANILMADAN — gövde
+düğmesi, bağlantıların tıklanır olması (`innerHTML` KULLANILMADAN - gövde
 serbest metindir ve widget müşterinin sayfasında çalışır), gönder düğmesinin
 boş mesajda pasif olması.
 
 Boyut: 30.4 KB gzip (hedef < 40 KB).
 
-## 2026-09-01 — v2.1.1: `RadioChannel` sahtelenebilir oldu
+## 2026-09-01 - v2.1.1: `RadioChannel` sahtelenebilir oldu
 
 `final class RadioChannel` idi ve Mockery final sınıfı sahteleyemiyor. Sonuç:
-`Signalbird::radio('x')->error(…)` çağıran HER müşterinin testi kırılıyordu —
+`Signalbird::radio('x')->error(…)` çağıran HER müşterinin testi kırılıyordu -
 "sahtele" diyemedikleri için ya gerçek HTTP isteği atacaklar ya da o kod yolunu
 hiç test etmeyeceklerdi. penyu.api'de `SignalDualWriteTest` tam olarak buna
 takıldı (`Mockery\Exception: … is marked final and its methods cannot be
@@ -183,7 +183,7 @@ replaced`).
 `final` kaldırıldı. Bir kütüphanenin kendisini test edilemez yapması,
 kapatılmasından daha pahalıya mal olur.
 
-## 2026-09-01 — v2.1.0: `radio()` kanal bağlama
+## 2026-09-01 - v2.1.0: `radio()` kanal bağlama
 
 Sözleşme: `docs/CONTRACT.md` § 1.1.
 
@@ -195,7 +195,7 @@ signalbird().radio('penyuCritical').error('Ödeme düğümü öldü', ctx)
 ```
 
 NEDEN: bu sözdizimi 1 Eyl 2026 anahtar sözleşmesinde ve panelin kopyala-yapıştır
-kod örneğinde YAZIYORDU ama SDK'da karşılığı yoktu — müşteri panelde kopyala
+kod örneğinde YAZIYORDU ama SDK'da karşılığı yoktu - müşteri panelde kopyala
 düğmesine basınca çalışmayan kod alıyordu. Var olan tek biçim
 `Signalbird::error('penyuCritical', 'mesaj', $ctx)` idi; kanal adı her satırda
 tekrar ediliyordu.
@@ -207,10 +207,10 @@ zaten ilk argüman olarak alıyor.
 
 Yeni: `src/php/RadioChannel.php`, `SignalbirdClient::radio()`,
 `Facades\Signalbird::radio()`, node `SignalbirdClient.radio()`.
-Test: `tests/php/RadioChannelTest.php` — kanal adının her seviyede aynı
+Test: `tests/php/RadioChannelTest.php` - kanal adının her seviyede aynı
 kaldığını sınar; kaybolursa kayıt yanlış kanala düşer ve hata sessizdir.
 
-## 2026-09-01 — v2.0.0: tek anahtar (domain key + module key)
+## 2026-09-01 - v2.0.0: tek anahtar (domain key + module key)
 
 Sözleşme: `docs/CONTRACT.md` §0–2, §10 · platform:
 `../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md`.
@@ -240,34 +240,34 @@ Davranış değişikliği: modül anahtarının `key` alanı artık **değiştir
 bir sonraki deploya kadar kayıt kaybetmez.
 
 Anahtar türü denetimi tek kurala indi: sunucu istemcileri `sb_secret_live_`
-ister, istemci yüzeyi `sb_public_live_`. Yanlış tür KURULUMDA yakalanır —
+ister, istemci yüzeyi `sb_public_live_`. Yanlış tür KURULUMDA yakalanır -
 açık anahtar sunucuda `ORIGIN_REQUIRED` alır ve sebebi log'da görünmez.
 
 Node · PHP · Python · Go · .NET · Swift · Kotlin · tarayıcı · widget · React ·
 Vue · Angular · React Native: hepsi güncellendi, parite korundu.
 
-## 2026-08-31 — Ön-form kararı ziyaretçi KAYDINA değil, BİLİNİYOR OLMASINA bakıyor
+## 2026-08-31 - Ön-form kararı ziyaretçi KAYDINA değil, BİLİNİYOR OLMASINA bakıyor
 
 Widget'ın ön-formu (ad/e-posta) `!this.store.visitor` koşuluyla kapanıyordu:
 ziyaretçi kaydı varsa form gösterilmiyordu. Oysa sayfa ziyaretçiyi yalnızca
 kendi damgasıyla (`external_id`) tanıtmışsa kayıt VARDIR ama kim olduğu hâlâ
-bilinmez — o kişiye form gösterilmeliydi, gösterilmiyordu ve e-postası bir daha
+bilinmez - o kişiye form gösterilmeliydi, gösterilmiyordu ve e-postası bir daha
 hiç sorulmuyordu.
 
 Bu, sayfanın her ziyaretçiyi baştan `identify` etmesini mümkün kılıyor
 (penyu'nun `client_uid` damgası): kayıt açılıyor ama misafirin e-postası yine
 soruluyor.
 
-`src/widget/chat.ts` · `decideView()` — davranış: adı ya da e-postası bilinen
+`src/widget/chat.ts` · `decideView()` - davranış: adı ya da e-postası bilinen
 (sayfadan gelen kimlikte ya da kayıtlı ziyaretçide) kişiye form gösterilmez;
 ikisi de yoksa gösterilir.
 
-**Widget'ın yeniden yayımlanması gerekir** — bu değişiklik `sdk/v1/signalbird.js`
+**Widget'ın yeniden yayımlanması gerekir** - bu değişiklik `sdk/v1/signalbird.js`
 paketinin içinde.
 
 > Her sürüm ve API değişikliğinden sonra güncellenir. En yeni bölüm en üstte.
 
-## 2026-08-30 — Balon modu, çekmece düzeni, dile göre metinler (v1.9.0)
+## 2026-08-30 - Balon modu, çekmece düzeni, dile göre metinler (v1.9.0)
 
 Üç ayar sunucudan gelir, widget yalnız uygular:
 
@@ -286,7 +286,7 @@ Sunucu tarafı: ziyaretçinin bitirdiği konuşmaya ajan artık yazamıyor
 (409 `CONVERSATION_ENDED_BY_VISITOR`), yani balonun gizlenmesiyle sunucunun
 davranışı birbirini tutuyor.
 
-## 2026-08-29 (4. tur) — Çeviri yetiştiğinde ekran güncelleniyor (v1.8.1)
+## 2026-08-29 (4. tur) - Çeviri yetiştiğinde ekran güncelleniyor (v1.8.1)
 
 Ajan Türkçe yazdı, müşteriye önce Türkçesi düştü, İngilizce çevirisi ancak
 sayfa yenilenince geldi. İki sebep üst üste binmişti:
@@ -302,7 +302,7 @@ ile tekrarlıyor; widget ve `ChatSession` bu işareti görünce o turu imleçsiz
 atıyor. Soketi olmayan yol için widget'ta zaten olan "her 5. turda tam liste"
 kuralı yeterli.
 
-## 2026-08-29 (3. tur) — Canlı bağlantı `app` yüzeyine de geldi
+## 2026-08-29 (3. tur) - Canlı bağlantı `app` yüzeyine de geldi
 
 Soket istemcisi `src/widget/socket.ts`ten `src/shared/socket.ts`e taşındı ve
 artık `ChatSession` de kullanıyor. Mobil (penyu, React Native) canlıya geçti;
@@ -311,7 +311,7 @@ ediyordu.
 
 Yayın haber taşır, veri taşımaz: soketten gelen olay yalnız "yeni bir şey var"
 der, mesaj her zaman kendi yetkimizle yeniden çekilir. Yoklama kaldırılmadı,
-yavaşladı — bağlıyken açık panelde 45 s, kapalıyken merdivenin son basamağı.
+yavaşladı - bağlıyken açık panelde 45 s, kapalıyken merdivenin son basamağı.
 
 `socketAuth(socketId, channel)` sözleşmeye (§11) girdi; TS, Swift ve Kotlin'de
 var. Soket İSTEMCİSİ sözleşmede değil: mobil diller kendi WebSocket katmanını
@@ -319,9 +319,9 @@ kullanır, imzayı veren uç ise her dilde çağrılabilmeli.
 
 `ChatSession`'a `reset()` ve `state.settings` eklendi; React/Vue/Angular/RN
 uyarlamaları da açıyor. Kapanmış konuşma artık `refresh()`te benimsenmiyor ve
-ekran yeniden görünür olduğunda sıfırlanıyor — widget'takiyle aynı kural.
+ekran yeniden görünür olduğunda sıfırlanıyor - widget'takiyle aynı kural.
 
-## 2026-08-29 (2. tur) — Widget yeniden tasarım, marka yönetimi, çeviri düzeltmesi
+## 2026-08-29 (2. tur) - Widget yeniden tasarım, marka yönetimi, çeviri düzeltmesi
 
 **Çeviri yanlış tarafa gösteriliyordu (canlı hata).** `message.translation`
 hedef dile çevrilmiş metindir ve hedef, mesajı OKUYACAK tarafın dilidir; hem
@@ -329,7 +329,7 @@ widget hem panel bunu koşulsuz basıyordu. Sonuç: ziyaretçi kendi yazdığı
 İngilizce cümleyi, sayfayı tazeledikten sonra Türkçeye çevrilmiş buluyordu.
 Artık her arayüz yalnız KARŞI tarafın mesajında çeviriyi gösteriyor. Sunucuda
 ikinci kapı: sağlayıcı kaynak dili hedefle aynı bildirirse çeviri hiç
-saklanmıyor ve dil ziyaretçiye yazılıyor — ikisi de Türkçe konuşuyorsa sistem
+saklanmıyor ve dil ziyaretçiye yazılıyor - ikisi de Türkçe konuşuyorsa sistem
 bir kez sorup susuyor.
 
 **Kapanmış konuşma geri açılmıyor.** Ziyaretçi sohbeti bitirip paneli yeniden
@@ -340,7 +340,7 @@ benimsiyor (eski `|| items[0]` düşürüldü).
 **Widget yeniden tasarlandı.** Başlık artık renk bloğu değil: marka rengi
 üstteki hatta, avatar halkasında, gönder düğmesinde ve ziyaretçi balonunda.
 Soğuk eğimli nötrler, koyu tema, işletim sistemi arayüz yazı tipleri (dışarıdan
-font YÜKLENMEZ — müşterinin CSP'si ve sayfa hızı), yeni odak halkaları,
+font YÜKLENMEZ - müşterinin CSP'si ve sayfa hızı), yeni odak halkaları,
 "Signalbird ile" yerine kuş + kelime işaretinden oluşan imza.
 
 **Panel ölçüsü ve konumu ziyaretçinin.** Başlık sürüklenerek taşınır, dış üst
@@ -353,47 +353,47 @@ hiçbir şey yazılmaz.
 
 Widget 22.9 KB gzip (önce 20.3 KB).
 
-## 2026-08-29 — Gömme jetonu takım anahtarıyla, şablonla mail, sohbet bitişi
+## 2026-08-29 - Gömme jetonu takım anahtarıyla, şablonla mail, sohbet bitişi
 
 **Yönetim yüzeyine `embedToken`** (46. metot). Signalbird ekranını MÜŞTERİNİN
 kendi panelinde göstermek partnerliğe özgü bir ayrıcalık değil; artık takım
-anahtarıyla da jeton alınıyor. Kapsam ayrı: `embed:issue` — jeton 60 dakikalık
+anahtarıyla da jeton alınıyor. Kapsam ayrı: `embed:issue` - jeton 60 dakikalık
 bir panel oturumuna çevrildiği için dar kapsamlı bir anahtarın bunu üretmesi
 kapsam kısıtını tek çağrıyla aşmak olurdu.
 
-**`Signalbird::mail()`** (PHP): zincirlenebilir e-posta — şablon (ad ya da id),
+**`Signalbird::mail()`** (PHP): zincirlenebilir e-posta - şablon (ad ya da id),
 değişkenler, gönderen adı, yanıt adresi, hukukî sınıf. Sınıf zorunlu, varsayılanı
 yok. Mevcut Mailable'lar için gerekmez: `MAIL_MAILER=signalbird` zaten hepsini
 Signalbird'den geçiriyor. Sunucu tarafında `template`/`template_id` artık
 gerçekten çalışıyor (doğrulanıp sessizce atılıyordu).
 
 **Widget** (29 Ağu kararları): balonda Signalbird kuşu; balonu tamamen gizleyen
-`x` (widget sökülmez, gizlenir — `chat.open()` geri getirir); kimliği bilinen
+`x` (widget sökülmez, gizlenir - `chat.open()` geri getirir); kimliği bilinen
 ziyaretçiye ön-form çizilmez; bitiş ekranında puanlama bağlantısı (eşik ve
 adres sunucudan); ziyaretçi yalnız fotoğraf yükler.
 
-## 2026-08-28 (2. tur) — Ziyaretçi konu seçimi
+## 2026-08-28 (2. tur) - Ziyaretçi konu seçimi
 
 `bootstrap` yanıtındaki `topics[]` iki yüzeyde de karşılık buldu:
 
 - **Widget**: ön-formda konu seçici. Konu HER ZAMAN isteğe bağlıdır (ön-form
   zorunlu olsa bile): konusunu bilmeyen ziyaretçiyi kapıda tutmak, gelmeyecek
-  bir mesaj demektir. Seçim ilk konuşma açılırken gönderilir — form doldurulup
+  bir mesaj demektir. Seçim ilk konuşma açılırken gönderilir - form doldurulup
   hiç yazılmadan kapatılabilir.
 - **App yüzeyi** (`ChatSession`): `state.topics`, `setTopic(slug)`;
   `startConversation` konuyu taşır. Konuşma açıldıktan sonra `setTopic`
-  etkisizdir — ziyaretçinin kendi konuşmasını yeniden sınıflandırması atamayı
+  etkisizdir - ziyaretçinin kendi konuşmasını yeniden sınıflandırması atamayı
   bozardı.
 
-## 2026-08-28 — Tek anahtar + üretim adresi pakete taşındı
+## 2026-08-28 - Tek anahtar + üretim adresi pakete taşındı
 
 `.env` artık tek satır: `SIGNALBIRD_KEY=sb_…`. Gönderim ve yönetim istemcileri
 bu anahtara düşer (`SIGNALBIRD_MESSAGING_KEY` / `SIGNALBIRD_API_KEY` isteğe
-bağlı kaldı — yalnız bir sunucunun yetkisini daraltmak için). Telsiz istemcisi
+bağlı kaldı - yalnız bir sunucunun yetkisini daraltmak için). Telsiz istemcisi
 de aynı anahtarı taşır: kontrol düzlemi 28 Ağu'da takım anahtarıyla log
 yazımını açtı.
 
-**Varsayılan kök `https://live.signalbird.io/api` oldu** — 10 dilde birden
+**Varsayılan kök `https://live.signalbird.io/api` oldu** - 10 dilde birden
 (node, php, python, go, dotnet, swift, kotlin, tarayıcı, app, widget) ve Laravel
 config'inde. Eski varsayılan (`signalbird.io/api`) pazarlama sitesine bakıyordu;
 adresi yazmayan her kurulum sessizce 404 alıyordu. `SIGNALBIRD_URL` yalnız
@@ -402,7 +402,7 @@ kendi kurulumu/sandbox için kaldı.
 README "İki anahtar, iki paket" bölümü "Tek anahtar" olarak yeniden yazıldı;
 `docs/CONTRACT.md § 2` takım anahtarını kimlik tablosuna aldı.
 
-## 2026-08-27 — Gömme (embed) yüzeyi — v1.6.0
+## 2026-08-27 - Gömme (embed) yüzeyi - v1.6.0
 
 Altıncı yüzey ve tek TARAYICI yüzeyi: partner, Signalbird panel ekranını kendi
 panelinin içinde çalıştırır. Ekran kopyalanmaz; çalışan ekranın kendisi gelir.
@@ -419,7 +419,7 @@ iframe `sandbox` + `referrerpolicy` ile kurulur (top-navigation YOK).
 
 Sözleşme: `docs/CONTRACT.md § 13`. Diğer dillerde karşılığı yoktur (DOM yüzeyi).
 
-## Packagist yayın hazırlığı — 2026-08-21
+## Packagist yayın hazırlığı - 2026-08-21
 
 npm `signalbird@1.4.0` yayınlandı. Packagist tarafına geçerken paketin
 **tüketiciye ne indirdiği** ölçüldü ve üç engel çıktı.
@@ -457,16 +457,16 @@ GitHub zipball'ını verir; onu `git archive` üretir ve yalnız `.gitattributes
 
 Yapılanlar:
 
-- **`.gitattributes` eklendi** — diğer dillerin kaynağı, manifestleri, derleme
+- **`.gitattributes` eklendi** - diğer dillerin kaynağı, manifestleri, derleme
   çıktıları, testler ve geliştirme dosyaları `export-ignore`. Ölçüldü:
   zipball 2310 girdiden 24'e (15 dosya + 9 dizin) düştü.
 - `.gitignore` += `.build/`, `.gradle/`, `.kotlin/`, `bin/`, `build/`, `obj/`,
   `__pycache__/`.
-- `archive.exclude` += aynı yollar — ikinci kalkan; biri unutulursa diğeri tutar.
+- `archive.exclude` += aynı yollar - ikinci kalkan; biri unutulursa diğeri tutar.
 - CI'ya iki adım: her iki arşivi de ölçen sızıntı/boyut denetimi (500 KB tavan)
   ve "derleme çıktısı depoya girmiş mi" bekçisi.
 
-Artefaktların index'ten çıkarılması **commit'lenmedi** — komut aşağıda.
+Artefaktların index'ten çıkarılması **commit'lenmedi** - komut aşağıda.
 
 ### 3. Yeni PHP sınıfları denetlenmiyordu
 
@@ -477,20 +477,20 @@ Eklerken çıktı: `SignalbirdLogHandler`, `Mail\SignalbirdTransport`,
 `SignalbirdServiceProvider` ve `Facades\Signalbird` ata sınıflarını
 `suggest` paketlerden alır (monolog, symfony/mailer, illuminate/support).
 `class_exists` çağırmak bunları zorla yükler ve Laravel dışı bir ortamda
-**fatal error** verir — CI'yı ortamın kurulumuna bağlardı. Liste ikiye ayrıldı:
+**fatal error** verir - CI'yı ortamın kurulumuna bağlardı. Liste ikiye ayrıldı:
 bağımlılıksız çekirdek `class_exists` ile, ata sınıfı dışarıda olanlar dosya +
 sınıf adı denetimiyle (sözdizimi `php -l` zaten bakıyor).
 
 - `symfony/mailer` **`require-dev`**'e eklendi (tüketiciyi etkilemez): taşıyıcı
   artık CI'da gerçekten yükleniyor ve test edilebiliyor.
-- **`SignalbirdTransportTest` yazıldı** (9 test) — taşıyıcının hiç testi yoktu,
+- **`SignalbirdTransportTest` yazıldı** (9 test) - taşıyıcının hiç testi yoktu,
   oysa `MAIL_MAILER=signalbird` diyen müşterinin HER postası oradan geçiyor.
   Sınananlar: alıcı başına ayrı istek (To/Cc/Bcc), HTML→metin gövde seçimi,
   `from_name`/`reply_to` taşınması, hukuki sınıfın config'ten gelmesi, ek
   varsa açık hata, `ok:false` durumunda `TransportException` (yutulmaz).
 
 Bir gözlem: taşıyıcının kendi "alıcı yok" koruması normal yoldan
-**erişilemez** — Symfony Mime katmanı To/Cc/Bcc'siz iletiyi taşıyıcıya hiç
+**erişilemez** - Symfony Mime katmanı To/Cc/Bcc'siz iletiyi taşıyıcıya hiç
 ulaştırmaz. Koruma yine de duruyor (taşıyıcı Symfony dışından da çağrılabilir)
 ve test bu davranışı sabitliyor ki kimse "ölü kod" diye silmesin.
 
@@ -509,7 +509,7 @@ yayınlanamaz. İki yol var: etiketi HEAD'e taşımak (npm 1.4.0 ile aynı numar
 korunur ama yayımlanmış bir etiket yeniden yazılır) ya da `1.4.1` kesip npm'e
 de aynı numarayı yayınlamak (sürüm kilidi kuralı bozulmaz).
 
-## Yayın adları — 2026-08-21
+## Yayın adları - 2026-08-21
 
 | Kayıt defteri | Ad | Durum |
 |---|---|---|
@@ -527,7 +527,7 @@ Composer'da **tek kelimelik ad mümkün değil**: Packagist paket adları zorunl
 olarak `satıcı/paket` biçiminde. `pariette/signalbird` seçildi.
 
 PHP ad uzayı (`Signalbird\Sdk\…`) ve Kotlin paket yolu (`io.signalbird.sdk`)
-DEĞİŞMEDİ — paket adından bağımsızdırlar, değiştirmek her tüketicinin kodunu
+DEĞİŞMEDİ - paket adından bağımsızdırlar, değiştirmek her tüketicinin kodunu
 kırardı.
 
 > **Tüketiciler henüz eski adda.** `veribenim.api` ve `submit.api`
@@ -536,7 +536,7 @@ kırardı.
 > çözülebilir; erken çevirmek deploy'u kırardı. Yayından sonra iki repoda da:
 > `composer require pariette/signalbird:^1.4 && composer remove signalbird/sdk`
 
-## 1.4.0 — 2026-08-21 · Partner beş dilde, sohbet tetikleyicileri ve raporu
+## 1.4.0 - 2026-08-21 · Partner beş dilde, sohbet tetikleyicileri ve raporu
 
 ### Partner yüzeyi tamamlandı
 
@@ -550,16 +550,16 @@ dilde denetliyor.
 Sunucudaki sohbet eksikleri kapandı; SDK geride kalmasın diye aynı gün eklendi:
 
 - `listChatTriggers` `createChatTrigger` `updateChatTrigger` `deleteChatTrigger`
-- `chatReport(range)` — `7d` | `30d` | `90d`
+- `chatReport(range)` - `7d` | `30d` | `90d`
 
 Tetikleyici = "şu olduğunda şunu yap" kural kaydı: üç olay
 (`conversation.created`, `visitor.message`, `no_reply`), koşul listesi, beş
 eylem. Rapor ortalama değil **ortanca + p90** döner ve veri yoksa süreler
-`null` olur — `0` değil.
+`null` olur - `0` değil.
 
 Beş dile birden yazıldı (node, php, python, go, dotnet).
 
-## 1.3.0 — 2026-08-20 · Partner yüzeyi + Signalbird posta taşıyıcısı
+## 1.3.0 - 2026-08-20 · Partner yüzeyi + Signalbird posta taşıyıcısı
 
 Sözleşme: `docs/CONTRACT.md` §12 ve
 `../signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md`.
@@ -577,7 +577,7 @@ kurulum anında `WRONG_KEY_TYPE`.
 `createEmbedToken`.
 
 Bu yüzey `CLAUDE.md`'deki "Admin yüzeyi OLMAYACAK" kuralının **bilinçli
-istisnasıdır** — gerekçesi CONTRACT §12.1'de yazılı. Kural `sb_` anahtarı için
+istisnasıdır** - gerekçesi CONTRACT §12.1'de yazılı. Kural `sb_` anahtarı için
 aynen duruyor.
 
 `scripts/check-parity.mjs` artık **beş** yüzey denetliyor (Partner: node + php).
@@ -590,20 +590,20 @@ aynen duruyor.
 Mailable sınıfı değişmez. Alıcı başına ayrı istek (Signalbird'de her alıcı ayrı
 `message` kaydıdır). `From` görünen adı ve `Reply-To` korunur, zarf adresi
 havuzda kalır. Hata yutulmaz (`TransportException`). **Ek gönderimi henüz
-yok** — sessizce düşürmek yerine açıkça hata verir.
+yok** - sessizce düşürmek yerine açıkça hata verir.
 
 Yeni konfig: `signalbird.partner_key`, `signalbird.mail_class`.
 
-## 2026-08-19 — Yönetim yüzeyi + yedi yeni dil (v1.2.0)
+## 2026-08-19 - Yönetim yüzeyi + yedi yeni dil (v1.2.0)
 
 İstek tek cümleydi: *"müşteri ile ilgili her zerre kod SDK üzerinden
-desteklensin — admin değil, müşterinin kendi projesini yönetmesi."* Paket üç
+desteklensin - admin değil, müşterinin kendi projesini yönetmesi."* Paket üç
 yüzeyden **dörde**, iki dilden **on iki giriş noktasına** çıktı.
 
 | Yüzey | Yeni mi | Anahtar | Diller |
 |---|---|---|---|
-| Telsiz | — | `sbr_live_` / `sbr_pub_` | Node, PHP, **Python**, **Go**, **.NET**, **Swift**, **Kotlin**, tarayıcı |
-| Gönderim | — | `sb_` | Node, PHP, **Python**, **Go**, **.NET** |
+| Telsiz | - | `sbr_live_` / `sbr_pub_` | Node, PHP, **Python**, **Go**, **.NET**, **Swift**, **Kotlin**, tarayıcı |
+| Gönderim | - | `sb_` | Node, PHP, **Python**, **Go**, **.NET** |
 | **Yönetim** | ✔ 40 metot | `sb_` + `radio\|chat\|apps` scope | Node, PHP, Python, Go, .NET |
 | **Uygulama** | ✔ 17 metot | `sbw_pub_` + ziyaretçi sırrı | **TypeScript**, **Swift**, **Kotlin** (+ React, Vue, Angular, React Native uyarlamaları) |
 
@@ -612,32 +612,32 @@ yüzeyden **dörde**, iki dilden **on iki giriş noktasına** çıktı.
 Panel uçları anahtarla erişilebilir hâle geldi; gövde değil KAPI eklendi:
 
 - `ApiKey::SCOPES` += `radio:read|write`, `chat:read|write`, `apps:read|write`.
-  `SCOPE_FALLBACKS` ile yazma scope'u okumayı kapsar — ikisini ayrı ayrı
+  `SCOPE_FALLBACKS` ile yazma scope'u okumayı kapsar - ikisini ayrı ayrı
   işaretlemeye zorlamak, ilk entegrasyonda 403 alıp anahtarı yeniden üretmek
   demekti.
 - Yeni rota grupları: `/v1/radio/{summary,events,projects…}`, `/v1/apps…`,
-  `/v1/chat/…` — hepsi `api-key:<scope>` ile korunuyor. Panel rotaları
+  `/v1/chat/…` - hepsi `api-key:<scope>` ile korunuyor. Panel rotaları
   (`/v1/panel/*`) aynen duruyor.
 - `RadioPanelController`, `AppController` ve `ChatPanelController::team()`
   artık `api_key_team` niteliğini önce okuyor (`ContactController` deseni).
 - Sohbette "ajan" **anahtarı üreten kullanıcıdır** (`ChatPanelController::actor`).
   Sahipsiz miras anahtar yazma yapamaz: gelen kutusundaki her satırın bir
-  sahibi olmalı. `canManage` anahtar modunda scope'a bakar — anahtarı üreten
+  sahibi olmalı. `canManage` anahtar modunda scope'a bakar - anahtarı üreten
   kişi sonradan yetkisini kaybederse entegrasyon durmasın.
 - Testler: `ManagementApiTest` (10), `Chat/ChatAgentKeyTest` (7). Panel
   regresyonu için 82 test yeşil.
 
 **SDK tarafı**
 
-- **Yönetim istemcisi** (`SignalbirdManagement` / `ManagementClient`) — Gönderim
+- **Yönetim istemcisi** (`SignalbirdManagement` / `ManagementClient`) - Gönderim
   ile aynı anahtar ailesi ama ayrı sınıf: biri ileti gönderip kota harcar,
   diğeri yapılandırma değiştirir. Tek sınıfta birleşseydi "hangi scope
   gerekiyordu" sorusu her metotta yeniden sorulurdu.
-- **Uygulama istemcisi** (`SignalbirdApp`) — son kullanıcı yüzeyi. Tek gövde;
+- **Uygulama istemcisi** (`SignalbirdApp`) - son kullanıcı yüzeyi. Tek gövde;
   platform farkı iki noktada toplandı ve ikisi de dışarıdan veriliyor:
   `storage` ve `fetch`. React/Vue/Angular/React Native uyarlamaları bu sınıfın
   ÜSTÜNE oturur, kopyası değildir.
-- **`ChatSession`** — çatısız durum katmanı: iyimser gönderim, yoklama
+- **`ChatSession`** - çatısız durum katmanı: iyimser gönderim, yoklama
   merdiveni, okunmamış sayısı, yazıyor durumu. Dört çatı buna abone olur;
   dördünde ayrı yazmak dört ayrı hata takımı üretirdi.
 - **Angular dekoratör kullanmıyor.** `@Injectable()` yazsaydık paketin
@@ -645,7 +645,7 @@ Panel uçları anahtarla erişilebilir hâle geldi; gövde değil KAPI eklendi:
   fabrikası sürümden bağımsızdır.
 - **Kotlin'de PATCH.** Android'in `HttpURLConnection`'ı PATCH bilmez; istek
   POST + `X-HTTP-Method-Override: PATCH` ile gider (Symfony/Laravel bunu
-  yerleşik destekler — `Request::getMethod()`).
+  yerleşik destekler - `Request::getMethod()`).
 - **Swift'te aktör yok.** Aktör olsaydı başlık kurulumu (her istekte sırrı
   okumak) yalıtımı delmek zorunda kalır ve Swift 6'da derlenmezdi. Paylaşılan
   durum tek bir kilitli kutuda (`VisitorStore`).
@@ -665,21 +665,21 @@ götürürdü. Toplam: Telsiz 7, Gönderim 20, Yönetim 40, Uygulama 17.
 **Manifestler kökte.** `pyproject.toml`, `go.mod`, `Package.swift`,
 `build.gradle.kts`, `Signalbird.Sdk.csproj` eklendi; `sync-version.mjs` artık
 JSON olmayan manifestlerin sürüm satırını da yazıyor ve bulamazsa **hata
-veriyor** — sessizce geçmek, bir paketin eski sürümle yayınlanması demekti.
+veriyor** - sessizce geçmek, bir paketin eski sürümle yayınlanması demekti.
 
 **Yapılmayanlar:** Gönderim yüzeyi mobil dillerde yok (gizli anahtar telefona
 gömülmez); `uploadAttachment` sözleşmede yok (dosya tipi her platformda farklı);
 WebSocket taşıyıcısı yok.
 
-## 2026-08-19 — Gönderim istemcisi + canlı sohbet widget'ı (v1.1.0)
+## 2026-08-19 - Gönderim istemcisi + canlı sohbet widget'ı (v1.1.0)
 
 Platform genişlemesi (`signalbird.api/docs/PLATFORM_EXPANSION_2026-08-19.md` §3).
 Paket artık üç yüzey taşır; Telsiz istemcisine dokunulmadı.
 
 | Yüzey | Giriş noktası | Kimlik | Uçlar |
 |---|---|---|---|
-| Gönderim — Node | `signalbird` → `SignalbirdMessaging`, `verifyWebhook` | `Authorization: Bearer sb_…` | `POST /v1/email/send`, `/v1/sms/send`, `/v1/sms/preview`, `/v1/push/send`; `GET/POST /v1/contacts`, `PATCH/DELETE /v1/contacts/{id}`, `POST /v1/contacts/bulk`; `GET/POST /v1/contact-lists`, `DELETE /v1/contact-lists/{id}`; `GET/POST /v1/campaigns`, `GET /v1/campaigns/{id}`, `POST /v1/campaigns/{id}/cancel`, `GET /v1/campaigns/{id}/messages`; `GET /v1/messages`, `GET /v1/messages/{id}` |
-| Gönderim — PHP | `Signalbird\Sdk\Messaging\MessagingClient`, `Messaging\Webhook::verify()`, Laravel `Signalbird::messaging()` (`SIGNALBIRD_MESSAGING_KEY`) | aynı | aynı |
+| Gönderim - Node | `signalbird` → `SignalbirdMessaging`, `verifyWebhook` | `Authorization: Bearer sb_…` | `POST /v1/email/send`, `/v1/sms/send`, `/v1/sms/preview`, `/v1/push/send`; `GET/POST /v1/contacts`, `PATCH/DELETE /v1/contacts/{id}`, `POST /v1/contacts/bulk`; `GET/POST /v1/contact-lists`, `DELETE /v1/contact-lists/{id}`; `GET/POST /v1/campaigns`, `GET /v1/campaigns/{id}`, `POST /v1/campaigns/{id}/cancel`, `GET /v1/campaigns/{id}/messages`; `GET /v1/messages`, `GET /v1/messages/{id}` |
+| Gönderim - PHP | `Signalbird\Sdk\Messaging\MessagingClient`, `Messaging\Webhook::verify()`, Laravel `Signalbird::messaging()` (`SIGNALBIRD_MESSAGING_KEY`) | aynı | aynı |
 | Widget | `dist/signalbird.js` (IIFE, global `Signalbird`) → `signalbird.web/public/sdk/v1/signalbird.js` | `X-Signalbird-App-Key: sbw_pub_…` + `X-Signalbird-Visitor: <sır>` | `POST /v1/sdk/bootstrap`, `POST /v1/sdk/chat/session`, `GET/POST /v1/sdk/chat/conversations`, `GET …/{id}?after=&limit=`, `POST …/{id}/messages`, `PATCH/DELETE …/{id}/messages/{mid}`, `POST …/{id}/messages/{mid}/reactions`, `POST …/{id}/typing`, `POST …/{id}/read`, `POST …/{id}/attachments`, `POST …/{id}/close`, `POST …/{id}/rate`; `POST /v1/sdk/devices`, `POST /v1/sdk/identify` |
 
 **Kararlar ve gerekçeleri**
@@ -687,7 +687,7 @@ Paket artık üç yüzey taşır; Telsiz istemcisine dokunulmadı.
 - **Ayrı sınıf, aynı paket.** Gönderim için `SignalbirdClient`'a metot eklemek
   yerine `SignalbirdMessaging` açıldı: farklı anahtar (`sb_` ↔ `sbr_`), farklı
   kota, farklı hata kümesi. Yanlış anahtar kurulum anında `WRONG_KEY_TYPE` ile
-  reddedilir — sessizce 401 yiyip haftalar sonra fark edilmesin.
+  reddedilir - sessizce 401 yiyip haftalar sonra fark edilmesin.
 - **Tek zarf.** Her metot `{ok, status, data?, code?, message?}` döner (PHP dizi).
   Kod eşlemesi iki dilde aynı: sunucu kodu → 422 `VALIDATION_ERROR` → 401
   `API_KEY_INVALID` → `HTTP_<n>`; ağ `NETWORK_ERROR`, süre `TIMEOUT`.
@@ -697,7 +697,7 @@ Paket artık üç yüzey taşır; Telsiz istemcisine dokunulmadı.
   `hash_equals`; yalnız `sha256=` öneki.
 - **`SignalbirdException` genişledi, geriye uyumlu.** `getErrorCode()`,
   `getStatus()`, `getBody()`; `new SignalbirdException('mesaj')` aynen çalışır.
-- **PHP testleri.** `tests/php` (PHPUnit 10) — `transport()` `protected`, sahte
+- **PHP testleri.** `tests/php` (PHPUnit 10) - `transport()` `protected`, sahte
   istemci cURL yerine kuyruklu yanıt döner. `vendor/bin/phpunit`.
 - **Widget: çerçeve yok, Shadow DOM, IIFE.** Sayfa CSS'inden izole; sürükle-
   bırak/yapıştır ek, yanıtla, tepki, düzenle/sil (15 dk), ✓/✓✓, yazıyor, gün
@@ -709,14 +709,14 @@ Paket artık üç yüzey taşır; Telsiz istemcisine dokunulmadı.
   `scripts/publish-web.mjs` `../signalbird.web/public/sdk/v1/` altına kopyalar
   (`npm run build` = `tsup && node scripts/publish-web.mjs`).
 - **`check-parity.mjs`** artık iki küme doğrular: Telsiz (7 metot) ve Gönderim
-  (20 metot) — Node/PHP adları birebir.
+  (20 metot) - Node/PHP adları birebir.
 
 **Dokümanlar:** `docs/CONTRACT.md` §8–9, `README.md`, `signalbird.web/public/docs/{tr,en}/sdk-messaging.md` + `sdk-widget.md`, `/sdk/messaging` ve `/sdk/widget` rotaları.
 
 **Yapılmayanlar:** iOS/Android widget'ı (aynı sözleşme), WebSocket taşıyıcısı
 (API imleçli, istemci-yalnız iş).
 
-## 2026-08-19 — Telsiz (Radio) için sıfırdan yazıldı (v1.0.0)
+## 2026-08-19 - Telsiz (Radio) için sıfırdan yazıldı (v1.0.0)
 
 Eski paket `POST /api/sdk/log/{key}` ucuna yazıyordu; o uç gelen kaydı **hiçbir
 yere yazmıyor**, yalnız anahtarı üreten kişiye bir bildirim atıyordu. Kanal,
@@ -739,7 +739,7 @@ Telsiz modeline göre baştan yazıldı.
   istemciye inemez, sunucu `Origin` taşıyan gizli anahtarlı isteği reddeder.
 - **`sendBeacon` için sorgu parametresi.** Beacon özel başlık taşıyamaz; sayfa
   kapanırken kuyruğu boşaltmanın başka yolu yok. Sunucu sorgu dizesinde YALNIZ
-  açık anahtar kabul eder (`SECRET_KEY_IN_QUERY` aksi hâlde) — gizli anahtar
+  açık anahtar kabul eder (`SECRET_KEY_IN_QUERY` aksi hâlde) - gizli anahtar
   erişim günlüklerine düşmesin.
 - **Sessiz hata varsayılan.** `throwOnError: false`. Telsiz erişilemezse
   müşterinin ödeme akışı çökmemeli.

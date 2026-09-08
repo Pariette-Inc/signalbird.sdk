@@ -53,6 +53,6 @@ class SignalbirdException extends \RuntimeException
     /** Başarısız bir API yanıtından istisna üretir. */
     public static function fromResponse(string $code, int $status, string $message, mixed $body = null): self
     {
-        return new self("Signalbird: {$code} — {$message}", $code, $status, $body);
+        return new self("Signalbird: {$code} - {$message}", $code, $status, $body);
     }
 }

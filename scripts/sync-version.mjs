@@ -50,7 +50,7 @@ const TARGETS = [
 /**
  * JSON olmayan manifestler: sürüm satırı düzenli ifadeyle değiştirilir.
  *
- * Her biri için desen DAR tutulur — `build.gradle.kts` içinde birden çok
+ * Her biri için desen DAR tutulur - `build.gradle.kts` içinde birden çok
  * `version` geçer (bağımlılık sürümleri) ve geniş bir desen onları da bozardı.
  */
 const TEXT_TARGETS = [

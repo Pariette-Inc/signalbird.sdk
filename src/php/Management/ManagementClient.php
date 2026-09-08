@@ -5,7 +5,7 @@ namespace Signalbird\Sdk\Management;
 use Signalbird\Sdk\SignalbirdException;
 
 /**
- * Yönetim (Management) istemcisi — sunucu tarafı.
+ * Yönetim (Management) istemcisi - sunucu tarafı.
  *
  * Müşterinin panelde tıklayarak yaptığı her şeyi kodla yapar: Telsiz projesi ve
  * kanalı açar, olay akışını okur, sohbet gelen kutusunu işler, uygulama kaydı
@@ -18,7 +18,7 @@ use Signalbird\Sdk\SignalbirdException;
  * birebir aynıdır:
  *   ['ok' => bool, 'status' => int, 'data' => mixed|null, 'code' => ?string, 'message' => ?string]
  *
- * Node karşılığı: src/node/management.ts — metot adları birebir aynıdır
+ * Node karşılığı: src/node/management.ts - metot adları birebir aynıdır
  * (`scripts/check-parity.mjs` denetler).
  * Sözleşme: docs/CONTRACT.md § 10
  */
@@ -87,7 +87,7 @@ class ManagementClient
 
     /**
      * Kanal açar. `key` verilmezse başlıktan üretilir; çakışırsa sonuna sayı
-     * eklenir — "bu ad alınmış" hatası CI'da kanal açan betiği durdururdu.
+     * eklenir - "bu ad alınmış" hatası CI'da kanal açan betiği durdururdu.
      *
      * @param  array<string, mixed>  $input
      * @return array{ok: bool, status: int, data: mixed, code: ?string}
@@ -160,12 +160,12 @@ class ManagementClient
     }
 
     /**
-     * Proaktif sohbet — ziyaretçi yazmadan ajan başlatır.
+     * Proaktif sohbet - ziyaretçi yazmadan ajan başlatır.
      *
      * Ziyaretçi üç yoldan adreslenebilir: `visitor_id` (Signalbird kimliği),
      * `contact_id` ya da `external_id` (entegre eden tarafın kendi damgası).
-     * Çoğu entegrasyon `visitor_id`'yi bilmez — o kimliği yalnızca tarayıcıdaki
-     * sohbet oturumu görür — bu yüzden `external_id` pratikte en kullanışlı
+     * Çoğu entegrasyon `visitor_id`'yi bilmez - o kimliği yalnızca tarayıcıdaki
+     * sohbet oturumu görür - bu yüzden `external_id` pratikte en kullanışlı
      * olanıdır. Aynı damgaya sahip birden çok ziyaretçi varsa EN SON görülen
      * seçilir.
      *
@@ -233,7 +233,7 @@ class ManagementClient
         );
     }
 
-    /** Tepki açma/kapama — aynı emoji ikinci kez gönderilirse kaldırılır. */
+    /** Tepki açma/kapama - aynı emoji ikinci kez gönderilirse kaldırılır. */
     public function reactToChatMessage(string $id, string $messageId, string $emoji): array
     {
         return $this->request(
@@ -312,7 +312,7 @@ class ManagementClient
 
     /**
      * Yanıt süresi, çözüm süresi, memnuniyet ve ajan kırılımı.
-     * Veri yoksa süreler `null` döner — 0 DEĞİL.
+     * Veri yoksa süreler `null` döner - 0 DEĞİL.
      *
      * @param string $range `7d` | `30d` | `90d`
      */
@@ -324,7 +324,7 @@ class ManagementClient
     // ── Uygulamalar ───────────────────────────────────────────────────────
 
     // Uygulama uçları KALDIRILDI (1 Eyl 2026): sohbet widget'ı ve push kanalı
-    // birer modül anahtarıdır — `listModuleKeys('chat')`, `listModuleKeys('push')`.
+    // birer modül anahtarıdır - `listModuleKeys('chat')`, `listModuleKeys('push')`.
 
     public function embedToken(array $input): array
     {
@@ -469,7 +469,7 @@ class ManagementClient
         return (string) $value;
     }
 
-    /** Yol parçası — kimlikler URL'e gömülmeden önce kodlanır. */
+    /** Yol parçası - kimlikler URL'e gömülmeden önce kodlanır. */
     private static function seg(int|string $value): string
     {
         return rawurlencode((string) $value);

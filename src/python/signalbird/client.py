@@ -1,4 +1,4 @@
-"""Telsiz (Radio) istemcisi — sunucu tarafı.
+"""Telsiz (Radio) istemcisi - sunucu tarafı.
 
 Django, FastAPI, Flask, Celery işçileri ve düz betikler buradan yazar.
 Varsayılan davranış SESSİZ HATA'dır: telsiz erişilemezse müşterinin ödeme

@@ -5,7 +5,7 @@
  *
  * Widget npm paketine GİRMEZ (müşteri `<script>` ile CDN'den alır); bu yüzden
  * yayın adımı burasıdır. `npm run build` sonunda otomatik çalışır. Web reposu
- * bu makinede yoksa (CI) uyarır ama build'i kırmaz — npm yayını web'e bağlı
+ * bu makinede yoksa (CI) uyarır ama build'i kırmaz - npm yayını web'e bağlı
  * değildir.
  *
  * `--web <yol>` ile hedef repo verilebilir; varsayılan `../signalbird.web`.
@@ -27,7 +27,7 @@ const webDir = resolve(
 )
 
 if (!existsSync(source)) {
-  console.error(`✗ ${source} yok — önce \`tsup\` çalışmalı.`)
+  console.error(`✗ ${source} yok - önce \`tsup\` çalışmalı.`)
   process.exit(1)
 }
 
@@ -38,7 +38,7 @@ console.log(`widget: ${kb(raw.length)} ham, ${kb(gzip)} gzip`)
 
 // Sözleşme (§3.2): < 40 KB gzip. Aşarsa yayın durmaz ama gürültü çıkarır.
 if (gzip > 40 * 1024) {
-  console.warn('⚠ widget 40 KB gzip hedefini aştı — bağımlılık/özellik gözden geçirilmeli')
+  console.warn('⚠ widget 40 KB gzip hedefini aştı - bağımlılık/özellik gözden geçirilmeli')
 }
 
 if (!existsSync(join(webDir, 'package.json'))) {

@@ -1,12 +1,12 @@
 /**
- * Gönderim (Messaging) istemcisi — sunucu tarafı.
+ * Gönderim (Messaging) istemcisi - sunucu tarafı.
  *
  * Takım API anahtarıyla (`sb_…`) e-posta/SMS/push gönderir, kişi ve liste
  * yönetir, kampanya açar, mesaj durumlarını okur. Telsiz istemcisinden
  * (`SignalbirdClient`) ayrıdır: farklı anahtar, farklı kapı, farklı kota.
  *
  * Bağımlılığı yoktur (Node 18+ `fetch`). Retry yoktur: aynı iletiyi iki kez
- * göndermek, hiç göndermemekten pahalıdır — yeniden deneme kararı çağıranındır.
+ * göndermek, hiç göndermemekten pahalıdır - yeniden deneme kararı çağıranındır.
  *
  * Sözleşme: docs/CONTRACT.md § 8
  */
@@ -61,7 +61,7 @@ export class SignalbirdMessaging {
     if (!config.domainKey.startsWith('sb_secret_live_')) {
       throw new SignalbirdError(
         'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). ' +
-          'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
+        'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.',
         0,
         'WRONG_KEY_TYPE'
       );
@@ -85,7 +85,7 @@ export class SignalbirdMessaging {
   }
 
   /**
-   * Otomasyon olayı — kendi sisteminizdeki bir olayı bildirir ve eşleşen
+   * Otomasyon olayı - kendi sisteminizdeki bir olayı bildirir ve eşleşen
    * akışı tetikler (§11). Signalbird olayın anlamını bilmez; adı sizindir.
    */
   track(input: {
@@ -96,7 +96,7 @@ export class SignalbirdMessaging {
     return this.request('POST', '/v1/events', input);
   }
 
-  /** SMS parça/karakter hesabı — kota harcamaz. */
+  /** SMS parça/karakter hesabı - kota harcamaz. */
   previewSms(body: string): Promise<SbResult<SmsPreview>> {
     return this.request('POST', '/v1/sms/preview', { body });
   }
@@ -129,7 +129,7 @@ export class SignalbirdMessaging {
    * 1000'lik parçalara bölünür ve SIRAYLA gönderilir (paralel değil: aynı
    * e-posta iki parçada da varsa yarış olmasın). Sonuçlar tek yanıtta
    * birleştirilir. Bir parça başarısız olursa o noktada durulur ve o ana kadar
-   * biriken sayımlar `data` içinde döner — çağıran kaç kişinin işlendiğini görür.
+   * biriken sayımlar `data` içinde döner - çağıran kaç kişinin işlendiğini görür.
    */
   async bulkContacts(input: BulkContactsInput): Promise<SbResult<BulkContactsResult>> {
     const merged: BulkContactsResult = { imported: 0, updated: 0, skipped: [] };
@@ -207,7 +207,7 @@ export class SignalbirdMessaging {
    *   for await (const m of sdk.iterateCampaignMessages(42)) { … }
    *
    * Bir sayfa alınamazsa `SignalbirdError` fırlatır (sessiz yarım liste,
-   * "hepsi bu" sanılır — o daha tehlikeli).
+   * "hepsi bu" sanılır - o daha tehlikeli).
    */
   async *iterateCampaignMessages(
     id: number | string,
@@ -293,7 +293,7 @@ export class SignalbirdMessaging {
     }
 
     // HTTP hatası: API `{message, code}` döner; Laravel doğrulama hatası
-    // `{message, errors}` döner (kodsuz) — onu VALIDATION_ERROR sayarız.
+    // `{message, errors}` döner (kodsuz) - onu VALIDATION_ERROR sayarız.
     const code: string =
       (data && typeof data === 'object' && typeof data.code === 'string' && data.code) ||
       (status === 422 ? 'VALIDATION_ERROR' : status === 401 ? 'API_KEY_INVALID' : `HTTP_${status}`);
@@ -306,7 +306,7 @@ export class SignalbirdMessaging {
 
   private fail<T>(status: number, code: string, message: string, data: unknown): SbResult<T> {
     if (this.throwOnError) {
-      throw new SignalbirdError(`Signalbird: ${code} — ${message}`, status, code, data);
+      throw new SignalbirdError(`Signalbird: ${code} - ${message}`, status, code, data);
     }
 
     if (this.debug) {

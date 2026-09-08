@@ -11,7 +11,7 @@ import (
 //
 // İki kural, ikisi de kritik:
 //   - Doğrulama HAM GÖVDE üzerinde yapılır. JSON'u çözüp yeniden kodlamak
-//     imzayı bozar — alan sırası ve boşluklar değişir.
+//     imzayı bozar - alan sırası ve boşluklar değişir.
 //   - Karşılaştırma sabit zamanlıdır (hmac.Equal).
 //
 // Yeniden gönderimlere karşı tekilleştirme (evt_… kimliği) çağıranındır.

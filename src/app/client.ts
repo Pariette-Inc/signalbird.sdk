@@ -1,15 +1,15 @@
 /**
- * Uygulama istemcisi — son kullanıcı tarafı (sohbet + push kaydı).
+ * Uygulama istemcisi - son kullanıcı tarafı (sohbet + push kaydı).
  *
  * Tek bir sınıf; tarayıcı, React Native, Electron ve test aynı gövdeyi kullanır.
  * Platform farkı iki noktada toplanmıştır ve ikisi de dışarıdan verilir:
  * `storage` (ziyaretçi sırrı nerede durur) ve `fetchImpl`. Çatıya özel sarmalayıcı
- * yazmak yerine bunu seçtik — React, Vue, Angular ve RN uyarlamaları bu sınıfın
+ * yazmak yerine bunu seçtik - React, Vue, Angular ve RN uyarlamaları bu sınıfın
  * ÜSTÜNE oturur, kopyası değildir.
  *
  * Kimlik iki parçadır: açık domain anahtarı (`X-Signalbird-Key`) ve
  * ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner;
- * kaybolursa yeni oturum açılır ve geçmiş konuşmalar görünmez — bu yüzden
+ * kaybolursa yeni oturum açılır ve geçmiş konuşmalar görünmez - bu yüzden
  * saklama katmanı zorunludur, isteğe bağlı değil.
  *
  * Hiçbir metot istisna fırlatmaz: sohbet balonunun hatası müşterinin ödeme
@@ -55,7 +55,7 @@ function defaultStorage(): AppStorage {
       };
     }
   } catch {
-    // Gizli sekme / kısıtlı iframe — belleğe düş.
+    // Gizli sekme / kısıtlı iframe - belleğe düş.
   }
 
   const memory = new Map<string, string>();
@@ -98,7 +98,7 @@ export class SignalbirdApp {
     if (!config.publicKey.startsWith('sb_public_live_')) {
       throw new Error(
         'Signalbird: uygulama istemcisi açık domain anahtarı ister (sb_public_live_…). ' +
-          'Takım anahtarını (sb_…) istemci koduna KOYMAYIN.'
+        'Takım anahtarını (sb_…) istemci koduna KOYMAYIN.'
       );
     }
 
@@ -155,7 +155,7 @@ export class SignalbirdApp {
     return this.request('POST', '/v1/sdk/identify', input);
   }
 
-  /** Saklanan ziyaretçi kimliği — yoksa `null`. */
+  /** Saklanan ziyaretçi kimliği - yoksa `null`. */
   async currentVisitor(): Promise<{ id: string; name?: string | null; email?: string | null } | null> {
     const stored = await this.loadVisitor();
 
@@ -180,7 +180,7 @@ export class SignalbirdApp {
   }
 
   /**
-   * İlk mesajla konuşma açar. Kota burada harcanır — konuşma başına sayılır,
+   * İlk mesajla konuşma açar. Kota burada harcanır - konuşma başına sayılır,
    * mesaj başına değil.
    */
   startConversation(input: StartConversationInput): Promise<SbResult<{ conversation: Conversation; message: Message }>> {
@@ -266,7 +266,7 @@ export class SignalbirdApp {
 
   /**
    * Cihaz token'ını kaydeder. Token'ı almak (FCM/APNs/Web Push izni) ev
-   * sahibinin işidir; SDK yalnız iletir — izin diyaloğunu kimin, ne zaman
+   * sahibinin işidir; SDK yalnız iletir - izin diyaloğunu kimin, ne zaman
    * göstereceği ürün kararıdır, kütüphane kararı değil.
    */
   registerDevice(input: RegisterDeviceInput): Promise<SbResult<unknown>> {
@@ -279,14 +279,14 @@ export class SignalbirdApp {
   }
 
   /**
-   * Bildirime dokunuldu — açılma damgası.
+   * Bildirime dokunuldu - açılma damgası.
    *
    * Push'ta açılmayı YALNIZCA uygulama bilir: FCM/APNs "teslim ettim" der,
    * "kullanıcı dokundu" demez. Bildirim yükündeki `data.sb_message_id`
    * değerini buraya geri gönderin.
    *
    * ```ts
-   * // React Native / Expo — bildirime dokunma işleyicisinde
+   * // React Native / Expo - bildirime dokunma işleyicisinde
    * const id = response.notification.request.content.data?.sb_message_id
    * if (id) await sb.reportPushOpened(String(id))
    * ```

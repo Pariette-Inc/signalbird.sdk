@@ -1,4 +1,4 @@
-# Signalbird SDK — Diller Arası Davranış Sözleşmesi
+# Signalbird SDK - Diller Arası Davranış Sözleşmesi
 
 Bu belge, `src/` altındaki **her** dil istemcisinin uyması gereken kuralları
 tanımlar. Yeni bir dil eklerken tek referans budur; bir kural burada yoksa o
@@ -6,7 +6,7 @@ kural yoktur.
 
 ## 0. Beş yüzey
 
-> **v2 — 1 Eyl 2026.** Dört anahtar ailesi (`sbr_*`, `sb_`, `sbw_pub_`,
+> **v2 - 1 Eyl 2026.** Dört anahtar ailesi (`sbr_*`, `sb_`, `sbw_pub_`,
 > `sbp_live_`) ve 17 elemanlı scope listesi KALDIRILDI. Beş yüzeyin tamamı tek
 > anahtar kullanır: alan adının anahtarı. Platform sözleşmesi:
 > `../signalbird.api/docs/KEY_ARCHITECTURE_2026-09-01.md`.
@@ -26,7 +26,7 @@ her entegrasyonun ilk yarım saatini 403 ayıklamakla geçirten bir düzendi.
 
 **İkinci bir kavram var ve gizli DEĞİLDİR: modül anahtarı.** Müşterinin panelde
 açtığı kanalın adıdır (`penyuSatisBildirimi`), kodun içine gömülür ve domain
-anahtarı olmadan hiçbir işe yaramaz. Domain anahtarına referans VERMEZ —
+anahtarı olmadan hiçbir işe yaramaz. Domain anahtarına referans VERMEZ -
 anahtar yenilendiğinde müşterinin kodu aynı kalsın diye.
 
 `scripts/check-parity.mjs` beş kümeyi de denetler; bir dilde olup diğerinde
@@ -46,13 +46,13 @@ Gövde:
 ```
 
 `key` MODÜL ANAHTARIDIR (v2'de `channel` alanının yerini aldı): panelde açılan
-kanalın adı. Tanımsız bir ad gönderilirse sunucu kanalı SESSİZ olarak açar —
+kanalın adı. Tanımsız bir ad gönderilirse sunucu kanalı SESSİZ olarak açar -
 kayıt düşmez ama bildirim de gitmez.
 
 `level` ve `context` isteğe bağlıdır. `level` verilmezse **kanalın kendi
-varsayılanı** geçerlidir — istemci burada bir varsayılan uydurmaz.
+varsayılanı** geçerlidir - istemci burada bir varsayılan uydurmaz.
 
-## 1.1 Kanalı bağlama (`radio()`) — sözdizimi şekeri
+## 1.1 Kanalı bağlama (`radio()`) - sözdizimi şekeri
 
 ```php
 Signalbird::radio('penyuCritical')->error('Ödeme düğümü öldü', $context);
@@ -111,7 +111,7 @@ Her dil istemcisi şu metotları sunar:
 | `batch(events)` | En fazla 100 kayıt, satır satır sonuç |
 
 Seviye kümesi tam olarak: `debug`, `info`, `warn`, `error`, `critical`.
-Fazlası eklenmez — beş seviye kanal ayarını anlaşılır tutar.
+Fazlası eklenmez - beş seviye kanal ayarını anlaşılır tutar.
 
 ## 5. Hata davranışı
 
@@ -137,24 +137,24 @@ maliyettir.
 
 Telsiz'den ayrı ikinci bir yüzeydir: **takım API anahtarı** (`sb_…`) ile
 e-posta / SMS / push gönderir, kişi ve liste yönetir, kampanya açar, mesaj
-durumlarını okur. Farklı anahtar, farklı kapı, farklı kota — Telsiz
+durumlarını okur. Farklı anahtar, farklı kapı, farklı kota - Telsiz
 istemcisiyle karışmaz. Yalnız **sunucuda** çalışır; tarayıcı girişi yoktur.
 
 | Dil | Sınıf |
 |---|---|
 | Node | `SignalbirdMessaging` (`signalbird`) |
-| PHP | `Signalbird\Sdk\Messaging\MessagingClient` — Laravel: `Signalbird::messaging()` |
+| PHP | `Signalbird\Sdk\Messaging\MessagingClient` - Laravel: `Signalbird::messaging()` |
 
 ### 8.1 Kurucu
 
 | Alan | Varsayılan | Not |
 |---|---|---|
-| `domainKey` | — | `sb_secret_live_` ile başlamalı. Açık anahtar (`sb_public_live_`) verilirse **kurulum anında** `WRONG_KEY_TYPE`; boşsa `NO_KEY` |
+| `domainKey` | - | `sb_secret_live_` ile başlamalı. Açık anahtar (`sb_public_live_`) verilirse **kurulum anında** `WRONG_KEY_TYPE`; boşsa `NO_KEY` |
 | `baseUrl` | `https://live.signalbird.io/api` | sondaki `/` kırpılır |
 | `timeout` | 15 s | toplu kişi yükleme uzun sürebilir |
 | `throwOnError` | `false` | açıksa `SignalbirdError` / `SignalbirdException` |
 
-Kimlik: `Authorization: Bearer <sb_…>` — her istekte.
+Kimlik: `Authorization: Bearer <sb_…>` - her istekte.
 
 ### 8.2 Sonuç biçimi
 
@@ -176,28 +176,28 @@ ağ hatası → `NETWORK_ERROR` (status 0); zaman aşımı → `TIMEOUT` (status
 ### 8.3 Metot kümesi
 
 Adlar iki dilde de **birebir aynıdır** (camelCase); `check-parity.mjs` bunu
-denetler. Alan adları API ile aynıdır (snake_case) — SDK yeniden adlandırmaz.
+denetler. Alan adları API ile aynıdır (snake_case) - SDK yeniden adlandırmaz.
 
 | Alan | Metot | HTTP |
 |---|---|---|
-| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, template_hash?, vars?, sending_domain_id?, sending_address_id?, module_key?, contact_id?, from_name?, reply_to?, attachments?})` — `attachments`: en çok 5 × `{filename, mime?, content_b64}`, toplam çözülmüş 7 MB (`ATTACHMENTS_TOO_LARGE`); `module_key`: gönderici KANALI, From adresini panelde adrese bağlı `email` kanalı seçer (v2.3.0) | `POST /v1/email/send` |
+| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, template_hash?, vars?, sending_domain_id?, sending_address_id?, module_key?, contact_id?, from_name?, reply_to?, attachments?})` - `attachments`: en çok 5 × `{filename, mime?, content_b64}`, toplam çözülmüş 7 MB (`ATTACHMENTS_TOO_LARGE`); `module_key`: gönderici KANALI, From adresini panelde adrese bağlı `email` kanalı seçer (v2.3.0) | `POST /v1/email/send` |
 | SMS | `sendSms({to, class, body, brand_id?, contact_id?})` · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
-| push | `sendPush({to, class, subject, body, vars?, contact_id?})` — `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
-| olay | `track({event, contact:{email?|phone?|external_id?}, data?})` — kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
+| push | `sendPush({to, class, subject, body, vars?, contact_id?})` - `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
+| olay | `track({event, contact:{email?|phone?|external_id?}, data?})` - kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
 | kişiler | `listContacts(q)` · `createContact(c)` · `updateContact(id, c)` · `deleteContact(id)` · `bulkContacts({contacts[], list_id?, consent_source?, consent_text?})` | `/v1/contacts…` |
 | listeler | `listContactLists()` · `createContactList({name, description?})` · `deleteContactList(id)` | `/v1/contact-lists…` |
-| kampanyalar | `listCampaigns(q)` · `createCampaign({name, channel, domain_id, list_id?|segment_id?, subject?, body, template_hash?, sending_domain_id?, brand_id?, scheduled_at?, from_name?, reply_to?, metadata?, external_ref?})` — `domain_id` TXT ile doğrulanmış müşteri domaini (zorunlu); hedef liste VEYA segment · `getCampaign(id)` · `cancelCampaign(id)` · `listCampaignMessages(id, q)` · `iterateCampaignMessages(id, q)` (yardımcı, sayfa sayfa gezer) | `/v1/campaigns…` |
+| kampanyalar | `listCampaigns(q)` · `createCampaign({name, channel, domain_id, list_id?|segment_id?, subject?, body, template_hash?, sending_domain_id?, brand_id?, scheduled_at?, from_name?, reply_to?, metadata?, external_ref?})` - `domain_id` TXT ile doğrulanmış müşteri domaini (zorunlu); hedef liste VEYA segment · `getCampaign(id)` · `cancelCampaign(id)` · `listCampaignMessages(id, q)` · `iterateCampaignMessages(id, q)` (yardımcı, sayfa sayfa gezer) | `/v1/campaigns…` |
 | mesajlar | `listMessages(q)` · `getMessage(id)` | `/v1/messages…` |
 
-`class` (`transactional` | `commercial`) zorunludur ve **varsayılanı yoktur** —
+`class` (`transactional` | `commercial`) zorunludur ve **varsayılanı yoktur** -
 hukuki kapı çağıranın elindedir.
 
 **Şablon seçimi** üç biçimde olur ve biri yeterlidir: `template` (panelde
 yazan AD, büyük/küçük harfe duyarsız), `template_id` (sayı) ya da
-`template_hash` (gövde parmak izi — kampanya yolunda üretilir). Şablon
+`template_hash` (gövde parmak izi - kampanya yolunda üretilir). Şablon
 verildiğinde `subject` ve `body` isteğe bağlıdır: konu şablondan gelir, ama
 istekte konu varsa **çağıranınki kazanır**. Bulunamayan şablon 422
-`TEMPLATE_NOT_FOUND` döner — yok sayılıp gövdesiz posta gönderilmez.
+`TEMPLATE_NOT_FOUND` döner - yok sayılıp gövdesiz posta gönderilmez.
 
 ### 8.3.1 PHP: `Signalbird::mail()`
 
@@ -214,24 +214,24 @@ Signalbird::mail()
     ->send();
 ```
 
-`transactional()` / `commercial()` demek **zorunludur** — sınıfın varsayılanı
+`transactional()` / `commercial()` demek **zorunludur** - sınıfın varsayılanı
 yoktur. Uygulamanın mevcut `Mailable` sınıfları için bu gerekmez:
 `MAIL_MAILER=signalbird` ile hepsi zaten Signalbird'den çıkar (§8.8).
 
 **Gönderici kanalı ve ekler (v2.3.x):** `Signalbird::sendMail('noReply')` =
-`mail()->channel('noReply')` — kanal `module_key` olarak gövdede gider, From
+`mail()->channel('noReply')` - kanal `module_key` olarak gövdede gider, From
 adresini panelde adresle birlikte açılan `email` kanalı seçer (Telsiz'in
 `radio('kanal')` modeli; yeni anahtar üretilmez). `->attach(filename, content,
 mime?)` / `->attachFile(path)` ekler; `->body(...)` = `html(...)`. Taşıyıcı
 (§8.8) kanalı mailer tanımından alır:
-`'signalbird' => ['transport' => 'signalbird', 'channel' => 'noreply']` —
+`'signalbird' => ['transport' => 'signalbird', 'channel' => 'noreply']` -
 kanal adı sır değildir, KODA yazılır. Taşıyıcı düz ekleri de taşır; CID/inline
 gömme reddedilir (görsel https ile barındırılır).
 
 ### 8.4 Toplu kişi yükleme
 
 `bulkContacts` girdiyi **1000'lik parçalara** böler ve SIRAYLA gönderir
-(paralel değil — aynı e-posta iki parçada da varsa yarış olmasın). Sonuç tek
+(paralel değil - aynı e-posta iki parçada da varsa yarış olmasın). Sonuç tek
 zarfta birleşir: `{imported, updated, skipped[]}`. Bir parça başarısız olursa
 o noktada durulur; `ok:false` + o parçanın kodu döner, `data` o ana kadar
 biriken sayımları taşır. Boş liste istek atmaz, sıfırlarla döner.
@@ -262,7 +262,7 @@ bozar). Yeniden gönderimlere karşı `id` (`evt_…`) alanıyla tekilleştirme
 Yoktur. Aynı iletiyi iki kez göndermek hiç göndermemekten pahalıdır;
 yeniden deneme kararı çağıranındır (Telsiz ile aynı ilke).
 
-### 8.8 Laravel posta taşıyıcısı — `MAIL_MAILER=signalbird`
+### 8.8 Laravel posta taşıyıcısı - `MAIL_MAILER=signalbird`
 
 `config/mail.php` içine tek bir satır:
 
@@ -275,7 +275,7 @@ Signalbird'den çıkar ve orada kayda geçer; hiçbir çağrı yeri değişmez.
 
 İki yolun ayrımı şudur: taşıyıcıda **gövde uygulamada** üretilir,
 `Signalbird::mail()`'de **gövde panelde** durur. Onlarca Mailable'ı tek tek
-SDK çağrısına çevirmek hem çok iş hem de kaçınılmaz olarak eksik kalır —
+SDK çağrısına çevirmek hem çok iş hem de kaçınılmaz olarak eksik kalır -
 biri unutulur ve o posta kayıtlarda hiç görünmez.
 
 Taşıyıcının sınırları:
@@ -301,7 +301,7 @@ global `Signalbird`); iOS/Android SDK'ları geldiğinde aynı sözleşmeye uyar.
 |---|---|
 | `X-Signalbird-Key` | `sb_public_live_…` (açık domain anahtarı; origin kısıtlı) |
 | `X-Signalbird-Module-Key` | sohbet/push kanalının adı (gizli değil) |
-| `X-Signalbird-Visitor` | ziyaretçi sırrı — `POST /v1/sdk/chat/session` **yalnız oluşturma anında** döner |
+| `X-Signalbird-Visitor` | ziyaretçi sırrı - `POST /v1/sdk/chat/session` **yalnız oluşturma anında** döner |
 
 Ziyaretçi `localStorage['sb_visitor']` içinde `{id, secret, appKey, name?, email?}`
 olarak saklanır; `appKey` uyuşmazsa yok sayılır. Sunucu `VISITOR_INVALID`
@@ -387,7 +387,7 @@ olarak saklanır; `appKey` uyuşmazsa yok sayılır. Sunucu `VISITOR_INVALID`
    taşınır, dış üst köşedeki tutamakla boyutlandırılır; ikisi de
    `localStorage['sb_geometry']` içinde saklanır ve ekran küçüldüyse atılır.
    `position` ayarı bir BAŞLANGIÇTIR, kural değil. Mobilde (≤640 px) ikisi de
-   kapalıdır — panel zaten tam ekrandır ve sürükleme kaydırmayı çalardı.
+   kapalıdır - panel zaten tam ekrandır ve sürükleme kaydırmayı çalardı.
 3. İlk açılışta ziyaretçi yoksa ve `prechat.name|email` açıksa ön-form; sonra
    `POST /v1/sdk/chat/session`.
 4. Konuşma ilk mesajla açılır: `POST /v1/sdk/chat/conversations {body, client_id}`.
@@ -404,14 +404,14 @@ mesajında çeviriyi gösterir; kendi mesajında **orijinali** gösterir.
 Bu kural bir tercih değil doğruluk meselesidir: 29 Ağu 2026'da widget
 koşulsuz `translation.body` bastığı için ziyaretçi, kendi yazdığı İngilizce
 cümleyi sayfayı tazeledikten sonra Türkçeye çevrilmiş buluyordu. Canlıda fark
-edilmiyordu — soket mesajı çeviri bitmeden getirip orijinali basıyor, hata
+edilmiyordu - soket mesajı çeviri bitmeden getirip orijinali basıyor, hata
 ancak geçmiş yeniden çekilince ortaya çıkıyordu.
 
 Sunucu tarafında ikinci bir kapı var: sağlayıcı kaynak dili hedefle **aynı**
 bildirirse çeviri hiç saklanmaz (`ChatTranslationService`). Ziyaretçi dilini
 seçmemişse ipucu boştur ve "aynı dil" ancak cevap geldikten sonra anlaşılır.
 
-### 9.2b-2 `updated` işareti — imleci atla
+### 9.2b-2 `updated` işareti - imleci atla
 
 Yayın gövdesinde `updated: true` varsa VAR OLAN bir mesaj değişmiştir (çeviri
 yetişti, mesaj düzenlendi); yeni mesaj eklenmemiştir. İstemci o tur imleci
@@ -457,7 +457,7 @@ fırlatmaz**; hata konsola yazılır ve yutulur. `init` öncesi kaydedilen
   sunucu aynı `client_id` ile var olanı dönerse (200) yerel kopya onunla
   değiştirilir. Başarısızsa kabarcık kırmızıya döner, tıklayınca yeniden dener.
 - **Uzunluk tavanı (2 Eyl 2026).** Tek mesaj en fazla
-  `channel.chat.max_message_chars` karakter (varsayılan **420**) — iki taraf
+  `channel.chat.max_message_chars` karakter (varsayılan **420**) - iki taraf
   için de. Widget `maxlength` ile kırpar, son 60 karakterde sayaç gösterir ve
   tavan aşılıysa göndermez; sunucu da aynı tavanı uygular (422
   `MESSAGE_TOO_LONG`). Sayı SUNUCUDAN gelir, widget'a gömülü değildir.
@@ -468,7 +468,7 @@ fırlatmaz**; hata konsola yazılır ve yutulur. `init` öncesi kaydedilen
   betik çalıştırabilen bir belgedir, görsel değil. Boyut
   `app.chat.max_attachment_mb` (varsayılan 10). Sürükle-bırak ve panoya
   yapıştırma desteklenir; en fazla 5 dosya. MIME sunucuda dosyanın
-  İÇERİĞİNDEN okunur — uzantı ya da istemci beyanı yetmez.
+  İÇERİĞİNDEN okunur - uzantı ya da istemci beyanı yetmez.
 - **Yazıyor**: ilk tuşta `is_typing:true`, 2.5 s hareketsizlikte `false`;
   aynı yönde 4 s'den sık gönderilmez. Ajanın yazıyor durumu `agent_typing`
   alanından okunur.
@@ -477,11 +477,11 @@ fırlatmaz**; hata konsola yazılır ve yutulur. `init` öncesi kaydedilen
 - **Okunmamış**: balon rozeti + balonda sessiz nabız + sekme gizliyken
   `document.title` yanıp söner + (`app.chat.sound`) WebAudio bip.
 - **Fark ettirme (2 Eyl 2026).** Üç ayrı sinyal, üç ayrı iş:
-  *karşılama kartı* (`sb_teaser`) — ziyaretçi paneli bu tarayıcıda hiç
+  *karşılama kartı* (`sb_teaser`) - ziyaretçi paneli bu tarayıcıda hiç
   açmadıysa 11 sn sonra bir kez, kapatılırsa bir daha çıkmaz;
-  *mesaj önizlemesi* — panel kapalıyken gelen ajan mesajının gövdesi balonun
+  *mesaj önizlemesi* - panel kapalıyken gelen ajan mesajının gövdesi balonun
   üstünde 9 sn görünür (rozet "bir şey var" der, önizleme NE olduğunu söyler);
-  *yaylanma* — yeni mesajda balon iki kez zıplar. `launcher_mode:'manual'`
+  *yaylanma* - yeni mesajda balon iki kez zıplar. `launcher_mode:'manual'`
   ise karşılama kartı hiç çizilmez.
 - **Düzenle/sil** yalnız kendi mesajı ve 15 dk içinde; **tepki** emoji ile
   toggle; **yanıtla** alıntı gösterir.
@@ -489,10 +489,10 @@ fırlatmaz**; hata konsola yazılır ve yutulur. `init` öncesi kaydedilen
   çözdüyse (`resolved`) panel kapatılırken bir kez sorulur; aynı konuşma için
   tekrar sorulmaz (`localStorage['sb_rated_<id>']`).
 - **Çalışma saatleri**: `within_hours=false` ise `offline_message` bandı.
-- **Boş ekran**: form değil davet — marka avatarı, karşılama cümlesi, yanıt
+- **Boş ekran**: form değil davet - marka avatarı, karşılama cümlesi, yanıt
   süresi vaadi ve `topics`ten türeyen hazır başlangıç çipleri (en fazla 4).
   Çipe dokunmak o metni MESAJ olarak gönderir ve konuşmayı açar.
-- **Gruplama**: aynı gönderenin 5 dakika içindeki ardışık mesajları tek öbek —
+- **Gruplama**: aynı gönderenin 5 dakika içindeki ardışık mesajları tek öbek -
   avatar ve saat yalnız öbeğin son satırında.
 - **Dil iki ayrı şeydir (2 Eyl 2026).** `locale` alanında sunucuya ziyaretçinin
   HAM tarayıcı etiketi gider (`navigator.languages[0]`, örn. `de-DE`);
@@ -521,12 +521,12 @@ gelen kutusunu işler, uygulama kaydı ve cihaz listesi yönetir.
 **Bu bir ADMIN yüzeyi DEĞİLDİR.** Anahtar tek bir takıma bağlıdır ve yalnız o
 takımın kayıtlarına dokunur; başka takımın kaydı 404 döner (varlık sızdırılmaz).
 Kullanıcı yönetimi, faturalama, abonelik ve plan işlemleri SDK'da YOKTUR ve
-olmayacaktır — onlar panelin ve şirket sahibinin işidir.
+olmayacaktır - onlar panelin ve şirket sahibinin işidir.
 
 | Dil | Sınıf |
 |---|---|
 | Node | `SignalbirdManagement` (`signalbird`) |
-| PHP | `Signalbird\Sdk\Management\ManagementClient` — Laravel: `Signalbird::management()` |
+| PHP | `Signalbird\Sdk\Management\ManagementClient` - Laravel: `Signalbird::management()` |
 | Python | `signalbird.SignalbirdManagement` |
 | Go | `signalbird.Management` |
 | .NET | `Signalbird.Sdk.ManagementClient` |
@@ -544,16 +544,16 @@ zorlamak, ilk entegrasyonda 403 alıp anahtarı yeniden üretmek demekti.
 
 ### 10.2 Sonuç biçimi
 
-§8.2 ile birebir aynıdır — aynı zarf, aynı kod eşlemesi. İki yüzey aynı kapıyı
+§8.2 ile birebir aynıdır - aynı zarf, aynı kod eşlemesi. İki yüzey aynı kapıyı
 (`Authorization: Bearer sb_…`) kullanır; hata kodlarının ayrışması müşterinin
 tek bir hata işleyicisi yazmasını imkânsız kılardı.
 
-### 10.3 Metot kümesi — 36 metot
+### 10.3 Metot kümesi - 36 metot
 
 Adlar diller arasında birebir aynıdır; her dil kendi yazım geleneğini korur
 (`createRadioProject` / `create_radio_project` / `CreateRadioProject` /
 `CreateRadioProjectAsync` aynı metottur). Alan adları API ile aynıdır
-(snake_case) — SDK yeniden adlandırmaz.
+(snake_case) - SDK yeniden adlandırmaz.
 
 **Telsiz okuma + modül anahtarları (8)**
 
@@ -582,7 +582,7 @@ değişmezdi): eski ad 30 gün daha kabul edilir (`previous_key`), böylece
 üretimdeki kod bir sonraki deploya kadar kayıt kaybetmez. `keep_previous:
 false` eski adı anında kapatır.
 
-**Sohbet — ajan tarafı (27)**
+**Sohbet - ajan tarafı (27)**
 
 | Metot | HTTP |
 |---|---|
@@ -596,12 +596,12 @@ false` eski adı anında kapatır.
 | `getVisitor(id)` · `updateVisitor(id, input)` · `banVisitor(id)` | `/v1/chat/visitors/{id}…` |
 | `listCannedReplies()` · `createCannedReply(input)` · `updateCannedReply(id, input)` · `deleteCannedReply(id)` | `/v1/chat/canned-replies…` |
 | `listChatTriggers()` · `createChatTrigger(input)` · `updateChatTrigger(id, input)` · `deleteChatTrigger(id)` | `/v1/chat/triggers…` |
-| `chatReport(range?)` — `7d` \| `30d` \| `90d` | `GET /v1/chat/reports` |
+| `chatReport(range?)` - `7d` \| `30d` \| `90d` | `GET /v1/chat/reports` |
 
 **Tetikleyiciler** ("şu olduğunda şunu yap") kural kaydıdır: üç olay
 (`conversation.created`, `visitor.message`, `no_reply`), koşul listesi ve beş
 eylem (`reply`, `internal_note`, `tag`, `priority`, `assign`). Otomatik yanıt
-`system` göndericisiyle yazılır, ajan olarak DEĞİL — ajan gibi görünseydi
+`system` göndericisiyle yazılır, ajan olarak DEĞİL - ajan gibi görünseydi
 `first_response_at` damgası yalan söyler ve SLA raporu bozulurdu.
 
 **Rapor** ortalama değil **ortanca + p90** döner ve veri yoksa süreler `null`
@@ -614,10 +614,10 @@ hâle gelir. `reply` içinde `is_internal: true` verilen mesaj bir iç nottur ve
 ziyaretçiye **asla** gitmez.
 
 **Uygulama metotları KALDIRILDI** (v2): sohbet widget'ı ve push kanalı birer
-modül anahtarıdır — `listModuleKeys('chat')`, `listModuleKeys('push')`.
+modül anahtarıdır - `listModuleKeys('chat')`, `listModuleKeys('push')`.
 
 
-### 10.4 Gömme jetonu — kendi panelinizde Signalbird ekranı
+### 10.4 Gömme jetonu - kendi panelinizde Signalbird ekranı
 
 | Metot | HTTP |
 |---|---|
@@ -650,11 +650,11 @@ göndermek, hiç yapmamaktan pahalıdır.
 
 ---
 
-## 11. Uygulama (App) istemcisi — son kullanıcı
+## 11. Uygulama (App) istemcisi - son kullanıcı
 
 Müşterinin **müşterisi** için: canlı sohbet ve push cihaz kaydı. Açık uygulama
 anahtarı (`sb_public_live_…`) taşır ve istemciye gömülür; güvenliği gizlilikten değil
-kısıttan gelir — yalnız izinli kökenden çalışır ve yalnız ziyaretçinin KENDİ
+kısıttan gelir - yalnız izinli kökenden çalışır ve yalnız ziyaretçinin KENDİ
 verisine dokunur. Gönderim yapmaz, kişi listesi okumaz, kota harcamaz (konuşma
 açmak hariç).
 
@@ -681,7 +681,7 @@ kalmazsa kullanıcı uygulamayı her açtığında sohbet geçmişini kaybeder.
 | Dil | Varsayılan | Değiştirilebilir |
 |---|---|---|
 | TypeScript (web) | `localStorage` | `storage` seçeneği |
-| React Native | — (verilmesi ZORUNLU) | `asyncStorageAdapter(AsyncStorage)` |
+| React Native | - (verilmesi ZORUNLU) | `asyncStorageAdapter(AsyncStorage)` |
 | Swift | `UserDefaults` | `SignalbirdStorage` uyarlaması (ör. Keychain) |
 | Kotlin | bellek (yalnız test için) | `SharedPreferences` sarmalayıcısı |
 
@@ -690,7 +690,7 @@ sayılır**: uygulama anahtarı döndürüldüğünde eski sırla yapılan her �
 alırdı ve sohbet sessizce ölürdü. Sunucu `VISITOR_INVALID` (401) dönerse yerel
 kimlik silinir ve bir sonraki çağrı yeni oturum açar.
 
-### 11.2 Metot kümesi — 18 metot
+### 11.2 Metot kümesi - 18 metot
 
 | Metot | HTTP |
 |---|---|
@@ -702,18 +702,18 @@ kimlik silinir ve bir sonraki çağrı yeni oturum açar.
 | `setTyping(id, bool)` · `markRead(id, lastId?)` | `POST …/{id}/typing` · `…/{id}/read` |
 | `closeConversation(id)` · `rateConversation(id, rating, comment?)` | `POST …/{id}/close` · `…/{id}/rate` |
 | `registerDevice(input)` · `unregisterDevice(token)` | `POST /v1/sdk/devices` · `DELETE …/{token}` |
-| `socketAuth(socketId, channel)` | `POST /v1/sdk/chat/socket/auth` — canlı bağlantı kanal imzası. Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine SUNUCU karar verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket servisi kimseyi tanımaz, imzayı doğrular. Bağlantı başına bir kez çağrılır |
-| `reportPushOpened(messageId)` | `POST /v1/sdk/push/opened` — bildirime dokunuldu; push'ta açılmayı YALNIZCA uygulama bilir (FCM/APNs "teslim ettim" der, "dokunuldu" demez). Bildirim yükündeki `data.sb_message_id` geri gönderilir |
+| `socketAuth(socketId, channel)` | `POST /v1/sdk/chat/socket/auth` - canlı bağlantı kanal imzası. Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine SUNUCU karar verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket servisi kimseyi tanımaz, imzayı doğrular. Bağlantı başına bir kez çağrılır |
+| `reportPushOpened(messageId)` | `POST /v1/sdk/push/opened` - bildirime dokunuldu; push'ta açılmayı YALNIZCA uygulama bilir (FCM/APNs "teslim ettim" der, "dokunuldu" demez). Bildirim yükündeki `data.sb_message_id` geri gönderilir |
 
 `uploadAttachment` **sözleşmede yoktur**: dosya her platformda farklı bir tip
 ister (`Blob` / `Data` / `Uri`) ve tek imzada birleşmiyor. Desteklendiği dilde
 o dilin belgesinde durur.
 
-### 11.3 Sohbet oturumu (`ChatSession`) — yalnız TypeScript
+### 11.3 Sohbet oturumu (`ChatSession`) - yalnız TypeScript
 
 Ham uçların üstünde bir durum katmanı: mesaj listesi, okunmamış sayısı, yazıyor
 durumu, iyimser gönderim ve yoklama merdiveni. React, Vue, Angular ve React
-Native uyarlamaları **bu sınıfa abone olur** — dördünde aynı mantığı yeniden
+Native uyarlamaları **bu sınıfa abone olur** - dördünde aynı mantığı yeniden
 yazmak, dört ayrı hata takımı üretmek demekti.
 
 - **İyimser gönderim.** Mesaj `client_id` ile listeye ANINDA düşer; sunucu
@@ -721,7 +721,7 @@ yazmak, dört ayrı hata takımı üretmek demekti.
   işaretlenir.
 - **Yoklama merdiveni** (§9.2 ile aynı): panel açıkken 3 s, kapalıyken
   20 s ×3 → 60 s ×2 → 180 s. Yeni veri merdiveni sıfırlar; arka plandaki
-  sekme/uygulama tur atlar. WebSocket yoktur — imleçli yoklama bağlantı
+  sekme/uygulama tur atlar. WebSocket yoktur - imleçli yoklama bağlantı
   kopmasında kendi kendini toparlar ve mobil ağda pil yakmaz.
 - **İmleç yalnız sunucu kimliğidir.** İyimser kayıtlar `after=` imlecine
   girmez; girseydi sunucu onları tanımaz ve liste boş dönerdi.
@@ -729,7 +729,7 @@ yazmak, dört ayrı hata takımı üretmek demekti.
 ### 11.4 Hata davranışı
 
 Hiçbir metot istisna FIRLATMAZ (kurucudaki anahtar denetimi hariç). Sohbet
-balonunun hatası müşterinin ödeme sayfasını çökertmemeli — §9'daki widget
+balonunun hatası müşterinin ödeme sayfasını çökertmemeli - §9'daki widget
 kuralının aynısı, artık dört dilde geçerli.
 
 ---
@@ -742,7 +742,7 @@ kuralının aynısı, artık dört dilde geçerli.
 | Dil | Sınıf |
 |---|---|
 | Node | `SignalbirdPartner` (`signalbird`) |
-| PHP | `Signalbird\Sdk\Partner\PartnerClient` — Laravel: `Signalbird::partner()` |
+| PHP | `Signalbird\Sdk\Partner\PartnerClient` - Laravel: `Signalbird::partner()` |
 | Python | `signalbird.SignalbirdPartner` |
 | Go | `signalbird.Partner` |
 | .NET | `Signalbird.Sdk.PartnerClient` |
@@ -756,7 +756,7 @@ plan, şirket/takım CRUD" der. Partner yüzeyi bunu **bilerek** deler.
 
 Kural, müşterinin kendi anahtarıyla (`sb_…`) şirket açamaması içindi ve o kural
 aynen duruyor: `sb_` anahtarı hâlâ tek takıma bağlıdır. Partner **farklı bir
-taraftır** — sözleşmesi vardır, müşterisini kendi panelinden yönetir ve
+taraftır** - sözleşmesi vardır, müşterisini kendi panelinden yönetir ve
 Signalbird onun için bir alt sistemdir. Bu yüzden ayrı anahtar türü, ayrı
 tablo, ayrı kapı taşır.
 
@@ -773,7 +773,7 @@ birebir aynıdır.
 Anahtar **tarayıcıya İNMEZ**. Gömme jetonunu partner'ın kendi sunucusu üretir;
 tarayıcı yalnız o kısa ömürlü jetonu görür (§12.5).
 
-### 12.3 Metot kümesi — 23 metot
+### 12.3 Metot kümesi - 23 metot
 
 | Alan | Metot |
 |---|---|
@@ -789,14 +789,14 @@ tarayıcı yalnız o kısa ömürlü jetonu görür (§12.5).
 
 Mesaj uçları **salt okurdur** ve partner yüzeyinin tek okuma kümesidir
 (signalbird.api/docs/MESSAGING_UNIFICATION_2026-08-25.md §5.1). Alıcı MASKELİ
-döner, gövde hiç dönmez — gövde zaten saklanmıyor (`template_hash` + `vars`).
+döner, gövde hiç dönmez - gövde zaten saklanmıyor (`template_hash` + `vars`).
 
 ### 12.4 Idempotens
 
 Her yazma işlemi partner'ın kendi kimliğiyle (`external_id`) yapılır ve
 **idempotenttir**: aynı kimlikle ikinci çağrı yeni kayıt açmaz, `created:false`
 ile var olanı döner. Partner'ın webhook'u iki kez tetiklenebilir, kuyruğu
-yeniden deneyebilir — SDK bunu gizlemez, sunucu garanti eder.
+yeniden deneyebilir - SDK bunu gizlemez, sunucu garanti eder.
 
 `createCompany` yanıtındaki `keys` (`api_key`, `app_key`) **yalnız ilk
 oluşturmada** gelir. Kaybedilirse `rotateKey` yenisini üretir; eskisini geri
@@ -823,11 +823,11 @@ Gerekçe: gönderim zarfı Signalbird havuzundan çıkar, yani itibar bizimdir.
 
 ### 12.7 Retry
 
-Yoktur — §8.7 ile aynı ilke.
+Yoktur - §8.7 ile aynı ilke.
 
 ---
 
-## 13. Gömme (Embed) yüzeyi — `signalbird/embed`
+## 13. Gömme (Embed) yüzeyi - `signalbird/embed`
 
 **Altıncı yüzey ve tek TARAYICI yüzeyi.** Partner, Signalbird panel ekranını
 KENDİ panelinin içinde çalıştırır; ekranı yeniden yazmaz.
@@ -850,7 +850,7 @@ Sunucu tarafının payı jeton üretmektir (§12.5, `createEmbedToken`).
 ```ts
 const handle = createEmbed({
   module: 'chat',            // chat | monitoring | campaigns | contacts | radio | messages
-  mint,                      // () => Promise<{url}>  — EV SAHİBİNİN SUNUCUSU
+  mint,                      // () => Promise<{url}>  - EV SAHİBİNİN SUNUCUSU
   theme: 'auto',             // auto | light | dark   (auto: ev sahibi sayfayı izler)
   locale: 'tr',
   accent: '#4f46e5',
@@ -862,7 +862,7 @@ await handle.mount('#sb-chat')
 ```
 
 `handle`: `mount(target)` · `refresh()` · `setTheme(t)` · `destroy()` ·
-`on(event, fn)` / `off(...)` — olaylar `ready`, `error`, `height`.
+`on(event, fn)` / `off(...)` - olaylar `ready`, `error`, `height`.
 
 ### 13.2 Jetonu SDK üretmez
 
@@ -876,7 +876,7 @@ jeton alır. `url` seçeneği doğrudan verilirse yalnız ilk kurulum çalışı
 ### 13.3 Yükseklik ve köken
 
 Gömülü ekran `postMessage` ile `signalbird:ready` ve `signalbird:height`
-bildirir. SDK gönderen çerçeveyi `event.source` ile doğrular — sayfadaki başka
+bildirir. SDK gönderen çerçeveyi `event.source` ile doğrular - sayfadaki başka
 bir iframe çerçeveyi büyütemez. `height:'auto'` bildirilen yüksekliği uygular,
 `minHeight`in altına inmez.
 
