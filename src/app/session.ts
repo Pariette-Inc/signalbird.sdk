@@ -106,6 +106,8 @@ export class ChatSession {
    * da düzenleme ekrana hiç yansımaz.
    */
   private forceFull = false;
+  /** Son gönderilen `typing(true)` zamanı; 0 = açık sinyal yok. */
+  private lastTypingSent = 0;
 
   constructor(
     private readonly app: SignalbirdApp,
@@ -287,11 +289,29 @@ export class ChatSession {
     this.patch({ topic: slug });
   }
 
-  /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar. */
+  /**
+   * İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar.
+   *
+   * SDK yine de kendini korur (18 Eyl 2026): `true` 4 saniyede bir kez gider,
+   * `false` yalnız açık bir `true` varsa. Bir entegrasyon her tuşta
+   * çağırdığında (Penyu mobil öyle yapıyordu) 40 harflik mesaj 40 istek
+   * oluyor ve sunucunun hız sınırı ikinci mesajı 429 ile düşürüyordu. Web
+   * widget'ındaki kuralın aynısı.
+   */
   typing(isTyping: boolean): void {
     const conversation = this.state.conversation;
 
     if (!conversation) return;
+
+    const now = Date.now();
+
+    if (isTyping) {
+      if (now - this.lastTypingSent < 4000) return;
+      this.lastTypingSent = now;
+    } else {
+      if (this.lastTypingSent === 0) return;
+      this.lastTypingSent = 0;
+    }
 
     void this.app.setTyping(conversation.id, isTyping);
   }
