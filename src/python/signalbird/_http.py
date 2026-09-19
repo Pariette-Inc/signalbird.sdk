@@ -16,6 +16,8 @@ import urllib.parse
 import urllib.request
 from typing import Any, Mapping, Optional
 
+from . import _version
+
 DEFAULT_BASE_URL = "https://live.signalbird.io/api"
 
 
@@ -108,6 +110,7 @@ class Transport:
         headers = {
             "Accept": "application/json",
             auth_header: f"{auth_prefix}{self.domain_key}",
+            _version.HEADER: _version.header_value(),
         }
 
         if body is not None:
@@ -118,8 +121,10 @@ class Transport:
 
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                _version.note(response.headers)
                 return self._success(response.status, _decode(response.read()))
         except urllib.error.HTTPError as error:
+            _version.note(error.headers)
             data = _decode(error.read())
             status = int(error.code)
 

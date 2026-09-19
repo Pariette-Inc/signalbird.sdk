@@ -25,6 +25,18 @@ git push && git push --tags
 
 Etiket gidince `.github/workflows/publish.yml` çalışır.
 
+```bash
+# 4. Kullananlara haber ver (signalbird.api sunucusunda, paketler yayına çıktıktan SONRA)
+php artisan sdk:release 1.5.0 --notes="…"
+#    güvenlik yaması:         --security
+#    eskileri desteklemiyorsa: --min-supported=1.5.0
+```
+
+Bu adım atlanırsa kimse haberdar olmaz: SDK yanıtlarında sürüm durumu ve eski
+sürümdeki takımlara giden bildirim bu kayıttan doğar (CONTRACT §14). Sürüm
+kaydı paket yayına çıkmadan girilmemeli; aksi hâlde müşteriye henüz
+indiremeyeceği bir sürüm için "güncelleyin" denir.
+
 ## Kayıt defterleri
 
 | Defter | Nasıl yayınlanır | Gereken sır |

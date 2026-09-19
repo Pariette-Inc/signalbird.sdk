@@ -94,7 +94,7 @@ değil, kasıtlı bir duvardır - anahtar bir kez istemciye indiğinde herkesind
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.5.0")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.6.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır - ayrı SDK reposu ya da
@@ -268,6 +268,10 @@ Signalbird::error('api', 'veritabanı bağlantısı koptu');
 - **Kritik seviye sessiz saatleri deler.** Gece üçte ölen servis sabahı bekleyemez.
 - **Tekrar bastırma kaydı değil bildirimi susturur.** Aynı mesaj kanalın
   `dedupe` süresi içinde tekrar gelirse ikinci bildirim gitmez ama kayıt tutulur.
+- **SDK sürümünü bildirir (2.6.0).** Her istek `X-Signalbird-Sdk:
+  <platform>/<sürüm>` taşır. Yeni sürüm çıktığında SDK süreç başına **bir kez**
+  uyarı yazar; eski sürümdeki anahtarların sahiplerine panel bildirimi gider.
+  Uyarı hata değildir, istek sonucu değişmez (CONTRACT §14).
 
 ## Gönderim (Messaging)
 

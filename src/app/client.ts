@@ -17,6 +17,7 @@
  *
  * Sözleşme: docs/CONTRACT.md § 11
  */
+import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
 import type {
   AppConfig,
   AppStorage,
@@ -312,6 +313,7 @@ export class SignalbirdApp {
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'X-Signalbird-Key': this.config.publicKey,
+      [SDK_HEADER]: sdkHeaderValue(appPlatform()),
     };
 
     /*
@@ -340,6 +342,7 @@ export class SignalbirdApp {
         signal: controller.signal,
       });
 
+      noteSdkStatus(response.headers);
       const text = await response.text();
       let data: any = null;
 
@@ -445,4 +448,15 @@ function buildQuery(query: object | undefined): string {
   const encoded = params.toString();
 
   return encoded ? `?${encoded}` : '';
+}
+
+/**
+ * Uygulama yüzeyinin platform adı (CONTRACT §14.1). React Native ayrı
+ * sayılır: mobil sürümler mağazada yıllarca yaşar, en çok onları görmek
+ * isteriz. React/Vue/Angular tarayıcıda `app` olarak görünür.
+ */
+function appPlatform(): string {
+  return typeof navigator !== 'undefined' && (navigator as { product?: string }).product === 'ReactNative'
+    ? 'react-native'
+    : 'app';
 }

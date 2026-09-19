@@ -1,5 +1,34 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-09-19 - v2.6.0: SDK sürümünü bildiriyor (`X-Signalbird-Sdk`)
+
+Ahmet: "signalbird.sdk kullanan projeler bu sdk paketini güncellemek zorunda
+olduklarını nasıl öğrenecekler? bir takip - bildirim mekanizmamız yok."
+
+Paketleri müşterinin kilit dosyası sabitler, biz güncelleyemeyiz; ama kimin
+eski sürümde olduğunu görüp haber verebiliriz. API tarafı aynı gün yazıldı
+(`signalbird.api` → `SdkVersionService`, `php artisan sdk:release`). Bu sürüm
+SDK tarafıdır. Sözleşme: CONTRACT §14.
+
+- **Her istek `X-Signalbird-Sdk: <platform>/<sürüm>` taşır.** Platformlar:
+  `node`, `browser` (beacon'da `?sdk=`), `app`, `react-native`, `widget`,
+  `php`, `python`, `go`, `dotnet`, `swift`, `kotlin`.
+- **Yanıtta `Signalbird-Sdk-Status: outdated|unsupported`** görülünce süreç
+  başına BİR KEZ uyarı. Hata değil; `throwOnError` etkilemez. Widget uyarı
+  yazmaz (CDN'den hep son sürüm gelir, konsol ziyaretçinindir). Swift yalnız
+  DEBUG derlemede yazar.
+- **Sürüm sabiti her dilde.** PHP, Go ve Swift sürümü etiketten alıyordu ve
+  kodun içinde bilmiyordu. Yeni sabitler: `SdkVersion::VERSION` (PHP),
+  `signalbird.Version` (Go), `SdkInfo.Version` (.NET), `SignalbirdSdk.version`
+  (Swift), `SignalbirdSdk.VERSION` (Kotlin); Python `__version__`
+  `_version.py`'ye taşındı (döngüsel içe aktarma). Hepsi `sync-version.mjs`
+  kilidinde. TypeScript tsup `define` ile alır; artık bütün girişlere gömülüyor
+  (önce yalnız widget'ta vardı).
+- `RELEASE.md`: yayından sonra `php artisan sdk:release` adımı eklendi.
+
+Test: `tests/php/SdkVersionTest.php` (başlık, toplayıcı, bir kez uyarı, sürüm
+kilidi). Go, .NET ve Kotlin Docker'da derlendi; Swift `swift build`.
+
 ## 2026-09-05 - Sayfa içi (inline) sohbet ve kanala ait ajan adı
 
 Ahmet: "Sohbet sistemi inline veya popup olabilsin. Bir site ikisini de

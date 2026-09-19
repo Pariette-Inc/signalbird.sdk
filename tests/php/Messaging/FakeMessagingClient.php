@@ -21,13 +21,14 @@ final class FakeMessagingClient extends MessagingClient
     }
 
     /** JSON gövdeli HTTP yanıtı kuyruğa ekler. */
-    public function queueJson(int $status, mixed $payload): self
+    public function queueJson(int $status, mixed $payload, array $headers = []): self
     {
         $this->queue[] = [
             'status' => $status,
             'body' => $payload === null ? '' : json_encode($payload, JSON_UNESCAPED_UNICODE),
             'error' => null,
             'errno' => 0,
+            'headers' => $headers,
         ];
 
         return $this;

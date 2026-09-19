@@ -132,8 +132,10 @@ class SignalbirdClient
     private function post(string $path, array $payload): array
     {
         $handle = curl_init($this->baseUrl . $path);
+        $sdkHeaders = [];
 
         curl_setopt_array($handle, [
+            CURLOPT_HEADERFUNCTION => SdkVersion::collector($sdkHeaders),
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $this->timeout,
@@ -143,6 +145,7 @@ class SignalbirdClient
                 'Content-Type: application/json',
                 'Accept: application/json',
                 'X-Signalbird-Key: ' . $this->domainKey,
+                SdkVersion::headerLine(),
             ],
         ]);
 
@@ -150,6 +153,8 @@ class SignalbirdClient
         $status = (int) curl_getinfo($handle, CURLINFO_HTTP_CODE);
         $error = curl_error($handle);
         curl_close($handle);
+
+        SdkVersion::note($sdkHeaders);
 
         if ($body === false) {
             if ($this->throwOnError) {

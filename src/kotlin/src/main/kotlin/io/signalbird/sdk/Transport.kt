@@ -73,6 +73,7 @@ internal class Transport(
             connection.connectTimeout = timeoutMs
             connection.readTimeout = timeoutMs
             connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty(SignalbirdSdk.HEADER, SignalbirdSdk.headerValue)
 
             for ((key, value) in headers()) {
                 connection.setRequestProperty(key, value)
@@ -85,6 +86,7 @@ internal class Transport(
             }
 
             val status = connection.responseCode
+            SignalbirdSdk.note(connection)
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val text = stream?.bufferedReader()?.use(BufferedReader::readText).orEmpty()
             val parsed = parse(text)

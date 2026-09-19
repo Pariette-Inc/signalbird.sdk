@@ -885,3 +885,64 @@ bir iframe çerçeveyi büyütemez. `height:'auto'` bildirilen yüksekliği uygu
 Müşterinin o modülü satın alıp almadığını ev sahibinin satış kaydı bilir;
 Signalbird de kendi yetki kaydını (`MODULE_DISABLED`, 403) uygular. SDK
 üçüncü bir kapı koymaz, `mint` hatasının mesajını gösterir.
+
+## 14. Sürüm bildirimi - `X-Signalbird-Sdk` (2.6.0)
+
+Paketleri müşterinin kilit dosyası sabitler; Signalbird onları dışarıdan
+güncelleyemez. Yapabildiği şey kimin eski sürümde olduğunu görmek ve haber
+vermektir. Bunun için her dil, her istekte kendi sürümünü bildirir.
+Sunucu tarafı: `signalbird.api` → `App\Services\SdkVersionService`.
+
+### 14.1 İstek başlığı
+
+```
+X-Signalbird-Sdk: <platform>/<sürüm>
+```
+
+Sürüm kilitli `VERSION` dosyasındandır; elle yazılmaz (`sync-version.mjs`,
+TypeScript'te tsup `define`). Platform adları sabittir:
+
+| Platform | Kaynak |
+|---|---|
+| `node` | `src/node` (Telsiz, Gönderim, Yönetim, Partner) |
+| `browser` | `src/browser` - `sendBeacon` başlık taşıyamadığı için `?sdk=browser/<sürüm>` |
+| `app` | `src/app` ve üstüne oturan `react`, `vue`, `angular` (tarayıcıda) |
+| `react-native` | `src/app`, `navigator.product === 'ReactNative'` iken |
+| `widget` | `src/widget` (`signalbird.js`) |
+| `php` · `python` · `go` · `dotnet` · `swift` · `kotlin` | ilgili `src/<dil>` |
+
+Başlık kimlik DEĞİLDİR ve hiçbir kapıyı açmaz; eksik ya da bozuk olması
+isteği düşürmez, API onu "sürüm bilinmiyor" sayar.
+
+### 14.2 Yanıt başlıkları
+
+Yayında bir SDK sürümü varsa her `domain-key` yanıtı şunları taşır:
+
+```
+Signalbird-Sdk-Latest: 2.7.0
+Signalbird-Sdk-Status: current | outdated | unsupported
+```
+
+`unsupported`: kurulu sürüm, yayındaki sürümün `min_supported_version`
+değerinden eski. Karşılaştırma sayısaldır (2.10.0 > 2.6.0). Tarayıcıdan
+okunabilmeleri için API CORS'ta `exposed_headers` olarak açar.
+
+### 14.3 Davranış
+
+- `outdated` ya da `unsupported` görülünce SDK **süreç başına BİR KEZ**
+  uyarı yazar: TS `console.warn`, PHP `error_log`, Python `signalbird`
+  logger'ı, Go `log.Printf`, .NET `Console.Error`, Kotlin `System.err`,
+  Swift yalnız `DEBUG` derlemede `print`.
+- Uyarı **hata değildir**: istek sonucu değişmez, istisna fırlatılmaz,
+  `throwOnError` bunu etkilemez.
+- **Widget uyarı yazmaz.** CDN'den her zaman son sürümle gelir ve konsolu
+  ziyaretçinindir; başlığı yine gönderir (önbellekte kalmış eski kopya görünsün).
+- SDK sürüm yüzünden **isteği engellemez**. Desteklenmeyen sürümü reddetmek
+  gerekirse bu karar sunucudadır.
+
+### 14.4 Bildirim sunucudadır
+
+Eski sürümdeki takıma panel bildirimi API'den gider (`php artisan
+sdk:release <sürüm>`); SDK'nın buna katkısı yalnız başlıktır. Sürüm
+yayınlandıktan sonra `sdk:release` çalıştırılmazsa kimse haberdar olmaz:
+yayın adımlarının parçasıdır (RELEASE.md).

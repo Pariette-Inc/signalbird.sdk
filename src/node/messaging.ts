@@ -36,6 +36,7 @@ import type {
   SendSmsInput,
   SmsPreview,
 } from './messaging-types';
+import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
 
 /** Toplu kişi yüklemede tek istekteki üst sınır (API tarafı da bunu kabul eder). */
 const BULK_CHUNK = 1000;
@@ -265,6 +266,7 @@ export class SignalbirdMessaging {
         headers: {
           Accept: 'application/json',
           'X-Signalbird-Key': this.domainKey,
+          [SDK_HEADER]: sdkHeaderValue('node'),
           ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -272,6 +274,7 @@ export class SignalbirdMessaging {
       });
 
       status = response.status;
+      noteSdkStatus(response.headers);
       const text = await response.text();
       try {
         data = text ? JSON.parse(text) : null;

@@ -121,6 +121,7 @@ func (t *transport) request(ctx context.Context, method, path string, body any, 
 
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set(t.authHeader, t.authPrefix+t.domainKey)
+	request.Header.Set(sdkHeader, "go/"+Version)
 
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")
@@ -136,6 +137,8 @@ func (t *transport) request(ctx context.Context, method, path string, body any, 
 		return t.fail(0, code, err.Error(), nil)
 	}
 	defer response.Body.Close()
+
+	noteSdkStatus(response.Header)
 
 	raw, _ := io.ReadAll(response.Body)
 

@@ -38,7 +38,8 @@ taraftır. Partner da süper yönetici değildir: yalnız KENDİ açtığı comp
 erişir, başkasınınki 404 döner.
 
 Ana kaynak sözleşme: `docs/CONTRACT.md` (§0 yüzey tablosu, §1–7 Telsiz,
-§8 Gönderim, §9 Widget, §10 Yönetim, §11 Uygulama, §12 Partner) ve platform sözleşmesi
+§8 Gönderim, §9 Widget, §10 Yönetim, §11 Uygulama, §12 Partner, §13 Gömme,
+§14 Sürüm bildirimi) ve platform sözleşmesi
 `../signalbird.api/docs/PLATFORM_EXPANSION_2026-08-19.md` §3.
 
 ## Repo yapısı
@@ -58,7 +59,7 @@ signalbird.sdk/
 ├── VERSION                 # kilitli tek sürüm (tek doğruluk kaynağı)
 ├── docs/CONTRACT.md        # diller arası davranış sözleşmesi ← ÖNCE BUNU OKU
 ├── scripts/
-│   ├── sync-version.mjs    # VERSION → package.json, pyproject, csproj, gradle, __init__.py
+│   ├── sync-version.mjs    # VERSION → manifestler + her dilin sürüm sabiti (CONTRACT §14)
 │   ├── check-parity.mjs    # 5 küme: Telsiz 7 · Gönderim 20 · Yönetim 45 · Uygulama 17 · Partner 20
 │   └── publish-web.mjs     # dist/signalbird.js → ../signalbird.web/public/sdk/v1/
 ├── src/
@@ -193,6 +194,9 @@ docs/CONTRACT.md güncelle
 3. `scripts/check-parity.mjs` → `SURFACES` içindeki her kümeye bir dil girişi
    (dosya + metot adı regex'i).
 4. `scripts/sync-version.mjs` → manifest sürüm alanı taşıyorsa `TARGETS`'a ekle.
+4b. Sürüm sabiti + `X-Signalbird-Sdk: <dil>/<sürüm>` başlığı + "bir kez uyar"
+   (CONTRACT §14). Sabit `sync-version.mjs` `TEXT_TARGETS`'a bağlanır; elle
+   tutulan sürüm numarası er geç bayatlar.
 5. CI'ya (`.github/workflows/ci.yml`) build/lint adımı.
 6. README dil matrisi + `signalbird.web/public/docs/{tr,en}/sdk-<dil>.md`.
 

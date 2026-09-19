@@ -10,6 +10,8 @@
  * React, Vue, Angular ve düz JS aynı istemciyi kullanır; çatıya özel sarmalayıcı
  * yoktur çünkü gereken tek şey bir fonksiyon çağrısıdır.
  */
+import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
+
 export type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 
 export interface BrowserConfig {
@@ -121,15 +123,17 @@ export class SignalbirdBrowser {
     const batch = this.queue.splice(0, 100);
 
     try {
-      await fetch(`${this.baseUrl}/v1/radio/log/batch`, {
+      const response = await fetch(`${this.baseUrl}/v1/radio/log/batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Signalbird-Key': this.config.publicKey,
+          [SDK_HEADER]: sdkHeaderValue('browser'),
         },
         body: JSON.stringify({ events: batch }),
         keepalive: true,
       });
+      noteSdkStatus(response.headers);
     } catch (error) {
       if (this.config.debug) {
         console.warn('[signalbird] gönderilemedi', error);
@@ -149,9 +153,10 @@ export class SignalbirdBrowser {
       { type: 'application/json' }
     );
 
-    // sendBeacon özel başlık taşıyamaz; anahtar sorgu dizesinden gider.
+    // sendBeacon özel başlık taşıyamaz; anahtar ve SDK sürümü sorgu dizesinden gider.
     navigator.sendBeacon?.(
-      `${this.baseUrl}/v1/radio/log/batch?k=${encodeURIComponent(this.config.publicKey)}`,
+      `${this.baseUrl}/v1/radio/log/batch?k=${encodeURIComponent(this.config.publicKey)}` +
+        `&sdk=${encodeURIComponent(sdkHeaderValue('browser'))}`,
       blob
     );
   }

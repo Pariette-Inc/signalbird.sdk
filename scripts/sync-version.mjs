@@ -70,9 +70,39 @@ const TEXT_TARGETS = [
     label: 'Maven',
   },
   {
-    file: 'src/python/signalbird/__init__.py',
+    file: 'src/python/signalbird/_version.py',
     pattern: /^(__version__ = ")([^"]+)(")$/m,
     label: 'python __version__',
+  },
+
+  // İstek başlığındaki sürüm (CONTRACT §14: `X-Signalbird-Sdk: php/2.6.0`).
+  // Etiketten sürüm alan diller (PHP, Go, Swift) kodun içinde sürümü
+  // bilmiyordu; API'ye "hangi sürümdeyim" diyebilmeleri için sabit gerekti.
+  // TypeScript sürümü derlemede tsup `define` ile alır, burada yoktur.
+  {
+    file: 'src/php/SdkVersion.php',
+    pattern: /^(\s*public const VERSION = ')([^']+)(';)$/m,
+    label: 'PHP SdkVersion::VERSION',
+  },
+  {
+    file: 'src/go/signalbird/version.go',
+    pattern: /^(const Version = ")([^"]+)(")$/m,
+    label: 'Go Version',
+  },
+  {
+    file: 'src/dotnet/Signalbird.Sdk/SdkInfo.cs',
+    pattern: /^(\s*public const string Version = ")([^"]+)(";)$/m,
+    label: '.NET SdkInfo.Version',
+  },
+  {
+    file: 'src/swift/Sources/Signalbird/SdkVersion.swift',
+    pattern: /^(\s*public static let version = ")([^"]+)(")$/m,
+    label: 'Swift SignalbirdSdk.version',
+  },
+  {
+    file: 'src/kotlin/src/main/kotlin/io/signalbird/sdk/SdkVersion.kt',
+    pattern: /^(\s*const val VERSION = ")([^"]+)(")$/m,
+    label: 'Kotlin SignalbirdSdk.VERSION',
   },
 
   // Belgelerdeki Gradle satırı. Maven koordinatı sürümü metin olarak taşır ve

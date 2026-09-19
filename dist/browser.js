@@ -1,5 +1,25 @@
 'use strict';
 
+// src/shared/version.ts
+var SDK_VERSION = "2.6.0" ;
+var SDK_HEADER = "X-Signalbird-Sdk";
+function sdkHeaderValue(platform) {
+  return `${platform}/${SDK_VERSION}`;
+}
+var warned = false;
+function noteSdkStatus(headers) {
+  if (warned || !headers) return;
+  try {
+    const status = headers.get("Signalbird-Sdk-Status");
+    if (status !== "outdated" && status !== "unsupported") return;
+    warned = true;
+    const latest = headers.get("Signalbird-Sdk-Latest") ?? "?";
+    const message = status === "unsupported" ? `[signalbird] Bu SDK s\xFCr\xFCm\xFC (${SDK_VERSION}) art\u0131k desteklenmiyor. Son s\xFCr\xFCm: ${latest}. Paketi g\xFCncelleyin.` : `[signalbird] Yeni SDK s\xFCr\xFCm\xFC var: ${latest} (kurulu: ${SDK_VERSION}).`;
+    if (typeof console !== "undefined") console.warn(message);
+  } catch {
+  }
+}
+
 // src/browser/index.ts
 var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 var SignalbirdBrowser = class {
@@ -65,15 +85,17 @@ var SignalbirdBrowser = class {
     if (this.queue.length === 0) return;
     const batch = this.queue.splice(0, 100);
     try {
-      await fetch(`${this.baseUrl}/v1/radio/log/batch`, {
+      const response = await fetch(`${this.baseUrl}/v1/radio/log/batch`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Signalbird-Key": this.config.publicKey
+          "X-Signalbird-Key": this.config.publicKey,
+          [SDK_HEADER]: sdkHeaderValue("browser")
         },
         body: JSON.stringify({ events: batch }),
         keepalive: true
       });
+      noteSdkStatus(response.headers);
     } catch (error) {
       if (this.config.debug) {
         console.warn("[signalbird] g\xF6nderilemedi", error);
@@ -89,7 +111,7 @@ var SignalbirdBrowser = class {
       { type: "application/json" }
     );
     navigator.sendBeacon?.(
-      `${this.baseUrl}/v1/radio/log/batch?k=${encodeURIComponent(this.config.publicKey)}`,
+      `${this.baseUrl}/v1/radio/log/batch?k=${encodeURIComponent(this.config.publicKey)}&sdk=${encodeURIComponent(sdkHeaderValue("browser"))}`,
       blob
     );
   }

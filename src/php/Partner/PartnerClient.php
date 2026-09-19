@@ -2,6 +2,7 @@
 
 namespace Signalbird\Sdk\Partner;
 
+use Signalbird\Sdk\SdkVersion;
 use Signalbird\Sdk\SignalbirdException;
 
 /**
@@ -278,6 +279,9 @@ class PartnerClient
     {
         $raw = $this->transport($method, $path . self::buildQuery($query), $body);
 
+        // Sürüm uyarısı (CONTRACT §14) - istek sonucunu değiştirmez.
+        SdkVersion::note($raw['headers'] ?? []);
+
         $status = (int) ($raw['status'] ?? 0);
         $errno = (int) ($raw['errno'] ?? 0);
         $error = $raw['error'] ?? null;
@@ -321,13 +325,17 @@ class PartnerClient
         $headers = [
             'Accept: application/json',
             'X-Signalbird-Key: ' . $this->domainKey,
+            SdkVersion::headerLine(),
         ];
+
+        $sdkHeaders = [];
 
         $options = [
             CURLOPT_CUSTOMREQUEST => $method,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $this->timeout,
             CURLOPT_CONNECTTIMEOUT => $this->timeout,
+            CURLOPT_HEADERFUNCTION => SdkVersion::collector($sdkHeaders),
         ];
 
         if ($body !== null) {
@@ -351,6 +359,7 @@ class PartnerClient
             'body' => $response === false ? null : (string) $response,
             'error' => $error !== '' ? $error : null,
             'errno' => $errno,
+            'headers' => $sdkHeaders,
         ];
     }
 

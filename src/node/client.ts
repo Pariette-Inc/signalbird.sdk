@@ -16,6 +16,7 @@ import {
   type LogResult,
   type SignalbirdConfig,
 } from './types';
+import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
 
 export class SignalbirdClient {
   private readonly baseUrl: string;
@@ -228,11 +229,13 @@ export class SignalbirdClient {
           // Kanonik başlık `X-Signalbird-Key`; `Authorization: Bearer` de
           // kabul edilir ama anahtarın bir OAuth jetonu olmadığı açık olsun.
           'X-Signalbird-Key': this.config.domainKey,
+          [SDK_HEADER]: sdkHeaderValue('node'),
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
 
+      noteSdkStatus(response.headers);
       const body = await response.json().catch(() => ({}));
 
       return { ok: response.ok, status: response.status, body };

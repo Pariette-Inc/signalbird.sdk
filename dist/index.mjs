@@ -14,6 +14,26 @@ var SignalbirdError = class extends Error {
 };
 var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 
+// src/shared/version.ts
+var SDK_VERSION = "2.6.0" ;
+var SDK_HEADER = "X-Signalbird-Sdk";
+function sdkHeaderValue(platform) {
+  return `${platform}/${SDK_VERSION}`;
+}
+var warned = false;
+function noteSdkStatus(headers) {
+  if (warned || !headers) return;
+  try {
+    const status = headers.get("Signalbird-Sdk-Status");
+    if (status !== "outdated" && status !== "unsupported") return;
+    warned = true;
+    const latest = headers.get("Signalbird-Sdk-Latest") ?? "?";
+    const message = status === "unsupported" ? `[signalbird] Bu SDK s\xFCr\xFCm\xFC (${SDK_VERSION}) art\u0131k desteklenmiyor. Son s\xFCr\xFCm: ${latest}. Paketi g\xFCncelleyin.` : `[signalbird] Yeni SDK s\xFCr\xFCm\xFC var: ${latest} (kurulu: ${SDK_VERSION}).`;
+    if (typeof console !== "undefined") console.warn(message);
+  } catch {
+  }
+}
+
 // src/node/client.ts
 var SignalbirdClient = class {
   constructor(config) {
@@ -177,11 +197,13 @@ var SignalbirdClient = class {
           Accept: "application/json",
           // Kanonik başlık `X-Signalbird-Key`; `Authorization: Bearer` de
           // kabul edilir ama anahtarın bir OAuth jetonu olmadığı açık olsun.
-          "X-Signalbird-Key": this.config.domainKey
+          "X-Signalbird-Key": this.config.domainKey,
+          [SDK_HEADER]: sdkHeaderValue("node")
         },
         body: JSON.stringify(payload),
         signal: controller.signal
       });
+      noteSdkStatus(response.headers);
       const body = await response.json().catch(() => ({}));
       return { ok: response.ok, status: response.status, body };
     } catch (error) {
@@ -359,12 +381,14 @@ var SignalbirdMessaging = class {
         headers: {
           Accept: "application/json",
           "X-Signalbird-Key": this.domainKey,
+          [SDK_HEADER]: sdkHeaderValue("node"),
           ...body !== void 0 ? { "Content-Type": "application/json" } : {}
         },
         body: body !== void 0 ? JSON.stringify(body) : void 0,
         signal: controller.signal
       });
       status = response.status;
+      noteSdkStatus(response.headers);
       const text = await response.text();
       try {
         data = text ? JSON.parse(text) : null;
@@ -388,7 +412,7 @@ var SignalbirdMessaging = class {
   }
   fail(status, code, message, data) {
     if (this.throwOnError) {
-      throw new SignalbirdError(`Signalbird: ${code} \u2014 ${message}`, status, code, data);
+      throw new SignalbirdError(`Signalbird: ${code} - ${message}`, status, code, data);
     }
     if (this.debug) {
       console.warn(`[signalbird] ${code} (HTTP ${status}): ${message}`);
@@ -428,12 +452,14 @@ var SbTransport = class {
         headers: {
           Accept: "application/json",
           "X-Signalbird-Key": this.config.domainKey,
+          [SDK_HEADER]: sdkHeaderValue("node"),
           ...body !== void 0 ? { "Content-Type": "application/json" } : {}
         },
         body: body !== void 0 ? JSON.stringify(body) : void 0,
         signal: controller.signal
       });
       status = response.status;
+      noteSdkStatus(response.headers);
       const text = await response.text();
       try {
         data = text ? JSON.parse(text) : null;
@@ -460,7 +486,7 @@ var SbTransport = class {
   }
   fail(status, code, message, data) {
     if (this.config.throwOnError) {
-      throw new SignalbirdError(`Signalbird: ${code} \u2014 ${message}`, status, code, data);
+      throw new SignalbirdError(`Signalbird: ${code} - ${message}`, status, code, data);
     }
     if (this.config.debug) {
       console.warn(`[signalbird] ${code} (HTTP ${status}): ${message}`);

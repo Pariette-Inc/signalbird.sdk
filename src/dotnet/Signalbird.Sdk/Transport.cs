@@ -109,6 +109,7 @@ internal sealed class Transport
         using var request = new HttpRequestMessage(method, _baseUrl + path + BuildQuery(query));
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
         request.Headers.TryAddWithoutValidation("Authorization", "Bearer " + _domainKey);
+        request.Headers.TryAddWithoutValidation(SdkInfo.Header, SdkInfo.HeaderValue);
 
         if (body is not null)
         {
@@ -133,6 +134,8 @@ internal sealed class Transport
 
         using (response)
         {
+            SdkInfo.Note(response);
+
             // `ReadAsStringAsync(CancellationToken)` aşırı yüklemesi .NET 5 ile
             // geldi; `netstandard2.1` hedefinde yalnız parametresiz sürüm var.
             // Gövde okuması zaten istek zaman aşımının içindedir, iptal

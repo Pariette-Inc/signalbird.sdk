@@ -1,15 +1,3 @@
-/**
- * signalbird/browser - tarayıcı istemcisi.
- *
- * Ayrı bir giriş noktası olmasının sebebi teknik değil, GÜVENLİKTİR: sunucu
- * anahtarı istemciye gömülemez ve sunucu `Origin` başlığı taşıyan bir istekte
- * onu zaten reddeder. Tarayıcı, açık anahtarı (`sb_public_live_…`) kullanır ve
- * güvenliği gizlilikten değil kısıttan gelir: yalnız izinli alan adlarından
- * çalışır ve Origin taşımayan istekte reddedilir (`ORIGIN_REQUIRED`).
- *
- * React, Vue, Angular ve düz JS aynı istemciyi kullanır; çatıya özel sarmalayıcı
- * yoktur çünkü gereken tek şey bir fonksiyon çağrısıdır.
- */
 type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 interface BrowserConfig {
     /** Açık anahtar (`sb_public_live_…`). Gizli anahtar BURAYA YAZILMAZ. */

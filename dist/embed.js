@@ -152,7 +152,7 @@ function createEmbed(options) {
     async mount(targetSelector) {
       const element = typeof targetSelector === "string" ? document.querySelector(targetSelector) : targetSelector;
       if (!(element instanceof HTMLElement)) {
-        throw new Error("Signalbird: g\xF6mme kab\u0131 bulunamad\u0131 \u2014 " + String(targetSelector));
+        throw new Error("Signalbird: g\xF6mme kab\u0131 bulunamad\u0131 - " + String(targetSelector));
       }
       container = element;
       destroyed = false;

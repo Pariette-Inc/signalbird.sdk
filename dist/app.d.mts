@@ -267,26 +267,6 @@ interface RegisterDeviceInput {
     locale?: string;
 }
 
-/**
- * Uygulama istemcisi - son kullanıcı tarafı (sohbet + push kaydı).
- *
- * Tek bir sınıf; tarayıcı, React Native, Electron ve test aynı gövdeyi kullanır.
- * Platform farkı iki noktada toplanmıştır ve ikisi de dışarıdan verilir:
- * `storage` (ziyaretçi sırrı nerede durur) ve `fetchImpl`. Çatıya özel sarmalayıcı
- * yazmak yerine bunu seçtik - React, Vue, Angular ve RN uyarlamaları bu sınıfın
- * ÜSTÜNE oturur, kopyası değildir.
- *
- * Kimlik iki parçadır: açık domain anahtarı (`X-Signalbird-Key`) ve
- * ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner;
- * kaybolursa yeni oturum açılır ve geçmiş konuşmalar görünmez - bu yüzden
- * saklama katmanı zorunludur, isteğe bağlı değil.
- *
- * Hiçbir metot istisna fırlatmaz: sohbet balonunun hatası müşterinin ödeme
- * sayfasını çökertmemeli. Sonuç her zaman `{ok, status, …}` zarfıdır.
- *
- * Sözleşme: docs/CONTRACT.md § 11
- */
-
 /** RFC 4122 uyumlu olmak zorunda değil; tek işi yerel kopyayı eşlemek. */
 declare function clientId(): string;
 declare class SignalbirdApp {
@@ -491,6 +471,8 @@ declare class ChatSession {
      * da düzenleme ekrana hiç yansımaz.
      */
     private forceFull;
+    /** Son gönderilen `typing(true)` zamanı; 0 = açık sinyal yok. */
+    private lastTypingSent;
     constructor(app: SignalbirdApp, options?: ChatSessionOptions);
     subscribe(listener: ChatListener): () => void;
     snapshot(): ChatState;
@@ -524,7 +506,15 @@ declare class ChatSession {
      * konuşmasını yeniden sınıflandırma yetkisi vermek, atamayı da bozardı.
      */
     setTopic(slug: string | null): void;
-    /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar. */
+    /**
+     * İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar.
+     *
+     * SDK yine de kendini korur (18 Eyl 2026): `true` 4 saniyede bir kez gider,
+     * `false` yalnız açık bir `true` varsa. Bir entegrasyon her tuşta
+     * çağırdığında (Penyu mobil öyle yapıyordu) 40 harflik mesaj 40 istek
+     * oluyor ve sunucunun hız sınırı ikinci mesajı 429 ile düşürüyordu. Web
+     * widget'ındaki kuralın aynısı.
+     */
     typing(isTyping: boolean): void;
     /** Görülen son mesaja kadar okundu işaretler. */
     markRead(): Promise<void>;

@@ -10,6 +10,7 @@
  * 64 KB ile sınırlar.
  */
 import type { ApiResult } from './types';
+import { SDK_HEADER, sdkHeaderValue } from '../shared/version';
 
 export class Api {
   constructor(
@@ -53,6 +54,9 @@ export class Api {
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'X-Signalbird-Key': this.publicKey,
+      // Widget CDN'den her zaman son sürümle gelir; uyarı YAZMAZ (konsol
+      // ziyaretçinindir). Başlık yine gider: önbellekte kalmış eski kopya görünsün.
+      [SDK_HEADER]: sdkHeaderValue('widget'),
       ...(this.chatKey ? { 'X-Signalbird-Module-Key': this.chatKey } : {}),
     };
     const secret = this.secret();

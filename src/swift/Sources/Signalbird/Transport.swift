@@ -85,6 +85,7 @@ struct Transport {
         var request = URLRequest(url: url, timeoutInterval: timeout)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(SignalbirdSdk.headerValue, forHTTPHeaderField: SignalbirdSdk.header)
 
         for (key, value) in headers() {
             request.setValue(value, forHTTPHeaderField: key)
@@ -107,6 +108,8 @@ struct Transport {
         } catch {
             return try fail(0, "NETWORK_ERROR", error.localizedDescription, nil)
         }
+
+        SignalbirdSdk.note(response)
 
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         let parsed = raw.isEmpty ? nil : try? JSONSerialization.jsonObject(with: raw, options: [.fragmentsAllowed])

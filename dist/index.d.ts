@@ -76,9 +76,9 @@ declare class SignalbirdError extends Error {
     readonly code?: string | undefined;
     /** Sunucunun ham yanıt gövdesi (varsa) - gönderim istemcisi doldurur. */
     readonly body?: unknown | undefined;
-    constructor(message: string, status: number, code?: string | undefined,
-        /** Sunucunun ham yanıt gövdesi (varsa) - gönderim istemcisi doldurur. */
-        body?: unknown | undefined);
+    constructor(message: string, status: number, code?: string | undefined, 
+    /** Sunucunun ham yanıt gövdesi (varsa) - gönderim istemcisi doldurur. */
+    body?: unknown | undefined);
 }
 declare const DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 

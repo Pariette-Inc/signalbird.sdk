@@ -4,6 +4,26 @@ var vue = require('vue');
 
 // src/vue/index.ts
 
+// src/shared/version.ts
+var SDK_VERSION = "2.6.0" ;
+var SDK_HEADER = "X-Signalbird-Sdk";
+function sdkHeaderValue(platform) {
+  return `${platform}/${SDK_VERSION}`;
+}
+var warned = false;
+function noteSdkStatus(headers) {
+  if (warned || !headers) return;
+  try {
+    const status = headers.get("Signalbird-Sdk-Status");
+    if (status !== "outdated" && status !== "unsupported") return;
+    warned = true;
+    const latest = headers.get("Signalbird-Sdk-Latest") ?? "?";
+    const message = status === "unsupported" ? `[signalbird] Bu SDK s\xFCr\xFCm\xFC (${SDK_VERSION}) art\u0131k desteklenmiyor. Son s\xFCr\xFCm: ${latest}. Paketi g\xFCncelleyin.` : `[signalbird] Yeni SDK s\xFCr\xFCm\xFC var: ${latest} (kurulu: ${SDK_VERSION}).`;
+    if (typeof console !== "undefined") console.warn(message);
+  } catch {
+  }
+}
+
 // src/app/client.ts
 var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 var STORAGE_KEY = "sb_visitor";
@@ -219,7 +239,8 @@ var SignalbirdApp = class {
     const isForm = typeof FormData !== "undefined" && body instanceof FormData;
     const headers = {
       Accept: "application/json",
-      "X-Signalbird-Key": this.config.publicKey
+      "X-Signalbird-Key": this.config.publicKey,
+      [SDK_HEADER]: sdkHeaderValue(appPlatform())
     };
     const moduleKey = path.startsWith("/v1/sdk/devices") || path.startsWith("/v1/sdk/push") ? this.config.pushKey : this.config.chatKey;
     if (moduleKey) headers["X-Signalbird-Module-Key"] = moduleKey;
@@ -235,6 +256,7 @@ var SignalbirdApp = class {
         body: body === void 0 ? void 0 : isForm ? body : JSON.stringify(body),
         signal: controller.signal
       });
+      noteSdkStatus(response.headers);
       const text = await response.text();
       let data = null;
       try {
@@ -309,6 +331,9 @@ function buildQuery(query) {
   }
   const encoded = params.toString();
   return encoded ? `?${encoded}` : "";
+}
+function appPlatform() {
+  return typeof navigator !== "undefined" && navigator.product === "ReactNative" ? "react-native" : "app";
 }
 
 // src/shared/socket.ts
@@ -499,6 +524,8 @@ var ChatSession = class {
      * da düzenleme ekrana hiç yansımaz.
      */
     this.forceFull = false;
+    /** Son gönderilen `typing(true)` zamanı; 0 = açık sinyal yok. */
+    this.lastTypingSent = 0;
     this.active = options.active ?? false;
   }
   // ── Abonelik ──────────────────────────────────────────────────────────
@@ -623,10 +650,26 @@ var ChatSession = class {
   setTopic(slug) {
     this.patch({ topic: slug });
   }
-  /** İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar. */
+  /**
+   * İlk tuşta `true`, 2.5 s hareketsizlikte `false` - çağıran zamanlar.
+   *
+   * SDK yine de kendini korur (18 Eyl 2026): `true` 4 saniyede bir kez gider,
+   * `false` yalnız açık bir `true` varsa. Bir entegrasyon her tuşta
+   * çağırdığında (Penyu mobil öyle yapıyordu) 40 harflik mesaj 40 istek
+   * oluyor ve sunucunun hız sınırı ikinci mesajı 429 ile düşürüyordu. Web
+   * widget'ındaki kuralın aynısı.
+   */
   typing(isTyping) {
     const conversation = this.state.conversation;
     if (!conversation) return;
+    const now = Date.now();
+    if (isTyping) {
+      if (now - this.lastTypingSent < 4e3) return;
+      this.lastTypingSent = now;
+    } else {
+      if (this.lastTypingSent === 0) return;
+      this.lastTypingSent = 0;
+    }
     void this.app.setTyping(conversation.id, isTyping);
   }
   /** Görülen son mesaja kadar okundu işaretler. */

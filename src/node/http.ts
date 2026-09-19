@@ -9,6 +9,7 @@
  * Sözleşme: docs/CONTRACT.md § 8.2 (zarf) ve § 8.5 (sorgu dizesi)
  */
 import { SignalbirdError } from './types';
+import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
 
 /** Her metodun döndüğü zarf. Başarısızlık istisna değil, veridir. */
 export interface SbResult<T = unknown> {
@@ -51,6 +52,7 @@ export class SbTransport {
         headers: {
           Accept: 'application/json',
           'X-Signalbird-Key': this.config.domainKey,
+          [SDK_HEADER]: sdkHeaderValue('node'),
           ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -58,6 +60,7 @@ export class SbTransport {
       });
 
       status = response.status;
+      noteSdkStatus(response.headers);
       const text = await response.text();
       try {
         data = text ? JSON.parse(text) : null;

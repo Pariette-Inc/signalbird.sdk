@@ -42,6 +42,8 @@ export default defineConfig([
     dts: true,
     sourcemap: true,
     external: ['react', 'react-native', 'vue', 'rxjs'],
+    // SDK sürümü her isteğin `X-Signalbird-Sdk` başlığına girer (CONTRACT §14).
+    define: { __SB_VERSION__: JSON.stringify(version) },
     // Widget çıktısı paralel build'de silinmesin
     clean: ['!signalbird.js'],
     splitting: false,
