@@ -1,5 +1,13 @@
 # CLAUDE.md - Signalbird SDK
 
+## Git akışı (23 Eyl 2026, sahibinin kararı — eski "commit atma, ben kontrol ederim" kuralının yerine)
+
+- Çalışma dalı **`test`**. Yazdığın kodu `test`'e commit'le ve `git push origin test` ile push'la; ayrıca izin sorma.
+- Push'tan sonra **her seferinde** `test → live` PR'ı olduğundan emin ol: yoksa `gh pr create --base live --head test` ile aç, varsa `gh pr edit` ile açıklamasını güncelle (ne değişti, neden, deploy'da gereken adımlar: migration, seeder, env, komut).
+- İnceleme artık PR üzerinden: PR'ı **sahibi** inceleyip merge eder. Ajan merge etmez, auto-merge açmaz.
+- `live`/`main`'e doğrudan push, force-push ve push edilmiş geçmişi yeniden yazma (`--amend`, `reset`) yasak; düzeltme gerekirse yeni commit at.
+- `test`'e push canlıya çıkmak demek değildir. "Canlıda" demeden önce `git rev-list --count origin/live..origin/test` sıfır mı bak.
+
 > Bu dosya Claude Code ve AI asistanları için proje bağlam dosyasıdır.
 
 ## Proje Tanımı
