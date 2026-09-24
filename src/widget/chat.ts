@@ -15,6 +15,7 @@ import { uuid } from './ui/dom';
 import { TitleBlinker } from './title';
 import { beep } from './sound';
 import { resolveLocale, strings, fmt, type Strings } from './i18n';
+import { Captcha } from './captcha';
 import type {
   ApiResult,
   Bootstrap,
@@ -31,6 +32,7 @@ import type {
 
 const DEFAULT_BASE_URL = 'https://live.signalbird.io/api';
 const CONV = '/v1/sdk/chat/conversations';
+const CAPTCHA_HEADER = 'X-Signalbird-Captcha';
 
 interface Pending {
   text: string;
@@ -87,13 +89,27 @@ export class ChatController {
    * o hâlde polling bugünkü hızıyla devam eder.
    */
   private socket: Socket | null = null;
+  /**
+   * Turnstile (CONTRACT §15.1). `null` = sunucu captcha istemiyor (kapalı ya
+   * da ziyaretçi zaten doğrulandı); o hâlde hiçbir betik yüklenmez.
+   */
+  private captcha: Captcha | null = null;
+  /** Ziyaretçi captcha'yı geçti mi - geçtiyse konuşma açarken jeton gerekmez. */
+  private verified = false;
+  /** Panel en az bir kez açıldı mı - captcha betiği ancak ondan sonra yüklenir. */
+  private opened = false;
+  /** Son başarısız oturum/konuşma çağrısının kodu - ziyaretçiye doğru bant için. */
+  private lastCode: string | null = null;
 
   constructor(private readonly opts: InitOptions) {
     this.baseUrl = (opts.baseUrl || DEFAULT_BASE_URL).replace(/\/$/, '');
     this.store = new Store(opts.publicKey);
     this.api = new Api(this.baseUrl, opts.publicKey, opts.chatKey, () => this.store.secret, (...a) => this.log(...a));
     this.poller = new Poller(() => this.tick());
-    this.identity = opts.user && (opts.user.name || opts.user.email || opts.user.external_id) ? opts.user : null;
+    this.identity =
+      opts.user && (opts.user.name || opts.user.email || opts.user.external_id)
+        ? this.mergeIdentity(null, opts.user)
+        : null;
     this.locale = resolveLocale(null, opts.locale);
     this.t = strings(this.locale);
     this.ready = this.start().catch((e) => this.log('start failed', e));
@@ -155,7 +171,7 @@ export class ChatController {
     }
     if (this.destroyed) return;
 
-    const { online, within_hours, visitor, conversation, topics, realtime } = boot.data;
+    const { online, within_hours, visitor, conversation, topics, realtime, captcha } = boot.data;
     if (!app.chat_enabled) {
       this.log('chat disabled for app');
       return;
@@ -190,6 +206,7 @@ export class ChatController {
     // Sır vardı ama sunucu ziyaretçiyi tanımadı → sır geçersiz, temizle.
     if (this.store.visitor && !visitor) this.store.clearVisitor();
     if (visitor) this.store.setVisitor({ id: visitor.id, name: visitor.name, email: visitor.email });
+    this.verified = !!visitor?.verified;
 
     this.store.online = !!online;
     this.store.withinHours = within_hours !== false;
@@ -228,6 +245,10 @@ export class ChatController {
         openImage: (url) => window.open(url, '_blank', 'noopener'),
       },
     });
+
+    if (captcha && captcha.site_key) {
+      this.captcha = new Captcha(captcha, () => this.ui?.captchaHost() || null, this.locale, (...a) => this.log(...a));
+    }
 
     this.store.on('unread', () => this.syncUnread());
     this.store.on('messages', () => this.render());
@@ -391,6 +412,11 @@ export class ChatController {
      * Balon olmasaydı yanıt hiçbir yerde görünmezdi.
      */
     this.store.isOpen = true;
+    // Captcha betiği TEMBEL: yalnız sunucu istediyse ve panel ilk kez açılırken.
+    if (!this.opened) {
+      this.opened = true;
+      this.captcha?.preload();
+    }
     this.ui.setOpen(true);
     this.syncLauncher();
     this.poller.setOpen(true);
@@ -448,7 +474,8 @@ export class ChatController {
     await this.ready;
     if (this.destroyed) return;
 
-    this.identity = { ...(this.identity || {}), ...input };
+    this.identity = this.mergeIdentity(this.identity, input);
+    const hash = this.identity.identity_hash;
 
     // Ön-form çizilmişse ve artık kimliği biliyorsak formu bekletmeyelim:
     // oturum açan kullanıcıya adını ikinci kez sormak, sohbeti geciktiren
@@ -457,6 +484,8 @@ export class ChatController {
     const [first_name, ...rest] = (input.name || '').trim().split(/\s+/);
     const body = {
       external_id: input.external_id,
+      // CONTRACT §15.2 - hash yalnız AYNI external_id için gider.
+      identity_hash: input.external_id && input.external_id === this.identity.external_id ? hash : undefined,
       email: input.email,
       phone: input.phone,
       first_name: first_name || undefined,
@@ -471,11 +500,73 @@ export class ChatController {
 
   async pushRegister(input: PushRegisterInput): Promise<ApiResult<unknown>> {
     await this.ready;
+    const id = this.identity;
     return this.api.post('/v1/sdk/devices', {
       provider: input.platform === 'ios' ? 'apns' : 'fcm',
       locale: browserLanguage(),
+      // Bilinen kullanıcının cihazıysa hash'i biz ekleriz (CONTRACT §15.2).
+      ...(id?.identity_hash && input.external_id && input.external_id === id.external_id
+        ? { identity_hash: id.identity_hash }
+        : {}),
       ...input,
     });
+  }
+
+  /**
+   * Kimliği birleştirir; hash'i `identity_hash` adıyla tek yerde tutar.
+   *
+   * `external_id` DEĞİŞTİYSE ve yeni girdi kendi hash'ini getirmediyse eski
+   * hash atılır: başka bir kullanıcının hash'iyle gitmek sunucuda zaten
+   * reddedilir, ama yanlış eşleşmeyi hiç göndermemek daha temiz.
+   * `init({identityHash})`, hash'i olmayan ilk `external_id`'ye uygulanır.
+   */
+  private mergeIdentity(prev: IdentifyInput | null, input: IdentifyInput): IdentifyInput {
+    const own = input.identity_hash || input.identityHash;
+    const next: IdentifyInput = { ...(prev || {}), ...input };
+    delete next.identityHash;
+
+    if (own) next.identity_hash = own;
+    else if (input.external_id !== undefined && input.external_id !== prev?.external_id) {
+      delete next.identity_hash;
+    }
+
+    if (!next.identity_hash && next.external_id && this.opts.identityHash && !prev?.identity_hash) {
+      next.identity_hash = this.opts.identityHash;
+    }
+
+    return next;
+  }
+
+  /**
+   * Captcha'lı çağrı (CONTRACT §15.1).
+   *
+   * `needed` ise önce jeton alınır. Sunucu yine de 403 `CAPTCHA_REQUIRED` /
+   * `CAPTCHA_INVALID` derse YENİ bir jetonla BİR KEZ daha denenir - jetonlar
+   * tek kullanımlıktır. Jeton alınamazsa çağrı jetonsuz gider; kararı sunucu verir.
+   */
+  private async withCaptcha<T>(
+    action: string,
+    needed: boolean,
+    call: (headers?: Record<string, string>) => Promise<ApiResult<T>>
+  ): Promise<ApiResult<T>> {
+    const c = this.captcha;
+    let token = needed && c ? await c.token(action) : null;
+    let r = await call(token ? { [CAPTCHA_HEADER]: token } : undefined);
+
+    if (!r.ok && r.status === 403 && isCaptchaError(r.code) && c) {
+      token = await c.token(action);
+      if (token) r = await call({ [CAPTCHA_HEADER]: token });
+    }
+
+    if (r.ok && token) this.verified = true;
+    return r;
+  }
+
+  /** Oturum/konuşma hatası için ziyaretçiye gösterilecek bant metni. */
+  private failureText(code: string | null): string {
+    if (code === 'CONVERSATION_RATE_LIMITED') return this.t.rateLimited;
+    if (isCaptchaError(code)) return this.t.captchaFailed;
+    return this.t.unavailable;
   }
 
   destroy(): void {
@@ -557,7 +648,7 @@ export class ChatController {
 
     const ok = await this.session({ name: name || undefined, email: email || undefined });
     if (ok) this.enterChat();
-    else this.ui?.setBanner(this.t.unavailable, true);
+    else this.ui?.setBanner(this.failureText(this.lastCode), true);
   }
 
   private newChat(): void {
@@ -627,10 +718,27 @@ export class ChatController {
      * bırakırdı - ajan kiminle konuştuğunu bilmeden yardım edemez.
      */
     const known = this.identity
-      ? { name: this.identity.name, email: this.identity.email, external_id: this.identity.external_id }
+      ? {
+        name: this.identity.name,
+        email: this.identity.email,
+        external_id: this.identity.external_id,
+        identity_hash: this.identity.external_id ? this.identity.identity_hash : undefined,
+      }
       : {};
 
-    const r = await this.api.post<{ visitor: Visitor }>('/v1/sdk/chat/session', {
+    /*
+     * Yeni ziyaretçi (sır yok) + captcha açık → jeton gerekir (CONTRACT §15.1).
+     * Panel hiç açılmadıysa (ör. `init({user})`) oturum ŞİMDİ açılmaz: Turnstile
+     * betiğini sohbeti açmamış birine indirmeyiz. Kimlik `this.identity`'de
+     * durur ve ilk mesajla/ön-formla gider.
+     */
+    const needToken = !!this.captcha && !this.store.secret;
+    if (needToken && !this.opened) {
+      this.log('session deferred until the panel opens (captcha)');
+      return false;
+    }
+
+    const body = {
       ...known,
       ...identity,
       /*
@@ -657,7 +765,12 @@ export class ChatController {
       ...(this.opts.locale ? { language: this.opts.locale } : {}),
       page_url: location.href,
       user_agent: navigator.userAgent,
-    });
+    };
+
+    const r = await this.withCaptcha<{ visitor: Visitor }>('chat_session', needToken, (headers) =>
+      this.api.post<{ visitor: Visitor }>('/v1/sdk/chat/session', body, false, headers)
+    );
+    this.lastCode = r.ok ? null : r.code;
 
     if (r.ok && r.data?.visitor) {
       const v = r.data.visitor;
@@ -668,6 +781,8 @@ export class ChatController {
         return false;
       }
       this.store.setVisitor(v);
+      // Sunucunun sözü belirleyicidir; alan yoksa (eski sunucu) jetonlu başarı yeter.
+      if (typeof v.verified === 'boolean') this.verified = v.verified;
       this.subscribeVisitor();
 
       return true;
@@ -894,14 +1009,20 @@ export class ChatController {
     };
 
     try {
-      if (!this.store.visitor && !(await this.session())) return fail();
+      if (!this.store.visitor && !(await this.session())) {
+        const code = this.lastCode;
+        if (code === 'CONVERSATION_RATE_LIMITED' || isCaptchaError(code)) {
+          this.ui?.setBanner(this.failureText(code), true);
+        }
+        return fail();
+      }
 
       let c = this.store.conversation;
       const needNew = !c || c.status !== 'open';
 
       // Metin-yalnız ilk mesaj: konuşma + mesaj tek çağrıda
       if (needNew && files.length === 0) {
-        const r = await this.api.post<ConversationPayload>(CONV, {
+        const r = await this.startConversation({
           body: text,
           page_url: location.href,
           client_id: clientId,
@@ -917,7 +1038,7 @@ export class ChatController {
       }
 
       if (needNew) {
-        const r = await this.api.post<ConversationPayload>(CONV, {
+        const r = await this.startConversation({
           page_url: location.href,
           ...(this.topic ? { topic: this.topic } : {}),
         });
@@ -952,6 +1073,13 @@ export class ChatController {
     }
   }
 
+  /** Konuşma açar; doğrulanmamış ziyaretçide captcha jetonuyla (CONTRACT §15.1). */
+  private startConversation(body: Record<string, unknown>): Promise<ApiResult<ConversationPayload>> {
+    return this.withCaptcha<ConversationPayload>('chat_start', !!this.captcha && !this.verified, (headers) =>
+      this.api.post<ConversationPayload>(CONV, body, false, headers)
+    );
+  }
+
   /** Sunucu mesajı `client_id` taşımıyorsa yerel kopyayı elle değiştir. */
   private reconcile(local: Message, serverMessages: Message[] | undefined): void {
     const match = (serverMessages || []).find((m) => m.client_id === local.client_id);
@@ -967,6 +1095,8 @@ export class ChatController {
     this.check(r);
     if (r.code === 'CHAT_UNAVAILABLE' || r.status === 503) {
       this.ui?.setBanner(this.t.unavailable, true);
+    } else if (r.code === 'CONVERSATION_RATE_LIMITED' || isCaptchaError(r.code)) {
+      this.ui?.setBanner(this.failureText(r.code), true);
     }
     fail();
   }
@@ -1042,6 +1172,10 @@ export class ChatController {
       if (this.store.isOpen) this.decideView();
     }
   }
+}
+
+function isCaptchaError(code: string | null | undefined): boolean {
+  return code === 'CAPTCHA_REQUIRED' || code === 'CAPTCHA_INVALID';
 }
 
 /**

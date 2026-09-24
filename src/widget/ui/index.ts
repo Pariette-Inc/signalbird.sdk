@@ -251,6 +251,13 @@ export class UI {
       this.dragBar,
       header,
       this.banner,
+      /*
+       * Captcha kutusu (CONTRACT §15.1). Turnstile iframe'i ışık-DOM'da,
+       * ev sahibi elemanın çocuğunda durur ve buraya slot ile yansır:
+       * Shadow DOM'un içine çizilen bir iframe'i Cloudflare betiği belge
+       * düzeyinde bulamayabilir. `interaction-only` - çoğu ziyaretçi hiç görmez.
+       */
+      h('slot', { name: 'captcha' }),
       this.body,
       this.grip);
 
@@ -311,6 +318,16 @@ export class UI {
 
     document.addEventListener('keydown', this.onKey);
     this.scheduleTeaser();
+  }
+
+  /** Turnstile'ın çizileceği ışık-DOM kabı; ilk istekte oluşturulur. */
+  captchaHost(): HTMLElement {
+    let el = this.host.querySelector<HTMLElement>('[slot="captcha"]');
+    if (!el) {
+      el = h('div', { slot: 'captcha', style: 'display:flex;justify-content:center;margin:0 12px' });
+      this.host.appendChild(el);
+    }
+    return el;
   }
 
   unmount(): void {

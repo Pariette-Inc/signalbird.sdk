@@ -12,8 +12,8 @@
  * sohbet balonunun çökmesi müşterinin ödeme sayfasını çökertmemeli.
  *
  * Genel API (docs/PLATFORM_EXPANSION §3.2):
- *   Signalbird.init({publicKey, chatKey?, baseUrl?, locale?, user?})
- *   Signalbird.identify({external_id, email, name, phone, attributes})
+ *   Signalbird.init({publicKey, chatKey?, baseUrl?, locale?, user?, identityHash?})
+ *   Signalbird.identify({external_id, identityHash?, email, name, phone, attributes})
  *   Signalbird.chat.open() / close() / toggle() / isOpen() / on('unread', fn) / off(…)
  *   Signalbird.inline('#destek')                  ← sayfa içi sohbet
  *   Signalbird.push.register({token, platform, provider?})
@@ -239,6 +239,13 @@ safe(() => {
        */
       layout: (ds.layout as InitOptions['layout']) || undefined,
       container: ds.container || undefined,
+      /*
+       * `data-external-id` + `data-identity-hash` (CONTRACT §15.2): sunucuda
+       * çizilen sayfa, oturumdaki kullanıcıyı tek satırda doğrulanmış olarak
+       * tanıtabilsin. Hash SUNUCUDA üretilir; gizli anahtar sayfaya inmez.
+       */
+      user: ds.externalId ? { external_id: ds.externalId } : undefined,
+      identityHash: ds.identityHash || undefined,
       debug: ds.debug === 'true' || ds.debug === '1',
     });
 

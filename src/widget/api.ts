@@ -26,8 +26,9 @@ export class Api {
     return this.request<T>('GET', path + toQuery(query));
   }
 
-  post<T>(path: string, body?: unknown, keepalive = false): Promise<ApiResult<T>> {
-    return this.request<T>('POST', path, body, keepalive);
+  /** `extra`: çağrıya özel başlık - ör. `X-Signalbird-Captcha` (CONTRACT §15.1). */
+  post<T>(path: string, body?: unknown, keepalive = false, extra?: Record<string, string>): Promise<ApiResult<T>> {
+    return this.request<T>('POST', path, body, keepalive, extra);
   }
 
   patch<T>(path: string, body?: unknown): Promise<ApiResult<T>> {
@@ -49,7 +50,8 @@ export class Api {
     method: string,
     path: string,
     body?: unknown,
-    keepalive = false
+    keepalive = false,
+    extra?: Record<string, string>
   ): Promise<ApiResult<T>> {
     const headers: Record<string, string> = {
       Accept: 'application/json',
@@ -61,6 +63,7 @@ export class Api {
     };
     const secret = this.secret();
     if (secret) headers['X-Signalbird-Visitor'] = secret;
+    if (extra) Object.assign(headers, extra);
 
     let payload: BodyInit | undefined;
     if (body instanceof FormData) {

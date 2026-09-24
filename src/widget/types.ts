@@ -30,11 +30,20 @@ export interface InitOptions {
    * `#signalbird-chat` aranır.
    */
   container?: string | Element;
+  /**
+   * Kimlik doğrulama hash'i (CONTRACT §15.2) - `user.external_id` için,
+   * SUNUCUNUZDA `identityHash(externalId)` ile üretilir. Yoksa sunucu
+   * `external_id`/`email`'i doğrulanmamış sayar.
+   */
+  identityHash?: string;
   debug?: boolean;
 }
 
 export interface IdentifyInput {
   external_id?: string;
+  /** `external_id`'nin hash'i (CONTRACT §15.2). `identity_hash` da kabul. */
+  identityHash?: string;
+  identity_hash?: string;
   email?: string;
   name?: string;
   phone?: string;
@@ -46,6 +55,8 @@ export interface PushRegisterInput {
   platform: 'web' | 'ios' | 'android';
   provider?: 'fcm' | 'apns' | 'webpush';
   external_id?: string;
+  /** Verilmezse ve `external_id` bilinen kimlikle aynıysa widget ekler. */
+  identity_hash?: string;
   device_name?: string;
   app_version?: string;
   locale?: string;
@@ -194,8 +205,26 @@ export interface Bootstrap {
   within_hours: boolean;
   /** Boşsa ön-formda konu adımı HİÇ çizilmez. */
   topics?: TopicOption[];
-  visitor?: { id: string; name?: string | null; email?: string | null; unread?: number } | null;
+  visitor?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    unread?: number;
+    verified?: boolean;
+    identity_verified?: boolean;
+  } | null;
   conversation?: Conversation | null;
+  /**
+   * Cloudflare Turnstile (CONTRACT §15.1). `null` = gerekmez (kapalı ya da
+   * ziyaretçi zaten doğrulandı). Doluysa betik panel ilk açıldığında yüklenir.
+   */
+  captcha?: CaptchaConfig | null;
+}
+
+export interface CaptchaConfig {
+  provider: 'turnstile' | string;
+  site_key: string;
+  mode?: 'managed' | string;
 }
 
 export interface Visitor {
@@ -204,6 +233,10 @@ export interface Visitor {
   secret?: string;
   name?: string | null;
   email?: string | null;
+  /** Captcha geçti (CONTRACT §15.1). */
+  verified?: boolean;
+  /** Geçerli `identity_hash` ile tanıtıldı (CONTRACT §15.2). */
+  identity_verified?: boolean;
 }
 
 export type ConversationStatus = 'open' | 'resolved' | 'closed';

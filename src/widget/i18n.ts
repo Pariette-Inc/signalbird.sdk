@@ -66,6 +66,10 @@ const tr = {
   newMessage: 'Yeni mesaj',
   /** Boş ekranda karşılamanın altında duran yanıt süresi vaadi. */
   replyFast: 'Şu an buradayız - genelde birkaç dakika içinde yanıtlıyoruz.',
+  /** 429 `CONVERSATION_RATE_LIMITED` (CONTRACT §15.1). */
+  rateLimited: 'Kısa sürede çok fazla sohbet başlatıldı. Lütfen biraz sonra tekrar deneyin.',
+  /** Captcha iki kez reddedildi ya da tamamlanamadı. */
+  captchaFailed: 'Güvenlik doğrulaması tamamlanamadı. Lütfen tekrar deneyin.',
 };
 
 const en: typeof tr = {
@@ -130,6 +134,8 @@ const en: typeof tr = {
   jump: 'Jump to latest',
   newMessage: 'New message',
   replyFast: "We're here right now - we usually reply within a few minutes.",
+  rateLimited: 'Too many chats were started in a short time. Please try again in a little while.',
+  captchaFailed: "We couldn't complete the security check. Please try again.",
 };
 
 export type Strings = typeof tr;
