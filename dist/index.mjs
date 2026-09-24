@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 
 // src/node/types.ts
 var SECRET_PREFIX = "sb_secret_live_";
@@ -15,7 +15,7 @@ var SignalbirdError = class extends Error {
 var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 
 // src/shared/version.ts
-var SDK_VERSION = "2.6.0" ;
+var SDK_VERSION = "2.7.0" ;
 var SDK_HEADER = "X-Signalbird-Sdk";
 function sdkHeaderValue(platform) {
   return `${platform}/${SDK_VERSION}`;
@@ -33,8 +33,6 @@ function noteSdkStatus(headers) {
   } catch {
   }
 }
-
-// src/node/client.ts
 var SignalbirdClient = class {
   constructor(config) {
     this.config = config;
@@ -137,6 +135,20 @@ var SignalbirdClient = class {
   }
   critical(key, message, context) {
     return this.log({ key, message, level: "critical", context });
+  }
+  /**
+   * Kimlik doğrulama hash'i (CONTRACT §15.2) - sohbet/push ziyaretçisinin
+   * `external_id`'sini GÜVENİLİR kılar.
+   *
+   *     identity_hash = hex(HMAC-SHA256(hex(SHA-256(secretKey)), externalId))
+   *
+   * Anahtar gizli anahtarın kendisi değil SHA-256 özetidir: sunucu anahtarı
+   * düz saklamaz. Hash sunucuda üretilir, sayfaya `external_id` ile birlikte
+   * yazılır; gizli anahtar istemciye İNMEZ.
+   */
+  identityHash(externalId) {
+    const key = createHash("sha256").update(this.config.domainKey).digest("hex");
+    return createHmac("sha256", key).update(String(externalId)).digest("hex");
   }
   /**
    * Yakalanmamış hataları Telsiz'e bağlar.

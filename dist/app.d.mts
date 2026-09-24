@@ -99,6 +99,16 @@ interface BootstrapResult {
         enabled: boolean;
         url?: string;
     };
+    /**
+     * Captcha (Cloudflare Turnstile) - yalnız Origin taşıyan web istekleri için
+     * dolu gelir; mobil anahtar muaftır ve `null` alır (CONTRACT §15.1). Bu
+     * istemci jeton ALMAZ; alan bilgi olarak durur.
+     */
+    captcha?: {
+        provider: 'turnstile';
+        site_key: string;
+        mode: 'managed' | string;
+    } | null;
 }
 interface BootstrapChannel {
     id: number;
@@ -146,8 +156,23 @@ interface Visitor {
     phone?: string | null;
     external_id?: string | null;
     unread_count?: number;
+    /** Captcha geçti (yalnız web widget'ı; uygulama yüzeyleri muaf). CONTRACT §15.1 */
+    verified?: boolean;
+    /** Geçerli `identity_hash` ile tanıtıldı - `external_id` güvenilir. CONTRACT §15.2 */
+    identity_verified?: boolean;
 }
-interface SessionInput {
+/**
+ * Kimlik doğrulama hash'i (CONTRACT §15.2) - SUNUCUNUZDA üretilir
+ * (`identityHash(externalId)` Node/PHP/Python/Go/.NET yardımcıları) ve
+ * `external_id` ile birlikte gönderilir. Yoksa sunucu `external_id`/`email`'i
+ * doğrulanmamış sayar: kişi bağlama ve cihaz hedefleme yapılmaz.
+ * `identityHash` yazımı da kabul edilir; istemci `identity_hash` olarak yollar.
+ */
+interface IdentityHashInput {
+    identity_hash?: string;
+    identityHash?: string;
+}
+interface SessionInput extends IdentityHashInput {
     name?: string;
     email?: string;
     phone?: string;
@@ -155,7 +180,7 @@ interface SessionInput {
     attributes?: Record<string, unknown>;
     page_url?: string;
 }
-interface IdentifyInput {
+interface IdentifyInput extends IdentityHashInput {
     external_id?: string;
     email?: string;
     name?: string;
@@ -257,7 +282,7 @@ interface ConversationQuery {
     limit?: number;
 }
 type DevicePlatform = 'ios' | 'android' | 'web';
-interface RegisterDeviceInput {
+interface RegisterDeviceInput extends IdentityHashInput {
     token: string;
     platform: DevicePlatform;
     provider?: 'fcm' | 'apns' | 'webpush' | string;
@@ -541,4 +566,4 @@ declare class ChatSession {
     private patch;
 }
 
-export { type AppConfig, type AppStorage, type Attachment, type BootstrapResult, type ChatListener, ChatSession, type ChatSessionOptions, type ChatState, type Conversation, type ConversationQuery, type DevicePlatform, type IdentifyInput, type Message, type MessageSender, type RegisterDeviceInput, type SbResult, type SendMessageInput, type SessionInput, SignalbirdApp, type StartConversationInput, type Visitor, clientId };
+export { type AppConfig, type AppStorage, type Attachment, type BootstrapResult, type ChatListener, ChatSession, type ChatSessionOptions, type ChatState, type Conversation, type ConversationQuery, type DevicePlatform, type IdentifyInput, type IdentityHashInput, type Message, type MessageSender, type RegisterDeviceInput, type SbResult, type SendMessageInput, type SessionInput, SignalbirdApp, type StartConversationInput, type Visitor, clientId };

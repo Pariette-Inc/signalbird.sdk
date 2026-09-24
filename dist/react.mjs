@@ -3,7 +3,7 @@ import { createContext, useMemo, createElement, useContext, useRef, useState, us
 // src/react/index.ts
 
 // src/shared/version.ts
-var SDK_VERSION = "2.6.0" ;
+var SDK_VERSION = "2.7.0" ;
 var SDK_HEADER = "X-Signalbird-Sdk";
 function sdkHeaderValue(platform) {
   return `${platform}/${SDK_VERSION}`;
@@ -92,7 +92,7 @@ var SignalbirdApp = class {
    * derse yerel kimlik silinir ve bir sonraki çağrı yeni oturum açar.
    */
   async startSession(input = {}) {
-    const result = await this.request("POST", "/v1/sdk/chat/session", input);
+    const result = await this.request("POST", "/v1/sdk/chat/session", withIdentityHash(input));
     const visitor = result.data?.visitor;
     if (result.ok && visitor?.id && visitor.secret) {
       await this.storeVisitor({
@@ -107,7 +107,7 @@ var SignalbirdApp = class {
   }
   /** Oturum açmış kullanıcıyı ziyaretçiye bağlar (kişi kaydı upsert edilir). */
   identify(input) {
-    return this.request("POST", "/v1/sdk/identify", input);
+    return this.request("POST", "/v1/sdk/identify", withIdentityHash(input));
   }
   /** Saklanan ziyaretçi kimliği - yoksa `null`. */
   async currentVisitor() {
@@ -206,7 +206,7 @@ var SignalbirdApp = class {
    * göstereceği ürün kararıdır, kütüphane kararı değil.
    */
   registerDevice(input) {
-    return this.request("POST", "/v1/sdk/devices", input);
+    return this.request("POST", "/v1/sdk/devices", withIdentityHash(input));
   }
   /** Çıkışta çağrılır: kayıt silinmez, kapatılır (geçmiş korunur). */
   unregisterDevice(token) {
@@ -317,6 +317,11 @@ var SignalbirdApp = class {
     }
   }
 };
+function withIdentityHash(input) {
+  if (!input || input.identityHash === void 0) return input;
+  const { identityHash, ...rest } = input;
+  return { ...rest, identity_hash: rest.identity_hash ?? identityHash };
+}
 function enc(value) {
   return encodeURIComponent(value);
 }

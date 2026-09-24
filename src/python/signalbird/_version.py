@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
-__version__ = "2.6.0"
+__version__ = "2.7.0"
 
 HEADER = "X-Signalbird-Sdk"
 

@@ -94,7 +94,7 @@ değil, kasıtlı bir duvardır - anahtar bir kez istemciye indiğinde herkesind
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.6.0")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.7.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır - ayrı SDK reposu ya da
@@ -272,6 +272,11 @@ Signalbird::error('api', 'veritabanı bağlantısı koptu');
   <platform>/<sürüm>` taşır. Yeni sürüm çıktığında SDK süreç başına **bir kez**
   uyarı yazar; eski sürümdeki anahtarların sahiplerine panel bildirimi gider.
   Uyarı hata değildir, istek sonucu değişmez (CONTRACT §14).
+- **Ziyaretçi kimliği doğrulanır (2.7.0).** Sohbet/push ziyaretçisinin
+  `external_id`'si ancak sunucunuzda üretilen `identity_hash` ile birlikte
+  gelirse güvenilir sayılır: kişi kaydına bağlama, cihaza push ve kanal
+  ajanının araçlarına giden güvenilir kimlik buna bağlıdır. Widget ayrıca
+  gerektiğinde Cloudflare Turnstile ister (CONTRACT §15).
 
 ## Gönderim (Messaging)
 
@@ -645,8 +650,34 @@ Signalbird.destroy()
 ```
 
 `data-key`/`data-channel` yerine `Signalbird.init({ publicKey, chatKey, baseUrl?, locale? })` da
-çağrılabilir. Widget ev sahibi sayfaya asla hata fırlatmaz; Shadow DOM içinde
-çalışır, sayfanızın CSS'iyle çakışmaz; < 20 KB gzip. Ayrıntı:
+çağrılabilir.
+
+**Kimlik doğrulaması (2.7.0).** Oturum açmış kullanıcıyı tanıtırken
+`external_id`'nin hash'ini SUNUCUNUZDA üretip birlikte verin; yoksa Signalbird
+bu kimliği doğrulanmamış sayar (kişi kaydına bağlamaz, cihaza push hedeflemez,
+ajan araçları kimliği yalnız `visitor.unverified` altında görür):
+
+```php
+// Blade - gizli anahtar sunucuda kalır
+<script async src="https://signalbird.io/sdk/v1/signalbird.js"
+        data-key="sb_public_live_…" data-channel="destek"
+        data-external-id="{{ $user->id }}"
+        data-identity-hash="{{ Signalbird::identityHash((string) $user->id) }}"></script>
+```
+
+```js
+Signalbird.identify({ external_id: 'user-1042', identityHash: '<sunucudan>', email: 'ali@example.com' })
+```
+
+`identity_hash = hex(HMAC-SHA256(hex(SHA-256(sb_secret_live_…)), external_id))`;
+Node `client.identityHash(id)`, Python `client.identity_hash(id)`, Go
+`client.IdentityHash(id)`, .NET `client.IdentityHash(id)`.
+
+**Captcha.** Kanalda açıksa widget yeni ziyaretçide ve doğrulanmamış
+ziyaretçinin ilk konuşmasında görünmez bir Cloudflare Turnstile jetonu alır;
+betik yalnız panel ilk açıldığında yüklenir, etkileşim yalnız Cloudflare
+isterse görünür. Kurulumda yapmanız gereken bir şey yoktur. Widget ev sahibi sayfaya asla hata fırlatmaz; Shadow DOM içinde
+çalışır, sayfanızın CSS'iyle çakışmaz; < 40 KB gzip. Ayrıntı:
 `docs/CONTRACT.md § 9` ve https://signalbird.io/sdk/widget.
 
 ## Gömme (embed) - Signalbird ekranını kendi panelinizde çalıştırın
@@ -706,4 +737,5 @@ Gönderim ve Yönetim istemcilerine özgü: `WRONG_KEY_TYPE` (kurulumda),
 
 Uygulama yüzeyi ve widget: `VISITOR_INVALID` (yerel kimlik silinir, yeni
 oturum açılır), `CHAT_UNAVAILABLE` (kota - "sohbet kullanılamıyor" bandı),
-`NOT_INITIALIZED`.
+`NOT_INITIALIZED`, `CAPTCHA_REQUIRED` / `CAPTCHA_INVALID` (403 - widget yeni
+jetonla bir kez yeniden dener), `CONVERSATION_RATE_LIMITED` (429 - nazik bant).

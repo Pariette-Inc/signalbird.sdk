@@ -1,5 +1,51 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-09-25 - v2.7.0: captcha (Turnstile) ve kimlik doğrulaması (`identity_hash`)
+
+Faz 5 - Signalbird güvenliği. Açık anahtar sayfanın kaynağında durur: onu
+kopyalayan biri kendi betiğinden ziyaretçi/konuşma üretebilir ya da
+`external_id`'ye başkasının kimliğini yazıp o kişinin kişi kaydına ve
+cihazlarına bağlanabilirdi. API tarafı aynı gün `signalbird.api`'de yazıldı.
+Sözleşme: CONTRACT §15.
+
+**Captcha (yalnız widget, §15.1)**
+- Bootstrap üst düzeyde `captcha: {provider:'turnstile', site_key, mode}` ya
+  da `null` döner. Doluysa `https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit`
+  TEMBEL yüklenir: panel ilk açıldığında (`src/widget/captcha.ts`).
+- `X-Signalbird-Captcha` başlığı: sırrı olmayan ziyaretçide
+  `POST /v1/sdk/chat/session` (`chat_session`), doğrulanmamış ziyaretçide
+  `POST /v1/sdk/chat/conversations` (`chat_start`). Jeton tek kullanımlık,
+  her çağrıya yenisi.
+- 403 `CAPTCHA_REQUIRED`/`CAPTCHA_INVALID` → yeni jetonla BİR KEZ yeniden
+  dene; 429 `CONVERSATION_RATE_LIMITED` → nazik bant. Yeni metinler
+  `rateLimited`, `captchaFailed` (tr + en).
+- Turnstile `interaction-only`; kutu ev sahibi elemanın ışık-DOM çocuğunda
+  çizilir ve panele `<slot name="captcha">` ile yansır.
+- Captcha açıkken, panel hiç açılmadan sırsız ziyaretçi için oturum açılmaz
+  (`init({user})` sayfa yüklenirken artık Turnstile indirmez).
+- Uygulama yüzeyleri (app, RN, Swift, Kotlin) muaf; yalnız yeni alanlara
+  (`captcha`, `verified`, `identity_verified`) tip düzeyinde tolerans.
+
+**Kimlik doğrulaması (§15.2)**
+- `identity_hash = hex(HMAC-SHA256(hex(SHA-256(sb_secret_live_…)), external_id))`.
+  Anahtar gizli anahtarın SHA-256 özetidir, çünkü sunucu yalnız özeti saklar.
+- Sunucu yardımcısı, Telsiz istemcisinin üstünde: Node `identityHash`, PHP
+  `Signalbird::identityHash` (cephe + `SignalbirdClient`), Python
+  `identity_hash`, Go `IdentityHash`, .NET `IdentityHash`.
+  `check-parity.mjs`'e altıncı küme "Kimlik" (1 metot, `only` modu).
+- İstemciler: widget `init({identityHash})`, `identify({external_id,
+  identityHash})`, `data-external-id` + `data-identity-hash`; hash `session`,
+  `identify` ve (aynı `external_id`'li) `push.register`'a kendiliğinden
+  eklenir. `signalbird/app`: `startSession`/`identify`/`registerDevice`
+  girdisinde `identity_hash` ya da `identityHash`. Swift/Kotlin
+  `registerDevice(…, identityHash:)`.
+
+Test: `tests/php/IdentityHashTest.php` (sözleşme vektörü, statik erişim),
+`src/go/signalbird/identity_test.go`; Node ve Python çıktısı aynı vektörle
+elle doğrulandı. Widget, sahte `fetch` + Turnstile saplamasıyla tarayıcıda
+denendi: oturum jetonu, 403 sonrası tek yeniden deneme, 429 bandı, betiğin
+yalnız açılışta eklenmesi.
+
 ## 2026-09-19 - v2.6.0: SDK sürümünü bildiriyor (`X-Signalbird-Sdk`)
 
 Ahmet: "signalbird.sdk kullanan projeler bu sdk paketini güncellemek zorunda
