@@ -17,6 +17,7 @@ import {
   type SignalbirdConfig,
 } from './types';
 import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
+import { createHash, createHmac } from 'node:crypto';
 
 export class SignalbirdClient {
   private readonly baseUrl: string;
@@ -152,6 +153,22 @@ export class SignalbirdClient {
 
   critical(key: string, message: string, context?: Record<string, unknown>) {
     return this.log({ key, message, level: 'critical', context });
+  }
+
+  /**
+   * Kimlik doğrulama hash'i (CONTRACT §15.2) - sohbet/push ziyaretçisinin
+   * `external_id`'sini GÜVENİLİR kılar.
+   *
+   *     identity_hash = hex(HMAC-SHA256(hex(SHA-256(secretKey)), externalId))
+   *
+   * Anahtar gizli anahtarın kendisi değil SHA-256 özetidir: sunucu anahtarı
+   * düz saklamaz. Hash sunucuda üretilir, sayfaya `external_id` ile birlikte
+   * yazılır; gizli anahtar istemciye İNMEZ.
+   */
+  identityHash(externalId: string): string {
+    const key = createHash('sha256').update(this.config.domainKey).digest('hex');
+
+    return createHmac('sha256', key).update(String(externalId)).digest('hex');
   }
 
   /**

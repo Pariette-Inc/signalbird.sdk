@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -56,6 +58,7 @@ public sealed class SignalbirdClient
 {
     private readonly Transport _http;
     private readonly string? _source;
+    private readonly string _domainKey;
 
     public SignalbirdClient(SignalbirdOptions options, HttpClient? http = null)
     {
@@ -75,6 +78,7 @@ public sealed class SignalbirdClient
         }
 
         _source = options.Source;
+        _domainKey = options.DomainKey;
         _http = new Transport(options.DomainKey, options.BaseUrl, options.Timeout, options.ThrowOnError, http);
     }
 
@@ -91,6 +95,29 @@ public sealed class SignalbirdClient
             new LogEvent { Key = key, Message = message, Level = level, Context = context, Source = _source },
             null,
             cancellationToken);
+
+    /// <summary>
+    /// Kimlik doğrulama hash'i (CONTRACT §15.2):
+    /// <c>hex(HMAC-SHA256(hex(SHA-256(secretKey)), externalId))</c>.
+    /// Sohbet/push ziyaretçisinin <c>external_id</c>'si ancak bununla güvenilir
+    /// sayılır. Hash sunucuda üretilir; gizli anahtar istemciye inmez.
+    /// </summary>
+    public string IdentityHash(string externalId)
+    {
+        using var sha = SHA256.Create();
+        var key = ToHex(sha.ComputeHash(Encoding.UTF8.GetBytes(_domainKey)));
+
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
+
+        return ToHex(hmac.ComputeHash(Encoding.UTF8.GetBytes(externalId ?? string.Empty)));
+    }
+
+    private static string ToHex(byte[] bytes)
+    {
+        var sb = new StringBuilder(bytes.Length * 2);
+        foreach (var b in bytes) sb.Append(b.ToString("x2"));
+        return sb.ToString();
+    }
 
     public Task<SbResult> DebugAsync(string key, string message, IDictionary<string, object?>? context = null, CancellationToken cancellationToken = default)
         => LogAsync(key, message, SignalbirdLevel.Debug, context, cancellationToken);

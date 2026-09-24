@@ -100,6 +100,20 @@ class SignalbirdClient
         ];
     }
 
+    /**
+     * Kimlik doğrulama hash'i (CONTRACT §15.2).
+     *
+     *   identity_hash = hex(HMAC-SHA256(hex(SHA-256(secretKey)), externalId))
+     *
+     * Sohbet/push ziyaretçisinin `external_id`'si ancak bu hash'le birlikte
+     * gelirse güvenilir sayılır (kişi bağlama, cihaz hedefleme, ajan araçları).
+     * Hash sunucuda üretilir ve sayfaya yazılır; gizli anahtar istemciye inmez.
+     */
+    public function identityHash(string $externalId): string
+    {
+        return hash_hmac('sha256', $externalId, hash('sha256', $this->domainKey));
+    }
+
     public function debug(string $key, string $message, ?array $context = null): array
     {
         return $this->log($key, $message, 'debug', $context);

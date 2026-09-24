@@ -12,6 +12,7 @@
  *   - Uygulama  (docs/CONTRACT.md § 11)  - 19 metot  · istemci dilleri
  *                                                     (TS, Swift, Kotlin)
  *   - Partner   (docs/CONTRACT.md § 12)  - 23 metot  · sunucu dilleri
+ *   - Kimlik    (docs/CONTRACT.md § 15.2) - 1 metot  · sunucu dilleri
  *       Mobil dile ya da tarayıcıya İNMEZ: partner anahtarı sunucuda kalır.
  * Adlar camelCase ve diller arasında birebirdir; her dil kendi yazım
  * geleneğini korur (`send_email` / `SendEmail` / `sendEmail` aynı metottur).
@@ -83,7 +84,9 @@ const SURFACES = [
      * yüzey değil - her metodu `log()`'a gider. Diller arası parite API
      * yüzeyini denetler, dilin kendi deyimini değil.
      */
-    ignored: new Set(['constructor', '__construct', 'captureUncaught', 'post', 'send', 'request', 'radio', 'channel']),
+    // `identityHash` aynı sınıfta durur ama Telsiz değildir: kendi kümesi
+    // ("Kimlik", § 15.2) aşağıda denetlenir.
+    ignored: new Set(['constructor', '__construct', 'captureUncaught', 'post', 'send', 'request', 'radio', 'channel', 'identityHash', 'toHex']),
     languages: [
       { name: 'node', file: 'src/node/client.ts', pattern: NODE_METHOD },
       { name: 'php', file: 'src/php/SignalbirdClient.php', pattern: PHP_METHOD },
@@ -181,6 +184,27 @@ const SURFACES = [
     ],
   },
   {
+    /*
+     * Kimlik doğrulama hash'i (2.7.0). Gizli anahtarı tutan Telsiz
+     * istemcisinin ÜSTÜNDE durur - ayrı kurulum istemesin diye - ama Telsiz
+     * kümesinin parçası değildir. `only`: dosyadaki diğer metotlar bu kümenin
+     * işi değil (onları Telsiz denetler); yalnız sözleşmedekiler aranır.
+     */
+    name: 'Kimlik',
+    ref: 'docs/CONTRACT.md § 15.2',
+    contract: ['identityHash'],
+    only: true,
+    aliases: noProto({}),
+    ignored: new Set([]),
+    languages: [
+      { name: 'node', file: 'src/node/client.ts', pattern: NODE_METHOD },
+      { name: 'php', file: 'src/php/SignalbirdClient.php', pattern: PHP_METHOD },
+      { name: 'python', file: 'src/python/signalbird/client.py', pattern: PYTHON_METHOD, normalize: toCamel },
+      { name: 'go', file: 'src/go/signalbird/radio.go', pattern: GO_METHOD, normalize: toCamel },
+      { name: 'dotnet', file: 'src/dotnet/Signalbird.Sdk/SignalbirdClient.cs', pattern: CSHARP_METHOD, normalize: (n) => toCamel(stripAsync(n)) },
+    ],
+  },
+  {
     name: 'Partner',
     ref: 'docs/CONTRACT.md § 12',
     contract: [
@@ -230,6 +254,7 @@ for (const surface of SURFACES) {
         .map((m) => normalize(m[1]))
         .map((m) => surface.aliases[m] ?? m)
         .filter((m) => !surface.ignored.has(m) && !KEYWORDS.has(m))
+        .filter((m) => !surface.only || expected.has(m))
     )
 
     const missing = surface.contract.filter((m) => !found.has(m))

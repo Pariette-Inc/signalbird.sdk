@@ -2,6 +2,9 @@ package signalbird
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"strings"
 	"time"
@@ -92,6 +95,20 @@ func (c *Client) Log(ctx context.Context, key, message string, level Level, fiel
 		Context: fields,
 		Source:  c.source,
 	}, nil)
+}
+
+// IdentityHash, kimlik doğrulama hash'idir (CONTRACT §15.2):
+//
+//	identity_hash = hex(HMAC-SHA256(hex(SHA-256(secretKey)), externalID))
+//
+// Sohbet/push ziyaretçisinin external_id'si ancak bununla güvenilir sayılır.
+// Hash sunucuda üretilir ve sayfaya yazılır; gizli anahtar istemciye inmez.
+func (c *Client) IdentityHash(externalID string) string {
+	sum := sha256.Sum256([]byte(c.http.domainKey))
+	mac := hmac.New(sha256.New, []byte(hex.EncodeToString(sum[:])))
+	mac.Write([]byte(externalID))
+
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func (c *Client) Debug(ctx context.Context, key, message string, fields map[string]any) (Result, error) {

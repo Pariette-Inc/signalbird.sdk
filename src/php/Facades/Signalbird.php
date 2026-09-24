@@ -22,6 +22,7 @@ use Signalbird\Sdk\Partner\PartnerClient;
  * @method static array error(string $key, string $message, ?array $context = null)
  * @method static array critical(string $key, string $message, ?array $context = null)
  * @method static array batch(array $events)
+ * @method static string identityHash(string $externalId)
  *
  * @see \Signalbird\Sdk\SignalbirdClient
  * @see \Signalbird\Sdk\Messaging\MessagingClient

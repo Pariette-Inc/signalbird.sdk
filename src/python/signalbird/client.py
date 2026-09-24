@@ -9,6 +9,8 @@ Sözleşme: docs/CONTRACT.md § 1–7
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import os
 from typing import Any, Iterable, Mapping, Optional
 
@@ -41,6 +43,7 @@ class SignalbirdClient:
             )
 
         self.source = source
+        self._domain_key = domain_key
         self._http = Transport(domain_key, base_url or DEFAULT_BASE_URL, timeout, throw_on_error, debug)
 
     def log(
@@ -61,6 +64,17 @@ class SignalbirdClient:
                 "source": self.source,
             },
         )
+
+    def identity_hash(self, external_id: str) -> str:
+        """Kimlik doğrulama hash'i (CONTRACT §15.2).
+
+        ``hex(HMAC-SHA256(hex(SHA-256(secret_key)), external_id))`` - sohbet/push
+        ziyaretçisinin ``external_id``'si ancak bununla güvenilir sayılır. Hash
+        sunucuda üretilir; gizli anahtar istemciye inmez.
+        """
+        key = hashlib.sha256(self._domain_key.encode("utf-8")).hexdigest()
+
+        return hmac.new(key.encode("utf-8"), str(external_id).encode("utf-8"), hashlib.sha256).hexdigest()
 
     def debug(self, key: str, message: str, context: Optional[Mapping[str, Any]] = None) -> Result:
         return self.log(key, message, "debug", context)
