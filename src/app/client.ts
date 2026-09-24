@@ -134,7 +134,7 @@ export class SignalbirdApp {
    * derse yerel kimlik silinir ve bir sonraki çağrı yeni oturum açar.
    */
   async startSession(input: SessionInput = {}): Promise<SbResult<{ visitor: Visitor }>> {
-    const result = await this.request<{ visitor: Visitor }>('POST', '/v1/sdk/chat/session', input);
+    const result = await this.request<{ visitor: Visitor }>('POST', '/v1/sdk/chat/session', withIdentityHash(input));
 
     const visitor = result.data?.visitor;
 
@@ -153,7 +153,7 @@ export class SignalbirdApp {
 
   /** Oturum açmış kullanıcıyı ziyaretçiye bağlar (kişi kaydı upsert edilir). */
   identify(input: IdentifyInput): Promise<SbResult<{ visitor: Visitor }>> {
-    return this.request('POST', '/v1/sdk/identify', input);
+    return this.request('POST', '/v1/sdk/identify', withIdentityHash(input));
   }
 
   /** Saklanan ziyaretçi kimliği - yoksa `null`. */
@@ -271,7 +271,7 @@ export class SignalbirdApp {
    * göstereceği ürün kararıdır, kütüphane kararı değil.
    */
   registerDevice(input: RegisterDeviceInput): Promise<SbResult<unknown>> {
-    return this.request('POST', '/v1/sdk/devices', input);
+    return this.request('POST', '/v1/sdk/devices', withIdentityHash(input));
   }
 
   /** Çıkışta çağrılır: kayıt silinmez, kapatılır (geçmiş korunur). */
@@ -429,6 +429,18 @@ export class SignalbirdApp {
       // Depo yazamıyorsa (kota, gizli sekme) oturum bu sekmede yaşar.
     }
   }
+}
+
+/**
+ * `identityHash` → `identity_hash` (CONTRACT §15.2). İki yazım da kabul edilir;
+ * sunucuya yalnız snake_case gider, camelCase kopya gövdede kalmaz.
+ */
+function withIdentityHash<T extends { identity_hash?: string; identityHash?: string }>(input: T): T {
+  if (!input || input.identityHash === undefined) return input;
+
+  const { identityHash, ...rest } = input;
+
+  return { ...rest, identity_hash: rest.identity_hash ?? identityHash } as T;
 }
 
 function enc(value: string): string {

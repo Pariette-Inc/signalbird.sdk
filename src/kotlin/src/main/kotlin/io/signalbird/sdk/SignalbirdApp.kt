@@ -159,6 +159,11 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
      * Token'ı almak (`FirebaseMessaging.getInstance().token`) ve Android 13+
      * bildirim iznini istemek uygulamanın işidir: izni ne zaman soracağın bir
      * ürün kararıdır, kütüphane kararı değil.
+     *
+     * `identityHash`: kendi sunucunuzda `identityHash(externalId)` ile üretilen
+     * değer (CONTRACT §15.2). Verilmezse cihaz `externalId` kullanıcısına push
+     * hedefi olarak BAĞLANMAZ. Aynı alan `startSession`/`identify` map'inde
+     * `"identity_hash"` anahtarıyla gider.
      */
     suspend fun registerDevice(
         token: String,
@@ -167,6 +172,7 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
         deviceName: String? = null,
         appVersion: String? = null,
         locale: String? = null,
+        identityHash: String? = null,
     ): SbResult = http.request(
         "POST",
         "/v1/sdk/devices",
@@ -178,6 +184,7 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
             "device_name" to deviceName,
             "app_version" to appVersion,
             "locale" to locale,
+            "identity_hash" to identityHash,
         ),
     )
 

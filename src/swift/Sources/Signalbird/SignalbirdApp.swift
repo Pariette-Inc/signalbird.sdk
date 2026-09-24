@@ -208,6 +208,11 @@ public final class SignalbirdApp: @unchecked Sendable {
     ///
     /// Token'ı almak ve bildirim iznini istemek uygulamanın işidir: izni ne
     /// zaman soracağın bir ürün kararıdır ve App Store bunu ciddiye alır.
+    ///
+    /// `identityHash`: kendi sunucunuzda `identityHash(externalId)` ile üretilen
+    /// değer (CONTRACT §15.2). Verilmezse cihaz `externalID` kullanıcısına push
+    /// hedefi olarak BAĞLANMAZ. `startSession`/`identify` sözlüğünde aynı alan
+    /// `"identity_hash"` anahtarıyla gider.
     @discardableResult
     public func registerDevice(
         token: String,
@@ -215,7 +220,8 @@ public final class SignalbirdApp: @unchecked Sendable {
         externalID: String? = nil,
         deviceName: String? = nil,
         appVersion: String? = nil,
-        locale: String? = nil
+        locale: String? = nil,
+        identityHash: String? = nil
     ) async throws -> SbResult {
         try await http.request("POST", "/v1/sdk/devices", body: [
             "token": token,
@@ -225,6 +231,7 @@ public final class SignalbirdApp: @unchecked Sendable {
             "device_name": deviceName as Any,
             "app_version": appVersion as Any,
             "locale": locale as Any,
+            "identity_hash": identityHash as Any,
         ])
     }
 

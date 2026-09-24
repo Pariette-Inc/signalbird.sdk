@@ -104,6 +104,12 @@ export interface BootstrapResult {
    * İYİLEŞTİRMEDİR, onsuz da sistem tamdır.
    */
   realtime?: { enabled: boolean; url?: string };
+  /**
+   * Captcha (Cloudflare Turnstile) - yalnız Origin taşıyan web istekleri için
+   * dolu gelir; mobil anahtar muaftır ve `null` alır (CONTRACT §15.1). Bu
+   * istemci jeton ALMAZ; alan bilgi olarak durur.
+   */
+  captcha?: { provider: 'turnstile'; site_key: string; mode: 'managed' | string } | null;
 }
 
 export interface BootstrapChannel {
@@ -152,9 +158,25 @@ export interface Visitor {
   phone?: string | null;
   external_id?: string | null;
   unread_count?: number;
+  /** Captcha geçti (yalnız web widget'ı; uygulama yüzeyleri muaf). CONTRACT §15.1 */
+  verified?: boolean;
+  /** Geçerli `identity_hash` ile tanıtıldı - `external_id` güvenilir. CONTRACT §15.2 */
+  identity_verified?: boolean;
 }
 
-export interface SessionInput {
+/**
+ * Kimlik doğrulama hash'i (CONTRACT §15.2) - SUNUCUNUZDA üretilir
+ * (`identityHash(externalId)` Node/PHP/Python/Go/.NET yardımcıları) ve
+ * `external_id` ile birlikte gönderilir. Yoksa sunucu `external_id`/`email`'i
+ * doğrulanmamış sayar: kişi bağlama ve cihaz hedefleme yapılmaz.
+ * `identityHash` yazımı da kabul edilir; istemci `identity_hash` olarak yollar.
+ */
+export interface IdentityHashInput {
+  identity_hash?: string;
+  identityHash?: string;
+}
+
+export interface SessionInput extends IdentityHashInput {
   name?: string;
   email?: string;
   phone?: string;
@@ -163,7 +185,7 @@ export interface SessionInput {
   page_url?: string;
 }
 
-export interface IdentifyInput {
+export interface IdentifyInput extends IdentityHashInput {
   external_id?: string;
   email?: string;
   name?: string;
@@ -267,7 +289,7 @@ export interface ConversationQuery {
 
 export type DevicePlatform = 'ios' | 'android' | 'web';
 
-export interface RegisterDeviceInput {
+export interface RegisterDeviceInput extends IdentityHashInput {
   token: string;
   platform: DevicePlatform;
   provider?: 'fcm' | 'apns' | 'webpush' | string;

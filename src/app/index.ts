@@ -21,6 +21,7 @@ export type {
   ConversationQuery,
   DevicePlatform,
   IdentifyInput,
+  IdentityHashInput,
   Message,
   MessageSender,
   RegisterDeviceInput,
