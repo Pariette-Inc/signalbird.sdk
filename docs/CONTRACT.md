@@ -437,8 +437,8 @@ ziyaretçi hâlâ yazabilir.
 ### 9.3 Genel API
 
 ```
-Signalbird.init({ appKey, baseUrl?, locale?, user?, debug? })
-Signalbird.identify({ external_id?, email?, name?, phone?, attributes? })
+Signalbird.init({ appKey, baseUrl?, locale?, user?, identityHash?, debug? })
+Signalbird.identify({ external_id?, identityHash?, email?, name?, phone?, attributes? })
 Signalbird.chat.open() | close() | toggle() | isOpen()
 Signalbird.chat.on('unread' | 'open' | 'close', fn) | off(event, fn)
 Signalbird.push.register({ token, platform, provider?, external_id?, device_name?, app_version?, locale? })
@@ -446,7 +446,9 @@ Signalbird.destroy()
 Signalbird.version
 ```
 
-`<script data-app-key data-base-url? data-locale? data-debug?>` verilirse
+`identityHash` ve captcha davranışı: §15.
+
+`<script data-app-key data-base-url? data-locale? data-external-id? data-identity-hash? data-debug?>` verilirse
 widget kendini başlatır. Hiçbir genel çağrı ev sahibi sayfaya **istisna
 fırlatmaz**; hata konsola yazılır ve yutulur. `init` öncesi kaydedilen
 `on()` dinleyicileri ve `identify()` çağrısı başlatınca uygulanır.
@@ -705,6 +707,11 @@ kimlik silinir ve bir sonraki çağrı yeni oturum açar.
 | `socketAuth(socketId, channel)` | `POST /v1/sdk/chat/socket/auth` - canlı bağlantı kanal imzası. Ziyaretçinin oturumu yoktur; hangi kanalı dinleyebileceğine SUNUCU karar verir ve yalnız kendi `visitor.<id>` kanalını imzalar. Soket servisi kimseyi tanımaz, imzayı doğrular. Bağlantı başına bir kez çağrılır |
 | `reportPushOpened(messageId)` | `POST /v1/sdk/push/opened` - bildirime dokunuldu; push'ta açılmayı YALNIZCA uygulama bilir (FCM/APNs "teslim ettim" der, "dokunuldu" demez). Bildirim yükündeki `data.sb_message_id` geri gönderilir |
 
+`startSession`, `identify` ve `registerDevice` girdisi `identity_hash` taşıyabilir
+(§15.2); ziyaretçi nesnesi `verified` ve `identity_verified` alanlarını, bootstrap
+`captcha` alanını taşır ve uygulama yüzeyleri bunlara yalnız tolerans gösterir
+(captcha göndermezler, §15.1).
+
 `uploadAttachment` **sözleşmede yoktur**: dosya her platformda farklı bir tip
 ister (`Blob` / `Data` / `Uri`) ve tek imzada birleşmiyor. Desteklendiği dilde
 o dilin belgesinde durur.
@@ -946,3 +953,126 @@ Eski sürümdeki takıma panel bildirimi API'den gider (`php artisan
 sdk:release <sürüm>`); SDK'nın buna katkısı yalnız başlıktır. Sürüm
 yayınlandıktan sonra `sdk:release` çalıştırılmazsa kimse haberdar olmaz:
 yayın adımlarının parçasıdır (RELEASE.md).
+
+---
+
+## 15. Güvenlik: captcha ve kimlik doğrulaması (2.7.0)
+
+Faz 5 (25 Eyl 2026). Açık anahtar (`sb_public_live_…`) sayfanın kaynağında
+durur; onu kopyalayan biri kendi betiğinden ziyaretçi ve konuşma üretebilir,
+ya da `external_id`'ye başkasının kimliğini yazıp o kişinin kişi kaydına ve
+cihazlarına bağlanabilirdi. İki önlem, ikisi de sunucuda karar verir; SDK
+yalnız gerekeni taşır. Sunucu tarafı: `signalbird.api` (aynı gün).
+
+### 15.1 Captcha - Cloudflare Turnstile (yalnız widget)
+
+`POST /v1/sdk/bootstrap` yanıtı üst düzeyde `captcha` taşır:
+
+```json
+"captcha": { "provider": "turnstile", "site_key": "0x4AAA…", "mode": "managed" }
+```
+
+`null` = gerekmez: kanalda kapalı, Origin taşımayan (mobil/uygulama) anahtar
+ya da ziyaretçi zaten doğrulanmış (`verified`).
+
+| Çağrı | Ne zaman jeton | Turnstile `action` |
+|---|---|---|
+| `POST /v1/sdk/chat/session` | ziyaretçi sırrı HENÜZ YOKSA (yeni ziyaretçi) | `chat_session` |
+| `POST /v1/sdk/chat/conversations` | ziyaretçi `verified:false` ise | `chat_start` |
+
+Jeton `X-Signalbird-Captcha: <jeton>` başlığıyla gider. **Jeton tek
+kullanımlıktır**: her çağrı için yenisi alınır, biri ikinci isteğe taşınmaz.
+
+Hatalar:
+
+- 403 `CAPTCHA_REQUIRED` / `CAPTCHA_INVALID` → widget jeton alır ve aynı
+  çağrıyı **BİR KEZ** yeniden dener. İkinci hata ziyaretçiye "kullanılamıyor"
+  olarak düşer. (Bu, "istemcide otomatik retry yok" kuralının istisnası
+  DEĞİLDİR: ilk istek sunucuda hiçbir şey yaratmadan reddedilmiştir; ikinci
+  istek başka bir istektir.)
+- 429 `CONVERSATION_RATE_LIMITED` → nazik, yerelleştirilmiş bir bant
+  ("Kısa sürede çok fazla sohbet başlatıldı…"); yeniden deneme yok.
+
+Widget kuralları:
+
+- Betik (`https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit`)
+  **tembel** yüklenir: yalnız `captcha` doluysa VE widget ilk kez
+  AÇILDIĞINDA (ya da jeton gerçekten gerektiğinde). Sohbeti hiç açmayan
+  ziyaretçiye üçüncü taraf betik indirilmez.
+- Görünüm `interaction-only`: Cloudflare etkileşim istemedikçe ziyaretçi
+  hiçbir şey görmez. İsterse kutu panelin İÇİNDE çizilir - Shadow DOM'a
+  `<slot name="captcha">` ile yansıtılan, ev sahibi elemanın ışık-DOM
+  çocuğu bir kaba (Turnstile iframe'i belge düzeyinde bulunabilsin diye).
+- Captcha gerekiyorsa, sırrı olmayan ziyaretçi için panel hiç açılmadan
+  (örn. `init({user})` ile) oturum AÇILMAZ; kimlik saklanır ve panel açılıp
+  oturum gerçekten gerektiğinde gider.
+- Betik yüklenemezse ya da jeton alınamazsa çağrı jetonsuz gider; sunucunun
+  cevabı belirleyicidir. Hiçbir durumda ev sahibi sayfaya istisna fırlamaz.
+- Widget bağımlılık almaz; Turnstile çalışma anında Cloudflare'den gelir.
+
+**Uygulama yüzeyleri** (`src/app`, React/Vue/Angular/RN, Swift, Kotlin)
+captcha GÖNDERMEZ: mobil anahtar Origin taşımaz ve sunucu onları muaf tutar.
+Yalnız yeni alanlara (`captcha`, `verified`, `identity_verified`) tolerans
+gösterirler. Aynı TS istemcisini tarayıcıda kullanan (`signalbird/react` vb.)
+ve kanalında captcha açık olan müşteri, jetonu kendisi alıp `fetchImpl`
+üzerinden başlığa ekleyebilir; SDK bunu kendisi yapmaz.
+
+Ziyaretçi nesneleri iki alan kazanır: `verified` (captcha geçti) ve
+`identity_verified` (geçerli `identity_hash` ile tanıtıldı).
+
+### 15.2 Kimlik doğrulaması - `identity_hash`
+
+`POST /v1/sdk/chat/session`, `POST /v1/sdk/identify` ve `POST /v1/sdk/devices`
+`external_id`'nin yanında `identity_hash` kabul eder. Geçerli hash YOKSA
+sunucu `external_id`/`email`'i **DOĞRULANMAMIŞ** sayar:
+
+- kişi kaydına (contact) bağlama yapılmaz,
+- cihaz, o kullanıcıya push hedefi olarak bağlanmaz,
+- kanal ajanının araçları (tools) bu değerleri güvenilir ziyaretçi kimliği
+  olarak değil, yalnız `visitor.unverified` altında görür.
+
+Algoritma (her dilde birebir):
+
+```
+key           = lowercase_hex( SHA-256( sb_secret_live_… ) )
+identity_hash = lowercase_hex( HMAC-SHA256( key, external_id ) )
+```
+
+Anahtar gizli anahtarın KENDİSİ değil SHA-256 özetidir: sunucu anahtarı düz
+saklamaz, yalnız özetini tutar. Hash **sunucuda** üretilir ve sayfaya
+kullanıcının `external_id`'siyle birlikte yazılır; gizli anahtar asla
+istemciye inmez.
+
+Test vektörü:
+
+```
+secret        = sb_secret_live_example0000000000
+external_id   = user_42
+key           = 39bc3cee186b40c7fea73ca718c319410505088f071a51b21957bce00266396e
+identity_hash = b802f38c59cb0f0c9283d6a8091c692c6c70db549acab1083c630426e2916258
+```
+
+**Sunucu yardımcıları** (gizli anahtarı tutan istemcide, Telsiz istemcisiyle
+aynı sınıf - ayrı kurulum gerekmez):
+
+| Dil | Çağrı |
+|---|---|
+| Node | `new SignalbirdClient({domainKey}).identityHash(externalId)` |
+| PHP | `Signalbird::identityHash($externalId)` (cephe + `SignalbirdClient::identityHash`) |
+| Python | `client.identity_hash(external_id)` |
+| Go | `client.IdentityHash(externalID)` |
+| .NET | `client.IdentityHash(externalId)` (senkron; `Async` soneki yok) |
+
+`check-parity.mjs` bu metodu ayrı bir küme olarak (Kimlik, 1 metot) denetler.
+
+**İstemci yüzeyleri** hash'i taşır, üretmez:
+
+| Yüzey | Nasıl |
+|---|---|
+| Widget | `init({ user: {external_id}, identityHash })`, `identify({ external_id, identityHash })` (`identity_hash` da kabul), `<script data-external-id data-identity-hash>` |
+| `signalbird/app` ve uyarlamalar | `startSession` / `identify` / `registerDevice` girdisinde `identity_hash` (ya da `identityHash`) |
+| Swift | sözlük girdisinde `"identity_hash"`; `registerDevice(…, identityHash:)` |
+| Kotlin | map girdisinde `"identity_hash"`; `registerDevice(…, identityHash =)` |
+
+Widget, bildiği hash'i `session`, `identify` ve `push.register` çağrılarına
+kendisi ekler (push girdisinde `external_id` aynıysa).
