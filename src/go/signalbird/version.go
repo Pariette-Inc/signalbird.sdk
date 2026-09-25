@@ -8,7 +8,7 @@ import (
 
 // Version SDK sürümüdür. `scripts/sync-version.mjs` kökteki VERSION
 // dosyasından yazar - elle değiştirmeyin.
-const Version = "2.7.0"
+const Version = "2.8.0"
 
 // sdkHeader her isteğe `go/<sürüm>` olarak eklenir (docs/CONTRACT.md § 14).
 const sdkHeader = "X-Signalbird-Sdk"

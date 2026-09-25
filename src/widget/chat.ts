@@ -110,6 +110,18 @@ export class ChatController {
       opts.user && (opts.user.name || opts.user.email || opts.user.external_id)
         ? this.mergeIdentity(null, opts.user)
         : null;
+
+    /*
+     * İMZALI KİMLİKLE AÇILMIŞ ZİYARETÇİ BAŞKASINA DEVREDİLMEZ (25 Eyl 2026
+     * güvenlik düzeltmesi, CONTRACT §15.3). Tarayıcıda kalan ziyaretçi bir
+     * kullanıcı adına doğrulanmışsa ve bu `init` kimliksiz (çıkış yapılmış)
+     * ya da BAŞKA bir kullanıcıyla geliyorsa sır kullanılmaz, yeni anonim
+     * ziyaretçi açılır. Sunucu da kanıtsız oturumda doğrulamayı düşürür.
+     */
+    const stored = this.store.visitor;
+    if (stored?.identified_as && stored.identified_as !== (this.identity?.external_id ?? null)) {
+      this.store.clearVisitor();
+    }
     this.locale = resolveLocale(null, opts.locale);
     this.t = strings(this.locale);
     this.ready = this.start().catch((e) => this.log('start failed', e));
@@ -153,6 +165,14 @@ export class ChatController {
     const boot = await this.api.post<Bootstrap>('/v1/sdk/bootstrap', {
       page_url: location.href,
       locale: this.opts.locale,
+      /*
+       * Kimlik her açılışta yeniden kanıtlanır (CONTRACT §15.3): bilinen
+       * kullanıcının imzası açılışta da gider. Kanıtsız açılış, sunucuda
+       * ziyaretçinin doğrulamasını düşürür.
+       */
+      ...(this.identity?.external_id && this.identity.identity_hash
+        ? { external_id: this.identity.external_id, identity_hash: this.identity.identity_hash }
+        : {}),
     });
 
     if (!boot.ok || !boot.data) {
@@ -205,7 +225,8 @@ export class ChatController {
 
     // Sır vardı ama sunucu ziyaretçiyi tanımadı → sır geçersiz, temizle.
     if (this.store.visitor && !visitor) this.store.clearVisitor();
-    if (visitor) this.store.setVisitor({ id: visitor.id, name: visitor.name, email: visitor.email });
+    // Sunucu doğrulamayı düşürdüyse (kanıtsız açılış) işaret de kalkar (CONTRACT §15.3).
+    if (visitor) this.store.setVisitor({ id: visitor.id, name: visitor.name, email: visitor.email }, visitor.identity_verified ? undefined : null);
     this.verified = !!visitor?.verified;
 
     this.store.online = !!online;
@@ -780,7 +801,8 @@ export class ChatController {
         this.log('session returned no secret');
         return false;
       }
-      this.store.setVisitor(v);
+      // İmzalı kimlikle doğrulandıysa kimin adına olduğu saklanır (CONTRACT §15.3).
+      this.store.setVisitor(v, v.identity_verified ? (body.external_id ?? null) : null);
       // Sunucunun sözü belirleyicidir; alan yoksa (eski sunucu) jetonlu başarı yeter.
       if (typeof v.verified === 'boolean') this.verified = v.verified;
       this.subscribeVisitor();

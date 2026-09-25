@@ -1082,3 +1082,41 @@ aynı sınıf - ayrı kurulum gerekmez):
 
 Widget, bildiği hash'i `session`, `identify` ve `push.register` çağrılarına
 kendisi ekler (push girdisinde `external_id` aynıysa).
+
+### 15.3 Kimlik her oturumda yeniden kanıtlanır; çıkışta `reset()` (2.8.0)
+
+25 Eyl 2026 güvenlik düzeltmesi. Ürün kullanıcıyı çıkış yaptırdığında
+tarayıcıdaki ziyaretçi sırrı (`localStorage['sb_visitor']`) kalıyordu;
+kimliksiz gelen sonraki oturum sunucuda doğrulamayı ve eski `external_id`'yi
+koruyor, kanal ajanının araçlarına "doğrulanmış kullanıcı A" gidiyordu. Aynı
+tarayıcıyı kullanan sonraki kişi A'nın hesap bilgisini sorabiliyordu.
+
+**Sunucu** (`signalbird.api`, `ChatService::requireFreshIdentity`):
+doğrulanmış ziyaretçinin `POST /v1/sdk/chat/session` ya da `POST /v1/sdk/bootstrap`
+isteği AYNI `external_id` + geçerli `identity_hash` taşımıyorsa (gizli
+anahtarlı istek hariç) doğrulama ve ona bağlı kimlik (`external_id`, e-posta,
+ad, telefon, kişi bağı) düşer. Kimlik ancak yeniden imzayla doğrulanır.
+
+**Widget:**
+
+- `bootstrap` gövdesine bilinen kullanıcının `external_id` + `identity_hash`'i
+  eklenir (yalnız ikisi birlikte biliniyorsa).
+- İmzalı kimlikle doğrulanmış ziyaretçi yerelde `identified_as` ile işaretlenir.
+  Sonraki `init` kimliksiz ya da BAŞKA bir `external_id` ile gelirse o sır
+  kullanılmaz; yeni anonim ziyaretçi açılır. `destroy()` + kimliksiz `init`
+  bu yüzden önceki kullanıcının ziyaretçisini devralmaz.
+- **`Signalbird.reset()`**: ziyaretçi sırrını, konuşma durumunu ve bilinen
+  kimliği siler, widget'ı aynı anahtar/kanalla ANONİM olarak yeniden kurar.
+  Sayfa içi (`inline`) sohbetler kaldırılır; gerekiyorsa yeniden çağrılır.
+
+**Ürünlerin yükümlülüğü:** kullanıcı çıkış yaptığında `Signalbird.reset()`
+ÇAĞRILIR (uygulama istemcisinde `client.signOut()`). Çağrılmasa bile sunucu
+kanıtsız oturumu anonim sayar; ama önceki kullanıcının sohbet geçmişi aynı
+tarayıcıda görünür kalır - bunu yalnız `reset()` siler.
+
+```js
+async function logout() {
+  await api.logout();
+  window.Signalbird?.reset();
+}
+```

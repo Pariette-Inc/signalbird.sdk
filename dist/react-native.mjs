@@ -3,7 +3,7 @@ import { useRef, useMemo, useState, useEffect } from 'react';
 // src/react-native/index.ts
 
 // src/shared/version.ts
-var SDK_VERSION = "2.7.0" ;
+var SDK_VERSION = "2.8.0" ;
 var SDK_HEADER = "X-Signalbird-Sdk";
 function sdkHeaderValue(platform) {
   return `${platform}/${SDK_VERSION}`;

@@ -19,6 +19,7 @@
  *   Signalbird.push.register({token, platform, provider?})
  *   Signalbird.embed({module, mint}).mount('#kap')   ← panel gömme (partner)
  *   Signalbird.destroy()
+ *   Signalbird.reset()                           ← çıkışta ÇAĞRILMALI (CONTRACT §15.3)
  */
 import { ChatController } from './chat';
 import { createEmbed } from '../embed/element';
@@ -203,7 +204,56 @@ export const push = {
  */
 export const embed = createEmbed;
 
-/** Widget'ı kaldırır: polling durur, DOM silinir. Ziyaretçi sırrı localStorage'da kalır. */
+/**
+ * Oturumu kapatılan kullanıcının izini siler ve widget'ı ANONİM olarak
+ * yeniden kurar (25 Eyl 2026 güvenlik düzeltmesi, CONTRACT §15.3).
+ *
+ * Ürün kullanıcıyı çıkış yaptırdığında ÇAĞIRMALIDIR: tarayıcıdaki ziyaretçi
+ * sırrı (`localStorage['sb_visitor']`), konuşma durumu ve bilinen kimlik
+ * silinir; aynı tarayıcıyı kullanan sonraki kişi öncekinin sohbetini
+ * görmez, destek ajanı onu önceki kullanıcı sanmaz. `init` hiç
+ * çağrılmadıysa yalnız depo temizlenir.
+ */
+export function reset(): void {
+  safe(() => {
+    pendingIdentify = null;
+
+    try {
+      localStorage.removeItem('sb_visitor');
+    } catch {
+      /* gizli sekme */
+    }
+
+    const previous = lastInit;
+    const inlineTargets = inlineControllers.length;
+
+    controller?.destroy();
+    controller = null;
+    for (const c of inlineControllers.splice(0)) c.destroy();
+
+    if (!previous) return;
+
+    // Aynı anahtar ve kanal, kimliksiz: yeni anonim ziyaretçi.
+    const anonymous: InitOptions = { ...previous, user: undefined, identityHash: undefined };
+    lastInit = anonymous;
+
+    if (typeof document === 'undefined') return;
+
+    controller = new ChatController(anonymous);
+    for (const { event, fn } of pendingListeners) controller.on(event, fn);
+
+    if (inlineTargets > 0) {
+      console.warn('[signalbird] reset: sayfa içi sohbetler kaldırıldı; gerekiyorsa inline() yeniden çağrılmalı');
+    }
+  }, undefined);
+}
+
+/**
+ * Widget'ı kaldırır: polling durur, DOM silinir. Anonim ziyaretçinin sırrı
+ * localStorage'da kalır; imzalı kimlikle açılmış ziyaretçi bir sonraki
+ * kimliksiz/başka kullanıcılı `init`'te yeniden kullanılmaz (§15.3).
+ * Kullanıcı çıkışı için `reset()` kullanın.
+ */
 export function destroy(): void {
   safe(() => {
     controller?.destroy();

@@ -17,6 +17,13 @@ export interface StoredVisitor {
   publicKey: string;
   name?: string | null;
   email?: string | null;
+  /**
+   * Bu ziyaretçi imzalı kimlikle (identity_hash) tanıtıldıysa o `external_id`
+   * (25 Eyl 2026 güvenlik düzeltmesi, CONTRACT §15.3). Kimliksiz ya da başka
+   * kullanıcıyla açılan bir sonraki `init` bu ziyaretçiyi YENİDEN KULLANMAZ:
+   * çıkış yapılmış bir tarayıcıda sonraki kişi öncekinin sohbetini görmesin.
+   */
+  identified_as?: string | null;
 }
 
 type Listener = (payload?: unknown) => void;
@@ -75,7 +82,7 @@ export class Store {
     }
   }
 
-  setVisitor(visitor: { id: string; secret?: string; name?: string | null; email?: string | null }): void {
+  setVisitor(visitor: { id: string; secret?: string; name?: string | null; email?: string | null }, identifiedAs?: string | null): void {
     const secret = visitor.secret || this.visitor?.secret;
     if (!secret) return; // sır yoksa saklanacak kimlik de yok
     this.visitor = {
@@ -84,6 +91,7 @@ export class Store {
       publicKey: this.publicKey,
       name: visitor.name ?? this.visitor?.name ?? null,
       email: visitor.email ?? this.visitor?.email ?? null,
+      identified_as: identifiedAs !== undefined ? identifiedAs : (this.visitor?.identified_as ?? null),
     };
     try {
       localStorage.setItem(KEY, JSON.stringify(this.visitor));

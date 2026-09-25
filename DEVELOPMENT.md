@@ -1,5 +1,21 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-09-25 - v2.8.0: GÜVENLİK - çıkışta `Signalbird.reset()`, kimlik her oturumda kanıtlanır
+
+| Yüzey | Değişiklik |
+|---|---|
+| Widget `Signalbird.reset()` | yeni: ziyaretçi sırrı (`sb_visitor`), konuşma durumu ve bilinen kimlik silinir, widget aynı anahtar/kanalla anonim yeniden kurulur. Ürünler çıkışta çağırır (CONTRACT §15.3) |
+| Widget `init` / `destroy` | değişti: imzalı kimlikle doğrulanmış ziyaretçi yerelde `identified_as` ile işaretlenir; kimliksiz ya da başka `external_id`'li `init` o sırrı kullanmaz |
+| Widget `bootstrap` | değişti: bilinen kullanıcının `external_id` + `identity_hash`'i açılışta da gider (sunucu kanıtsız açılışta doğrulamayı düşürür) |
+
+Sebep: çıkıştan sonra aynı tarayıcıdaki sonraki anonim kişi, önceki
+kullanıcının doğrulanmış ziyaretçisini devralıyor ve destek ajanının hesap
+araçları ona önceki kullanıcının faturasını açabiliyordu. Sunucu tarafı
+`signalbird.api` (aynı gün, `ChatService::requireFreshIdentity`).
+Uygulama istemcisinde karşılığı zaten var: `client.signOut()`.
+Test: `npm run test:widget` (6 senaryo, DOM kütüphanesi gerektirmez).
+Yayın sahibin adımı: `git tag v2.8.0`, npm + Packagist + `sdk:release 2.8.0 --security`.
+
 ## 2026-09-25 (2) - v2.7.0 düzeltmesi: `identityHash` kırpılmış değeri imzalar
 
 İnceleme bulgusu: sunucu (Laravel `TrimStrings`) `external_id`'yi kırpılmış

@@ -94,7 +94,7 @@ değil, kasıtlı bir duvardır - anahtar bir kez istemciye indiğinde herkesind
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.7.0")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.8.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır - ayrı SDK reposu ya da
@@ -647,7 +647,13 @@ Signalbird.chat.open()                       // close() · toggle() · isOpen()
 Signalbird.chat.on('unread', (n) => badge.textContent = n)
 Signalbird.push.register({ token, platform: 'web', provider: 'fcm' })
 Signalbird.destroy()
+Signalbird.reset()                           // kullanıcı ÇIKIŞ yapınca (2.8.0, CONTRACT §15.3)
 ```
+
+**Çıkışta `Signalbird.reset()` zorunlu (2.8.0).** Ziyaretçi sırrını, sohbet
+geçmişini ve kimliği tarayıcıdan siler; aynı tarayıcıyı kullanan sonraki kişi
+öncekinin sohbetini görmez, destek ajanı onu önceki kullanıcı sanmaz.
+Sunucu da kimliği her oturumda yeniden imza ister.
 
 `data-key`/`data-channel` yerine `Signalbird.init({ publicKey, chatKey, baseUrl?, locale? })` da
 çağrılabilir.
