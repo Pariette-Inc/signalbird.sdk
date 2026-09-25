@@ -51,12 +51,13 @@ function load() {
 
 const visitor = (identifiedAs) => JSON.stringify({ id: 'v_1', secret: 's3cret', publicKey: 'pk', identified_as: identifiedAs });
 
-// 1) İmzalı kimlikle açılmış ziyaretçi + kimliksiz init (çıkış yapılmış): sır kullanılmaz.
+// 1) İmzalı ziyaretçi + kimliksiz init (belgelenen init → identify() düzeni): sır KORUNUR (2.8.1).
+//    Çıkışı reset() yapar (senaryo 5).
 {
   const { Signalbird, store } = load();
   store.set('sb_visitor', visitor('u-42'));
   Signalbird.init({ publicKey: 'pk', chatKey: 'destek' });
-  assert.equal(store.get('sb_visitor'), undefined, 'kimliksiz init önceki kullanıcının ziyaretçisini devralmamalı');
+  assert.ok(store.get('sb_visitor'), 'kimliksiz init ziyaretçiyi silmemeli (her sayfada sohbet sıfırlanırdı)');
 }
 
 // 2) Başka kullanıcıyla init: sır kullanılmaz.
@@ -102,4 +103,26 @@ const visitor = (identifiedAs) => JSON.stringify({ id: 'v_1', secret: 's3cret', 
   assert.equal(store.get('sb_visitor'), undefined);
 }
 
-console.log('✓ widget kimlik sıfırlama: 6 senaryo');
+// 7) Uygulama istemcisi: bootstrap kimliği yalnız ikisi birlikte varsa gönderir.
+{
+  const { SignalbirdApp } = await import(join(root, 'dist', 'app.mjs')).catch(() => ({}));
+  if (SignalbirdApp) {
+    const bodies = [];
+    const client = new SignalbirdApp({
+      publicKey: 'sb_public_live_x', chatKey: 'destek',
+      storage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+      fetchImpl: async (_u, init) => { bodies.push(JSON.parse(init.body)); return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } }); },
+    });
+    await client.bootstrap();
+    await client.bootstrap({ external_id: 'u-1', identityHash: 'h' });
+    await client.bootstrap({ external_id: 'u-1' });
+    assert.equal(bodies[0].external_id, undefined);
+    assert.equal(bodies[1].external_id, 'u-1');
+    assert.equal(bodies[1].identity_hash, 'h');
+    assert.equal(bodies[2].external_id, undefined, 'hash olmadan kimlik gönderilmez');
+  } else {
+    throw new Error('dist/app.mjs SignalbirdApp bulunamadı');
+  }
+}
+
+console.log('✓ widget + uygulama kimlik sıfırlama: 7 senaryo');

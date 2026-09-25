@@ -1,5 +1,16 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-09-25 - v2.8.1: kimliksiz init/açılış ziyaretçiye dokunmaz
+
+| Yüzey | Değişiklik |
+|---|---|
+| Widget `init` | değişti: yalnız BAŞKA `external_id`'li init imzalı ziyaretçiyi bırakır; kimliksiz init (belgelenen init → identify() düzeni) dokunmaz. Çıkış `reset()` |
+| `signalbird/app` `bootstrap(identity?)`, Kotlin/Swift `bootstrap(externalId, identityHash)` | yeni isteğe bağlı kimlik: `external_id` + `identity_hash` birlikte varsa açılışta gider |
+| CONTRACT §15.3 | sunucu kuralı (kimliksiz istek dokunmaz), 2.8 öncesi widget için yükseltme / `sb_visitor` silme yükümlülüğü |
+
+Test: `npm run test:widget` (7 senaryo; uygulama istemcisi dahil). Kotlin/Swift
+derlemesi bu makinede denenmedi (araç zinciri yok). Yayın: `git tag v2.8.1`.
+
 ## 2026-09-25 - v2.8.0: GÜVENLİK - çıkışta `Signalbird.reset()`, kimlik her oturumda kanıtlanır
 
 | Yüzey | Değişiklik |

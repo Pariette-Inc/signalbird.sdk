@@ -249,10 +249,9 @@ export function reset(): void {
 }
 
 /**
- * Widget'ı kaldırır: polling durur, DOM silinir. Anonim ziyaretçinin sırrı
- * localStorage'da kalır; imzalı kimlikle açılmış ziyaretçi bir sonraki
- * kimliksiz/başka kullanıcılı `init`'te yeniden kullanılmaz (§15.3).
- * Kullanıcı çıkışı için `reset()` kullanın.
+ * Widget'ı kaldırır: polling durur, DOM silinir. Ziyaretçi sırrı
+ * localStorage'da kalır; imzalı kimlikle açılmış ziyaretçi BAŞKA kullanıcılı
+ * `init`'te yeniden kullanılmaz (§15.3). Kullanıcı çıkışı için `reset()`.
  */
 export function destroy(): void {
   safe(() => {

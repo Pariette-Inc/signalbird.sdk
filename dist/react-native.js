@@ -5,7 +5,7 @@ var react = require('react');
 // src/react-native/index.ts
 
 // src/shared/version.ts
-var SDK_VERSION = "2.8.0" ;
+var SDK_VERSION = "2.8.1" ;
 var SDK_HEADER = "X-Signalbird-Sdk";
 function sdkHeaderValue(platform) {
   return `${platform}/${SDK_VERSION}`;
@@ -73,9 +73,19 @@ var SignalbirdApp = class {
     this.doFetch = config.fetchImpl ?? ((...args) => fetch(...args));
   }
   // ── Kimlik ────────────────────────────────────────────────────────────
-  /** Uygulama ayarları: sohbet açık mı, renk, çalışma saati, ön-form. */
-  bootstrap() {
-    return this.request("POST", "/v1/sdk/bootstrap", { locale: this.config.locale });
+  /**
+   * Uygulama ayarları: sohbet açık mı, renk, çalışma saati, ön-form.
+   *
+   * Oturum açmış kullanıcı biliniyorsa `external_id` + `identity_hash`
+   * verilir (CONTRACT §15.3): sunucu kimliği açılışta da doğrular. Kimliksiz
+   * açılış ziyaretçiye dokunmaz; çıkışta `signOut()` çağrılır.
+   */
+  bootstrap(identity) {
+    const id = identity ? withIdentityHash(identity) : void 0;
+    return this.request("POST", "/v1/sdk/bootstrap", {
+      locale: this.config.locale,
+      ...id?.external_id && id.identity_hash ? { external_id: id.external_id, identity_hash: id.identity_hash } : {}
+    });
   }
   /**
    * Canlı bağlantı kanalı için imza.

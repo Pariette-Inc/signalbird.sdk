@@ -114,12 +114,18 @@ export class ChatController {
     /*
      * İMZALI KİMLİKLE AÇILMIŞ ZİYARETÇİ BAŞKASINA DEVREDİLMEZ (25 Eyl 2026
      * güvenlik düzeltmesi, CONTRACT §15.3). Tarayıcıda kalan ziyaretçi bir
-     * kullanıcı adına doğrulanmışsa ve bu `init` kimliksiz (çıkış yapılmış)
-     * ya da BAŞKA bir kullanıcıyla geliyorsa sır kullanılmaz, yeni anonim
-     * ziyaretçi açılır. Sunucu da kanıtsız oturumda doğrulamayı düşürür.
+     * kullanıcı adına doğrulanmışsa ve bu `init` BAŞKA bir kullanıcıyla
+     * geliyorsa sır kullanılmaz, yeni anonim ziyaretçi açılır. Kimliksiz
+     * init dokunmaz; çıkışta ürün `reset()` çağırır.
      */
     const stored = this.store.visitor;
-    if (stored?.identified_as && stored.identified_as !== (this.identity?.external_id ?? null)) {
+    const nextId = this.identity?.external_id ?? null;
+    /*
+     * Yalnız BAŞKA bir kullanıcıyla açılan init sırrı bırakır (2.8.1): belgelenen
+     * "önce init, sonra identify()" düzeninde her sayfa açılışı kimliksiz init'tir
+     * ve ziyaretçiyi silmek sohbeti her sayfada sıfırlıyordu. Çıkış `reset()`'tir.
+     */
+    if (stored?.identified_as && nextId !== null && stored.identified_as !== nextId) {
       this.store.clearVisitor();
     }
     this.locale = resolveLocale(null, opts.locale);

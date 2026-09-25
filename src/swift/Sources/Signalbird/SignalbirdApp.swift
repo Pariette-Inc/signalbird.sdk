@@ -86,8 +86,15 @@ public final class SignalbirdApp: @unchecked Sendable {
     // ── Kimlik ────────────────────────────────────────────────────────────
 
     /// Uygulama ayarları: sohbet açık mı, renk, çalışma saati, ön-form.
-    public func bootstrap() async throws -> SbResult {
-        try await http.request("POST", "/v1/sdk/bootstrap", body: ["locale": config.locale as Any])
+    /// Oturum açmış kullanıcı biliniyorsa `externalId` + `identityHash` verilir
+    /// (CONTRACT §15.3); kimliksiz açılış ziyaretçiye dokunmaz, çıkışta `signOut()`.
+    public func bootstrap(externalId: String? = nil, identityHash: String? = nil) async throws -> SbResult {
+        var body: [String: Any] = ["locale": config.locale as Any]
+        if let externalId, !externalId.isEmpty, let identityHash, !identityHash.isEmpty {
+            body["external_id"] = externalId
+            body["identity_hash"] = identityHash
+        }
+        return try await http.request("POST", "/v1/sdk/bootstrap", body: body)
     }
 
     /// Ziyaretçi oturumu açar ya da mevcut olanı günceller; sırrı saklar.

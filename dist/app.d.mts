@@ -303,8 +303,18 @@ declare class SignalbirdApp {
     private visitor;
     private loaded;
     constructor(config: AppConfig);
-    /** Uygulama ayarları: sohbet açık mı, renk, çalışma saati, ön-form. */
-    bootstrap(): Promise<SbResult<BootstrapResult>>;
+    /**
+     * Uygulama ayarları: sohbet açık mı, renk, çalışma saati, ön-form.
+     *
+     * Oturum açmış kullanıcı biliniyorsa `external_id` + `identity_hash`
+     * verilir (CONTRACT §15.3): sunucu kimliği açılışta da doğrular. Kimliksiz
+     * açılış ziyaretçiye dokunmaz; çıkışta `signOut()` çağrılır.
+     */
+    bootstrap(identity?: {
+        external_id?: string;
+        identity_hash?: string;
+        identityHash?: string;
+    }): Promise<SbResult<BootstrapResult>>;
     /**
      * Canlı bağlantı kanalı için imza.
      *

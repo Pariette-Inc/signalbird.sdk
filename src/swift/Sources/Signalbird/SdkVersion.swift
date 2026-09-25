@@ -10,7 +10,7 @@ import Foundation
 /// `version` satırını `scripts/sync-version.mjs` kökteki VERSION dosyasından
 /// yazar - elle değiştirmeyin.
 public enum SignalbirdSdk {
-    public static let version = "2.8.0"
+    public static let version = "2.8.1"
 
     static let header = "X-Signalbird-Sdk"
     static var headerValue: String { "swift/\(version)" }

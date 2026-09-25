@@ -49,9 +49,19 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
 
     // ── Kimlik ────────────────────────────────────────────────────────────
 
-    /** Uygulama ayarları: sohbet açık mı, renk, çalışma saati, ön-form. */
-    suspend fun bootstrap(): SbResult =
-        http.request("POST", "/v1/sdk/bootstrap", mapOf("locale" to config.locale))
+    /**
+     * Uygulama ayarları: sohbet açık mı, renk, çalışma saati, ön-form.
+     * Oturum açmış kullanıcı biliniyorsa `externalId` + `identityHash` verilir
+     * (CONTRACT §15.3); kimliksiz açılış ziyaretçiye dokunmaz, çıkışta `signOut()`.
+     */
+    suspend fun bootstrap(externalId: String? = null, identityHash: String? = null): SbResult {
+        val body = mutableMapOf<String, Any?>("locale" to config.locale)
+        if (!externalId.isNullOrEmpty() && !identityHash.isNullOrEmpty()) {
+            body["external_id"] = externalId
+            body["identity_hash"] = identityHash
+        }
+        return http.request("POST", "/v1/sdk/bootstrap", body)
+    }
 
     /** Ziyaretçi oturumu açar ya da mevcut olanı günceller; sırrı saklar. */
     suspend fun startSession(input: Map<String, Any?> = emptyMap()): SbResult {

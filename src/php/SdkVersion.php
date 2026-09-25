@@ -15,7 +15,7 @@ namespace Signalbird\Sdk;
  */
 final class SdkVersion
 {
-    public const VERSION = '2.8.0';
+    public const VERSION = '2.8.1';
 
     public const HEADER = 'X-Signalbird-Sdk';
 
