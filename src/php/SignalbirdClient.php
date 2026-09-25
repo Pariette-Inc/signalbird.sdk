@@ -111,7 +111,8 @@ class SignalbirdClient
      */
     public function identityHash(string $externalId): string
     {
-        return hash_hmac('sha256', $externalId, hash('sha256', $this->domainKey));
+        // Sunucu (Laravel TrimStrings) değeri kırpılmış alır; imza da kırpılmış değerin (§15.2).
+        return hash_hmac('sha256', trim($externalId), hash('sha256', $this->domainKey));
     }
 
     public function debug(string $key, string $message, ?array $context = null): array

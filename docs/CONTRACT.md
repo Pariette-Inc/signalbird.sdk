@@ -1035,8 +1035,14 @@ Algoritma (her dilde birebir):
 
 ```
 key           = lowercase_hex( SHA-256( sb_secret_live_… ) )
-identity_hash = lowercase_hex( HMAC-SHA256( key, external_id ) )
+identity_hash = lowercase_hex( HMAC-SHA256( key, trim(external_id) ) )
 ```
+
+**Kırpma kuralı:** imzalanan değer `external_id`'nin baştaki ve sondaki
+boşluklardan arındırılmış hâlidir. Sunucu gelen metni her zaman kırpılmış alır
+(Laravel `TrimStrings`); kırpmadan imzalayan istemcinin, boşluklu bir kimlikte
+imzası tutmazdı. Beş dilin yardımcısı da kırpar. İstemci yüzeyleri
+(`external_id` gönderen widget/app) değeri olduğu gibi gönderebilir.
 
 Anahtar gizli anahtarın KENDİSİ değil SHA-256 özetidir: sunucu anahtarı düz
 saklamaz, yalnız özetini tutar. Hash **sunucuda** üretilir ve sayfaya

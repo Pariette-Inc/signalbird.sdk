@@ -106,7 +106,7 @@ func (c *Client) Log(ctx context.Context, key, message string, level Level, fiel
 func (c *Client) IdentityHash(externalID string) string {
 	sum := sha256.Sum256([]byte(c.http.domainKey))
 	mac := hmac.New(sha256.New, []byte(hex.EncodeToString(sum[:])))
-	mac.Write([]byte(externalID))
+	mac.Write([]byte(strings.TrimSpace(externalID))) // §15.2: kırpılmış değer imzalanır
 
 	return hex.EncodeToString(mac.Sum(nil))
 }

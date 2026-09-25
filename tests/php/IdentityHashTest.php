@@ -23,6 +23,8 @@ final class IdentityHashTest extends TestCase
         $client = new SignalbirdClient(self::SECRET);
 
         $this->assertSame(self::EXPECTED, $client->identityHash('user_42'));
+        // §15.2: sunucu değeri kırpılmış alır; imza da kırpılmış değerin.
+        $this->assertSame(self::EXPECTED, $client->identityHash("  user_42\n"));
     }
 
     public function testKeyIsTheSha256HexOfTheSecretNotTheSecretItself(): void

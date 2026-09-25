@@ -168,7 +168,7 @@ export class SignalbirdClient {
   identityHash(externalId: string): string {
     const key = createHash('sha256').update(this.config.domainKey).digest('hex');
 
-    return createHmac('sha256', key).update(String(externalId)).digest('hex');
+    return createHmac('sha256', key).update(String(externalId).trim()).digest('hex'); // §15.2: kırpılmış değer imzalanır
   }
 
   /**

@@ -109,7 +109,7 @@ public sealed class SignalbirdClient
 
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
 
-        return ToHex(hmac.ComputeHash(Encoding.UTF8.GetBytes(externalId ?? string.Empty)));
+        return ToHex(hmac.ComputeHash(Encoding.UTF8.GetBytes((externalId ?? string.Empty).Trim())));
     }
 
     private static string ToHex(byte[] bytes)

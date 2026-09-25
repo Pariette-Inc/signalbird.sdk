@@ -10,4 +10,7 @@ func TestIdentityHashVector(t *testing.T) {
 	if got := c.IdentityHash("user_42"); got != "b802f38c59cb0f0c9283d6a8091c692c6c70db549acab1083c630426e2916258" {
 		t.Fatalf("got %s", got)
 	}
+	if got := c.IdentityHash("  user_42\n"); got != "b802f38c59cb0f0c9283d6a8091c692c6c70db549acab1083c630426e2916258" {
+		t.Fatalf("trim: got %s", got)
+	}
 }

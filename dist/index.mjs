@@ -148,7 +148,7 @@ var SignalbirdClient = class {
    */
   identityHash(externalId) {
     const key = createHash("sha256").update(this.config.domainKey).digest("hex");
-    return createHmac("sha256", key).update(String(externalId)).digest("hex");
+    return createHmac("sha256", key).update(String(externalId).trim()).digest("hex");
   }
   /**
    * Yakalanmamış hataları Telsiz'e bağlar.

@@ -74,7 +74,7 @@ class SignalbirdClient:
         """
         key = hashlib.sha256(self._domain_key.encode("utf-8")).hexdigest()
 
-        return hmac.new(key.encode("utf-8"), str(external_id).encode("utf-8"), hashlib.sha256).hexdigest()
+        return hmac.new(key.encode("utf-8"), str(external_id).strip().encode("utf-8"), hashlib.sha256).hexdigest()
 
     def debug(self, key: str, message: str, context: Optional[Mapping[str, Any]] = None) -> Result:
         return self.log(key, message, "debug", context)

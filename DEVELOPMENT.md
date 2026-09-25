@@ -1,5 +1,14 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-09-25 (2) - v2.7.0 düzeltmesi: `identityHash` kırpılmış değeri imzalar
+
+İnceleme bulgusu: sunucu (Laravel `TrimStrings`) `external_id`'yi kırpılmış
+alıyor, SDK yardımcıları kırpmadan imzalıyordu - baştaki/sondaki boşluklu bir
+kimlikte imza tutmazdı. Beş dil (PHP, Node, Python, Go, .NET) artık
+`trim(external_id)` imzalar; CONTRACT §15.2'ye kırpma kuralı yazıldı. Test
+vektörü değişmedi; PHP ve Go testlerine boşluklu girdi eklendi. Sürüm 2.7.0
+kalır (henüz etiketlenmedi).
+
 ## 2026-09-25 - v2.7.0: captcha (Turnstile) ve kimlik doğrulaması (`identity_hash`)
 
 Faz 5 - Signalbird güvenliği. Açık anahtar sayfanın kaynağında durur: onu
