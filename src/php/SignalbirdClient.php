@@ -59,6 +59,10 @@ class SignalbirdClient
     /**
      * Bir kanala kayıt gönderir.
      *
+     * `message` 4000 karaktere kırpılır (API sınırı - aşan satır 422 alırdı) ve
+     * `context` içindeki istisnalar okunur diziye çevrilir (`json_encode` onları
+     * `{}` yazıyordu). Ayrıntı: RadioPayload.
+     *
      * @param  array<string, mixed>|null  $context
      * @return array{ok: bool, event_id?: string, code?: string}
      */
@@ -66,15 +70,19 @@ class SignalbirdClient
     {
         return $this->post('/v1/radio/log', array_filter([
             'key' => $key,
-            'message' => $message,
+            'message' => RadioPayload::message($message),
             'level' => $level,
-            'context' => $context,
+            'context' => RadioPayload::context($context),
             'source' => $this->source,
         ], fn ($value) => $value !== null));
     }
 
     /**
      * Toplu gönderim (en fazla 100).
+     *
+     * Doğrulama satır satır DEĞİLDİR: tek bir geçersiz satır bütün paketi 422
+     * ile düşürür. Kırpma ve istisna dönüşümü bu yüzden burada da yapılır -
+     * `SignalbirdLogHandler` her şeyi bu yoldan gönderir.
      *
      * @param  array<int, array{key: string, message: string, level?: string, context?: array}>  $events
      * @return array{accepted: int, total: int, results: array}
@@ -84,9 +92,9 @@ class SignalbirdClient
         $payload = array_map(function (array $event) {
             return array_filter([
                 'key' => $event['key'],
-                'message' => $event['message'],
+                'message' => RadioPayload::message((string) $event['message']),
                 'level' => $event['level'] ?? null,
-                'context' => $event['context'] ?? null,
+                'context' => RadioPayload::context($event['context'] ?? null),
                 'source' => $event['source'] ?? $this->source,
             ], fn ($value) => $value !== null);
         }, array_slice($events, 0, 100));
@@ -155,7 +163,9 @@ class SignalbirdClient
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $this->timeout,
             CURLOPT_CONNECTTIMEOUT => $this->timeout,
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            // Geçersiz UTF-8 (ör. ikili veri taşıyan context) `json_encode`'u
+            // `false` döndürür ve curl BOŞ gövde gönderirdi; bozuk bayt U+FFFD olur.
+            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR),
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Accept: application/json',

@@ -17,6 +17,7 @@ import {
   type SignalbirdConfig,
 } from './types';
 import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
+import { safeContext, truncateMessage } from '../shared/serialize';
 import { createHash, createHmac } from 'node:crypto';
 
 export class SignalbirdClient {
@@ -83,13 +84,19 @@ export class SignalbirdClient {
     };
   }
 
-  /** Tek kayıt gönderir. */
+  /**
+   * Tek kayıt gönderir.
+   *
+   * `message` 4000 kod noktasına kırpılır (API sınırı; aşan satır 422 alırdı)
+   * ve `context` güvenli kopyaya çevrilir: döngüsel nesne ya da BigInt artık
+   * `NETWORK_ERROR` gibi görünen bir istisnaya dönüşmez.
+   */
   async log(input: LogInput): Promise<LogResult> {
     return this.send('/v1/radio/log', {
       key: input.key,
-      message: input.message,
+      message: truncateMessage(input.message),
       level: input.level,
-      context: input.context,
+      context: safeContext(input.context),
       source: input.source ?? this.source,
     });
   }
@@ -99,14 +106,17 @@ export class SignalbirdClient {
    *
    * Kısmi başarı normaldir (kota tam ortada dolabilir), o yüzden sonuç tek bir
    * durum değil satır satır döner.
+   *
+   * Doğrulama ise satır satır DEĞİLDİR: tek bir geçersiz satır (4000'i aşan
+   * mesaj) bütün paketi 422 ile düşürür. Bu yüzden kırpma burada da yapılır.
    */
   async batch(events: LogInput[]): Promise<BatchResult> {
     const payload = {
       events: events.slice(0, 100).map((event) => ({
         key: event.key,
-        message: event.message,
+        message: truncateMessage(event.message),
         level: event.level,
-        context: event.context,
+        context: safeContext(event.context),
         source: event.source ?? this.source,
       })),
     };
@@ -213,7 +223,12 @@ export class SignalbirdClient {
       return { ok: false, code: 'NETWORK_ERROR' };
     }
 
-    if (!response.ok) {
+    /*
+     * `MODULE_KEY_DISABLED` 202 + `ok:false` döner (kabul edildi ama yazılmadı:
+     * istemci tekrar denemesin). Yalnız HTTP durumuna bakmak, panelde
+     * kapatılmış kanala yazılan kaydı "gönderildi" diye raporlardı.
+     */
+    if (!response.ok || response.body?.ok === false) {
       const code = response.body?.code ?? 'UNKNOWN';
 
       if (this.throwOnError) {
