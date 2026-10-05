@@ -8,8 +8,8 @@ import (
 
 // PartnerConfig - partner istemcisinin kurulumu.
 type PartnerConfig struct {
-	// DomainKey, sözleşmeli partner anahtarıdır (sb_secret_live_…). Takım anahtarı
-	// (sb_…) burada çalışmaz ve kurulum anında reddedilir.
+	// DomainKey, sözleşmeli partnerin gizli anahtarıdır (sb_secret_live_…). Açık
+	// anahtar (sb_public_live_…) kurulum anında reddedilir.
 	DomainKey  string
 	BaseURL string
 	// Timeout boşsa 15 saniye.
@@ -25,7 +25,7 @@ type PartnerConfig struct {
 //
 // Bu, "Admin yüzeyi OLMAYACAK" kuralının BİLİNÇLİ istisnasıdır ve istisna
 // olduğu için ayrı anahtar türü taşır. Kural, müşterinin kendi anahtarıyla
-// (sb_…) şirket açamaması içindi; o kural aynen duruyor.
+// şirket açamaması içindi; o kural aynen duruyor.
 //
 // Partner SÜPER YÖNETİCİ DEĞİLDİR: yalnız kendi açtığı company'lere erişir,
 // başkasınınki 404 döner.

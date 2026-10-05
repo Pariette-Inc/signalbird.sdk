@@ -9,9 +9,9 @@
  * kayıtlarına dokunur; başka takımın kaydı 404 döner.
  *
  * Neden ayrı sınıf: Gönderim (`SignalbirdMessaging`) ileti gönderir ve kota
- * harcar; bu istemci yapılandırma değiştirir. Aynı anahtar ailesini kullanırlar
- * (`sb_…`) ama scope'ları ve hata kümeleri farklıdır - tek sınıfta birleşseydi
- * "hangi scope gerekiyordu" sorusu her metotta yeniden sorulurdu.
+ * harcar; bu istemci yapılandırma değiştirir. Aynı gizli domain anahtarını
+ * (`sb_secret_live_…`) kullanırlar ama hata kümeleri farklıdır - tek sınıfta
+ * birleşseydi her metotta "bu kod hangi yüzeyin" sorusu sorulurdu.
  *
  * Sözleşme: docs/CONTRACT.md § 10
  */

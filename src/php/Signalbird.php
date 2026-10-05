@@ -70,16 +70,15 @@ class Signalbird
         return self::$messaging;
     }
 
-    /** Yönetim istemcisini elle yapılandırır (`sb_…` takım anahtarı). */
+    /** Yönetim istemcisini elle yapılandırır (gizli domain anahtarı, `sb_secret_live_…`). */
     public static function configureManagement(string $domainKey, ?string $baseUrl = null): void
     {
         self::$management = new ManagementClient($domainKey, $baseUrl);
     }
 
     /**
-     * Yönetim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_DOMAIN_KEY` (yoksa
-     * `SIGNALBIRD_DOMAIN_KEY` - çoğu kurulumda tek takım anahtarı vardır)
-     * ortam değişkeninden okunur.
+     * Yönetim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_DOMAIN_KEY` ortam
+     * değişkeninden okunur - Telsiz ve Gönderim ile aynı gizli domain anahtarı.
      */
     public static function management(): ManagementClient
     {

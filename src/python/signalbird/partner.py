@@ -5,7 +5,7 @@ submitcms) müşterisini bununla sağlar ve yetkilendirir.
 
 Bu, "Admin yüzeyi OLMAYACAK" kuralının BİLİNÇLİ istisnasıdır ve istisna
 olduğu için ayrı anahtar türü taşır (``sb_secret_live_…``). Kural, müşterinin kendi
-anahtarıyla (``sb_``) şirket açamaması içindi; o kural aynen duruyor.
+anahtarıyla şirket açamaması içindi; o kural aynen duruyor.
 
 Partner SÜPER YÖNETİCİ DEĞİLDİR: yalnız kendi açtığı company'lere erişir,
 başkasınınki 404 döner.

@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 namespace Signalbird.Sdk;
 
 /// <summary>
-/// Partner istemcisinin kurulumu. Anahtar <c>sb_secret_live_…</c>'dir; takım
-/// anahtarı (<c>sb_…</c>) burada çalışmaz.
+/// Partner istemcisinin kurulumu. Anahtar <c>sb_secret_live_…</c>'dir; açık
+/// anahtar (<c>sb_public_live_…</c>) burada çalışmaz.
 /// </summary>
 public sealed class SignalbirdPartnerOptions
 {
@@ -33,7 +33,7 @@ public sealed class SignalbirdPartnerOptions
 /// <para>
 /// Bu, "Admin yüzeyi OLMAYACAK" kuralının BİLİNÇLİ istisnasıdır ve istisna
 /// olduğu için ayrı anahtar türü taşır. Kural, müşterinin kendi anahtarıyla
-/// (<c>sb_…</c>) şirket açamaması içindi; o kural aynen duruyor.
+/// şirket açamaması içindi; o kural aynen duruyor.
 /// </para>
 ///
 /// <para>

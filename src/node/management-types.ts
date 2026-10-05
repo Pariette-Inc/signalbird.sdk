@@ -12,7 +12,7 @@ import type { SbResult } from './http';
 export type { SbResult };
 
 export interface ManagementConfig {
-  /** Takım API anahtarı (`sb_…`) - `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
+  /** Gizli domain anahtarı (`sb_secret_live_…`). Scope yoktur (v2); yalnız gömme jetonu ayrı onay ister. */
   domainKey: string;
   /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;

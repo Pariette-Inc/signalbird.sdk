@@ -1,10 +1,11 @@
 // Package signalbird - Signalbird SDK'sının Go istemcisi.
 //
-// Üç sunucu yüzeyi vardır ve anahtarları farklıdır:
+// Sunucu yüzeylerinin hepsi aynı gizli domain anahtarını (sb_secret_live_…)
+// kullanır; ayrım anahtarda değil kapıdadır:
 //
-//	Client     → Telsiz (log yazma),  sb_secret_live_…
-//	Messaging  → Gönderim,            sb_…
-//	Management → Yönetim,             sb_… + radio|chat|apps scope'ları
+//	Client     → Telsiz (log yazma)
+//	Messaging  → Gönderim
+//	Management → Yönetim
 //
 // Bağımlılığı yoktur: yalnız standart kütüphane. Retry yoktur - aynı iletiyi
 // iki kez göndermek hiç göndermemekten pahalıdır, yeniden deneme kararı
