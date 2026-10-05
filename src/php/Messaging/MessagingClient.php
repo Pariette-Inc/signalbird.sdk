@@ -68,7 +68,14 @@ class MessagingClient
         return $this->request('POST', '/v1/email/send', $input);
     }
 
-    /** @param array<string, mixed> $input */
+    /**
+     * Alanlar API ile birebir: `to`, `class` zorunlu; `body` (≤1600) YA DA
+     * şablon (`template` adı ≤190 / `template_id`); isteğe bağlı `vars`,
+     * `brand_id`, `contact_id`, `sender` (onaylı gönderici adı, ≤11).
+     * Gövde olduğu gibi gider - alan eklemek/çıkarmak sunucunun işidir.
+     *
+     * @param array{to: string, class: string, body?: string, template?: string, template_id?: int, vars?: array<string, mixed>, brand_id?: int, contact_id?: int, sender?: string} $input
+     */
     public function sendSms(array $input): array
     {
         return $this->request('POST', '/v1/sms/send', $input);

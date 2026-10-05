@@ -223,7 +223,7 @@ denetler. Alan adları API ile aynıdır (snake_case) - SDK yeniden adlandırmaz
 | Alan | Metot | HTTP |
 |---|---|---|
 | e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, vars?, sending_domain_id?, sending_address_id?, module_key?, contact_id?, from_name?, reply_to?, attachments?})` - `attachments`: en çok 5 × `{filename, mime?, content_b64}`, toplam çözülmüş 7 MB (`ATTACHMENTS_TOO_LARGE`); `module_key`: gönderici KANALI, From adresini panelde adrese bağlı `email` kanalı seçer (v2.3.0) | `POST /v1/email/send` |
-| SMS | `sendSms({to, class, body, brand_id?, contact_id?})` · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
+| SMS | `sendSms({to, class, body?, template?, template_id?, vars?, brand_id?, contact_id?, sender?})` - `body` (≤1600) ya da şablon zorunlu; `sender` onaylı gönderici adı (≤11); gönderici kanalı (`module_key`) SMS'te yoktur · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
 | push | `sendPush({to, class, subject, body, vars?, contact_id?})` - `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
 | olay | `track({event, contact:{email?|phone?|external_id?}, data?})` - kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
 | kişiler | `listContacts(q)` · `createContact(c)` · `updateContact(id, c)` · `deleteContact(id)` · `bulkContacts({contacts[], list_id?, consent_source?, consent_text?})` | `/v1/contacts…` |

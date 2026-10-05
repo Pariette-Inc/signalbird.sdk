@@ -10,6 +10,7 @@
 | Telsiz Node | 202 + `ok:false` (`MODULE_KEY_DISABLED`) artık başarı sayılmaz |
 | `signalbird/browser` | `sendBeacon` Blob'u `text/plain;charset=UTF-8` (cross-origin beacon `application/json`'u göndermiyordu; API tarafı text/plain'i JSON ayrıştıracak). Yeni `radio(key)` → `{debug, info, warn, error}`; `critical` bilerek yok |
 | Gönderim Node `SendEmailInput` | API doğrulamasıyla birebir: `subject`/`body` şablonla isteğe bağlı; `template`, `template_id`, `sending_address_id`, `from_name`, `reply_to`, `attachments`, `module_key` (PHP `sendMail('kanal')` karşılığı) eklendi; `template_hash` `@deprecated`, gönderilmez |
+| Gönderim Node `SendSmsInput` | API ile birebir: `body` şablonla isteğe bağlı; `template`, `template_id`, `vars`, `sender` eklendi. PHP `sendSms` diziyi olduğu gibi geçirir (sapma yok), docblock alanları listeler |
 | README / CONTRACT | `channel` → `key`; proje→kanal ve `sb_…`+scope anlatımı kaldırıldı; `createModuleKey` örnekleri; gerçek hata kodu tablosu; Laravel `'with' => ['key' => …]`; CONTRACT §1.2/§1.3/§2/§5; yeni "AWS / webhook ile Telsiz'e yazmak" (`/v1/radio/hook/sbh_…`) |
 | Yorumlar | beş dilde eski `sb_…` takım anahtarı / scope anlatımı temizlendi |
 

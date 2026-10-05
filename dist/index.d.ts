@@ -254,12 +254,36 @@ interface SendEmailInput {
      */
     template_hash?: string;
 }
+/**
+ * `POST /v1/sms/send` gövdesi - alanlar API doğrulamasıyla birebir
+ * (signalbird.api `Api\V1\MessagingController::sendSms`).
+ *
+ * İçerik ya `body` ya da panelde tanımlı bir şablondur (`template` adıyla ya
+ * da `template_id` ile). Şablon verilmediyse `body` ZORUNLUDUR (API:
+ * `required_without_all:template_id,template`).
+ *
+ * E-postanın aksine SMS ucunda gönderici KANALI (`module_key`) yoktur;
+ * gönderen adı `sender` ile seçilir.
+ */
 interface SendSmsInput {
+    /** Alıcı telefon (en fazla 20). Sunucu normalize eder; geçersizse 422 `INVALID_PHONE`. */
     to: string;
+    /** Zorunlu, varsayılanı yok: işlemsel ile ticari arasındaki fark hukukidir. */
     class: MessageClass;
-    body: string;
+    /** Mesaj metni (en fazla 1600). Şablon yoksa zorunlu. */
+    body?: string;
+    /** Panelde tanımlı şablonun ADI (en fazla 190). */
+    template?: string;
+    /** Panelde tanımlı şablonun kimliği. */
+    template_id?: number;
+    /** Şablon/gövde değişkenleri - `{{ad}}` yerine geçer. */
+    vars?: Record<string, unknown>;
+    /** Marka (SMS başlığı/kotası bu markadan). */
     brand_id?: number;
+    /** Signalbird'deki kişi kaydı. */
     contact_id?: number;
+    /** Onaylı SMS gönderici adı (en fazla 11). Verilmezse şirketin varsayılanı. */
+    sender?: string;
 }
 interface SendPushInput {
     /** Cihaz token'ı, `contact:<id>` ya da `external:<external_id>`. */
