@@ -1,5 +1,15 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-10-05 - v2.9.1 (yalnız sürüm numarası)
+
+Kod 2.9.0 ile birebir aynı. `v2.9.0` etiketi ilk önce eski commit'e (2.8.1
+kodu) atıldı ve Packagist sürümü o commit'e KİLİTLEDİ (version immutability:
+yayınlanmış kararlı sürümün kaynağı etiket taşınsa da değişmez). Composer
+kullanıcısı doğru kodu alsın diye bütün defterlerde 2.9.1 çıkarıldı;
+Packagist'teki v2.9.0 sahibince soft-delete edilir.
+
+Ders: etiket YALNIZ `git pull` edilmiş `main`'den atılır (RELEASE.md).
+
 ## 2026-10-05 - v2.9.0: Telsiz sağlamlığı, `SendEmailInput` eşitlemesi, belge temizliği
 
 | Yüzey | Değişiklik |
