@@ -5,8 +5,8 @@
     from signalbird import SignalbirdClient, SignalbirdMessaging, SignalbirdManagement
 
     radio = SignalbirdClient(domain_key="sb_secret_live_…")          # log yazma
-    send  = SignalbirdMessaging(domain_key="sb_…")             # e-posta/SMS/push
-    admin = SignalbirdManagement(domain_key="sb_…")            # proje/sohbet/uygulama
+    send  = SignalbirdMessaging(domain_key="sb_secret_live_…") # e-posta/SMS/push
+    admin = SignalbirdManagement(domain_key="sb_secret_live_…") # modül anahtarı/sohbet
     partner = SignalbirdPartner(domain_key="sb_secret_live_…")       # yalnız sözleşmeli platformlar
 
 Ortam değişkeninden kısayol::

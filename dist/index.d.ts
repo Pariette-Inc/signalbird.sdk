@@ -57,7 +57,7 @@ interface LogResult {
     ok: boolean;
     /** Sunucunun döndüğü olay kimliği (rev_…). */
     eventId?: string;
-    /** Reddedildiyse sebep: INVALID_KEY, MODULE_DISABLED, LIMIT_REACHED… */
+    /** Reddedildiyse sebep: DOMAIN_KEY_INVALID, MODULE_DISABLED, MODULE_KEY_DISABLED, LIMIT_REACHED… */
     code?: string;
     status?: number;
 }
@@ -114,13 +114,22 @@ declare class SignalbirdClient {
         error: (message: string, context?: Record<string, unknown>) => Promise<LogResult>;
         critical: (message: string, context?: Record<string, unknown>) => Promise<LogResult>;
     };
-    /** Tek kayıt gönderir. */
+    /**
+     * Tek kayıt gönderir.
+     *
+     * `message` 4000 kod noktasına kırpılır (API sınırı; aşan satır 422 alırdı)
+     * ve `context` güvenli kopyaya çevrilir: döngüsel nesne ya da BigInt artık
+     * `NETWORK_ERROR` gibi görünen bir istisnaya dönüşmez.
+     */
     log(input: LogInput): Promise<LogResult>;
     /**
      * Toplu gönderim - 100 kayda kadar.
      *
      * Kısmi başarı normaldir (kota tam ortada dolabilir), o yüzden sonuç tek bir
      * durum değil satır satır döner.
+     *
+     * Doğrulama ise satır satır DEĞİLDİR: tek bir geçersiz satır (4000'i aşan
+     * mesaj) bütün paketi 422 ile düşürür. Bu yüzden kırpma burada da yapılır.
      */
     batch(events: LogInput[]): Promise<BatchResult>;
     debugLog(key: string, message: string, context?: Record<string, unknown>): Promise<LogResult>;
@@ -159,7 +168,7 @@ declare class SignalbirdClient {
  * bulunur ve iki doküman arasında çeviri tablosu gerekmez.
  */
 interface MessagingConfig {
-    /** Takım API anahtarı (`sb_…`). GİZLİDİR, yalnız sunucuda kullanılır. */
+    /** Gizli domain anahtarı (`sb_secret_live_…`). Yalnız sunucuda kullanılır. */
     domainKey: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
@@ -185,22 +194,96 @@ type SbResult$1<T> = {
 /** İleti sınıfı - API'de zorunludur ve varsayılanı YOKTUR (hukuki kapı). */
 type MessageClass = 'transactional' | 'commercial';
 type Channel = 'email' | 'sms' | 'push';
-interface SendEmailInput {
-    to: string;
-    class: MessageClass;
-    subject: string;
-    body?: string;
-    template_hash?: string;
-    vars?: Record<string, unknown>;
-    sending_domain_id?: number;
-    contact_id?: number;
+/** E-posta eki - içerik base64; toplam çözülmüş boyut sınırı sunucudadır (7 MB). */
+interface EmailAttachment {
+    filename: string;
+    mime?: string;
+    /** Dosya içeriği, base64. */
+    content_b64: string;
 }
-interface SendSmsInput {
+/**
+ * `POST /v1/email/send` gövdesi - alanlar API doğrulamasıyla birebir
+ * (signalbird.api `Api\V1\MessagingController::sendEmail`).
+ *
+ * İçerik iki yoldan gelir: ya `subject` + `body`, ya panelde tanımlı bir
+ * şablon (`template` adıyla ya da `template_id` ile). Şablon verilmediyse
+ * `subject` ve `body` ZORUNLUDUR (API: `required_without_all:template_id,template`);
+ * verildiyse ikisi de şablondan gelir ve istenirse ezilebilir.
+ *
+ * Tip bilerek arayüz olarak kaldı (birleşim tipi değil): kullanıcı kodunda
+ * `extends SendEmailInput` yazan herkes kırılırdı.
+ */
+interface SendEmailInput {
+    /** Alıcı e-posta adresi. */
     to: string;
+    /** Zorunlu, varsayılanı yok: işlemsel ile ticari arasındaki fark hukukidir. */
     class: MessageClass;
-    body: string;
-    brand_id?: number;
+    /** Konu (en fazla 255). Şablon yoksa zorunlu. */
+    subject?: string;
+    /** Gövde - HTML ya da düz metin. Şablon yoksa zorunlu. */
+    body?: string;
+    /** Panelde tanımlı şablonun ADI (en fazla 190). Ad tercih edilir: şablon yeniden yaratılsa da kod değişmez. */
+    template?: string;
+    /** Panelde tanımlı şablonun kimliği. */
+    template_id?: number;
+    /** Şablon/gövde değişkenleri - `{{ad}}` yerine geçer. */
+    vars?: Record<string, unknown>;
+    /**
+     * GÖNDERİCİ KANALI: panelde adresle birlikte açılan `email` modül anahtarı
+     * (`noReply`). From adresini kanal seçer - PHP'deki
+     * `Signalbird::sendMail('noReply')` karşılığı. Kanala adres bağlanmamışsa
+     * 422 `SENDER_NOT_CONFIGURED`; tanımsız kanal `MODULE_KEY_NOT_FOUND`.
+     */
+    module_key?: string;
+    /** Belirli bir doğrulanmış gönderen alan adından çıksın. */
+    sending_domain_id?: number;
+    /** Gönderen ADRES seçimi (destek@…); alan adını da belirler. `module_key` verilirse kanalınki geçerlidir. */
+    sending_address_id?: number;
+    /** Signalbird'deki kişi kaydı - açılma/tıklama geçmişi ona yazılsın. */
     contact_id?: number;
+    /** Görünen gönderen adı (en fazla 120). Zarf adresi değil. */
+    from_name?: string;
+    /** "Yanıtla" adresi. */
+    reply_to?: string;
+    /** En fazla 5 ek. */
+    attachments?: EmailAttachment[];
+    /**
+     * @deprecated API bu alanı hiç okumaz ve SDK onu GÖNDERMEZ (2.9.0). Şablon
+     * için `template` (ad) ya da `template_id` kullanın. Yalnız eski kodun tip
+     * denetiminde kırılmaması için tanımlı; başka bir alana eşlenmez.
+     */
+    template_hash?: string;
+}
+/**
+ * `POST /v1/sms/send` gövdesi - alanlar API doğrulamasıyla birebir
+ * (signalbird.api `Api\V1\MessagingController::sendSms`).
+ *
+ * İçerik ya `body` ya da panelde tanımlı bir şablondur (`template` adıyla ya
+ * da `template_id` ile). Şablon verilmediyse `body` ZORUNLUDUR (API:
+ * `required_without_all:template_id,template`).
+ *
+ * E-postanın aksine SMS ucunda gönderici KANALI (`module_key`) yoktur;
+ * gönderen adı `sender` ile seçilir.
+ */
+interface SendSmsInput {
+    /** Alıcı telefon (en fazla 20). Sunucu normalize eder; geçersizse 422 `INVALID_PHONE`. */
+    to: string;
+    /** Zorunlu, varsayılanı yok: işlemsel ile ticari arasındaki fark hukukidir. */
+    class: MessageClass;
+    /** Mesaj metni (en fazla 1600). Şablon yoksa zorunlu. */
+    body?: string;
+    /** Panelde tanımlı şablonun ADI (en fazla 190). */
+    template?: string;
+    /** Panelde tanımlı şablonun kimliği. */
+    template_id?: number;
+    /** Şablon/gövde değişkenleri - `{{ad}}` yerine geçer. */
+    vars?: Record<string, unknown>;
+    /** Marka (SMS başlığı/kotası bu markadan). */
+    brand_id?: number;
+    /** Signalbird'deki kişi kaydı. */
+    contact_id?: number;
+    /** Onaylı SMS gönderici adı (en fazla 11). Verilmezse şirketin varsayılanı. */
+    sender?: string;
 }
 interface SendPushInput {
     /** Cihaz token'ı, `contact:<id>` ya da `external:<external_id>`. */
@@ -610,7 +693,7 @@ interface EmbedToken {
 }
 
 interface ManagementConfig {
-    /** Takım API anahtarı (`sb_…`) - `radio:*`, `chat:*`, `apps:*` scope'larıyla. */
+    /** Gizli domain anahtarı (`sb_secret_live_…`). Scope yoktur (v2); yalnız gömme jetonu ayrı onay ister. */
     domainKey: string;
     /** Varsayılan: https://live.signalbird.io/api */
     baseUrl?: string;
@@ -924,9 +1007,9 @@ interface TeamEmbedTokenInput {
  * kayıtlarına dokunur; başka takımın kaydı 404 döner.
  *
  * Neden ayrı sınıf: Gönderim (`SignalbirdMessaging`) ileti gönderir ve kota
- * harcar; bu istemci yapılandırma değiştirir. Aynı anahtar ailesini kullanırlar
- * (`sb_…`) ama scope'ları ve hata kümeleri farklıdır - tek sınıfta birleşseydi
- * "hangi scope gerekiyordu" sorusu her metotta yeniden sorulurdu.
+ * harcar; bu istemci yapılandırma değiştirir. Aynı gizli domain anahtarını
+ * (`sb_secret_live_…`) kullanırlar ama hata kümeleri farklıdır - tek sınıfta
+ * birleşseydi her metotta "bu kod hangi yüzeyin" sorusu sorulurdu.
  *
  * Sözleşme: docs/CONTRACT.md § 10
  */
@@ -1066,7 +1149,7 @@ declare class SignalbirdManagement {
  *
  * **Bu, CLAUDE.md'deki "Admin yüzeyi OLMAYACAK" kuralının bilinçli
  * istisnasıdır** ve istisna olduğu için ayrı anahtar türü taşır. Kural,
- * müşterinin kendi anahtarıyla (`sb_`) şirket açamaması içindi; o kural aynen
+ * müşterinin kendi anahtarıyla şirket açamaması içindi; o kural aynen
  * duruyor. Sözleşmeli partner farklı bir taraftır.
  *
  * Gizli anahtar **asla tarayıcıya inmez**: gömme jetonunu partner'ın
@@ -1173,11 +1256,12 @@ declare function verifyWebhook(rawBody: string | Uint8Array, signatureHeader: st
  * Node betikleri buradan alır. TARAYICI için `signalbird/browser`
  * kullanılır - gizli anahtar istemciye inmez.
  *
- * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
- *  - `SignalbirdClient`     → Telsiz (log yazma), `sb_secret_live_…`
- *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
- *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
- *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
+ * Sunucu istemcilerinin HEPSİ aynı gizli domain anahtarını (`sb_secret_live_…`)
+ * kullanır; ayrım anahtarda değil, kapıdadır:
+ *  - `SignalbirdClient`     → Telsiz (log yazma)
+ *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya)
+ *  - `SignalbirdManagement` → Yönetim (olay akışı, modül anahtarları, sohbet
+ *                             gelen kutusu)
  *  - `SignalbirdPartner`    → Partner (müşteri sağlama, modül yetkisi, gömme),
  *                             gizli anahtar - yalnız sözleşmeli platformlar
  *
@@ -1201,8 +1285,8 @@ declare function resetSignalbird(): void;
 /**
  * Ortam değişkeninden kurulan paylaşımlı yönetim istemcisi.
  *
- * `SIGNALBIRD_DOMAIN_KEY` okunur (yoksa `SIGNALBIRD_DOMAIN_KEY` - ikisi de aynı
- * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
+ * `SIGNALBIRD_DOMAIN_KEY` okunur - Telsiz ve Gönderim ile aynı gizli domain
+ * anahtarı (`sb_secret_live_…`).
  *
  *   import { management } from 'signalbird'
  *   await management().createModuleKey('logger', { title: 'Kritik API hatası' })
@@ -1211,4 +1295,4 @@ declare function management(config?: Partial<ManagementConfig>): SignalbirdManag
 /** Test ve sıcak yeniden yükleme için yönetim istemcisini sıfırlar. */
 declare function resetManagement(): void;
 
-export { type AddDomainInput, type AddDomainResult, type AppDevice, type AppPlatform, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateCompanyInput, type CreateCompanyResult, type CreateContactListInput, DEFAULT_BASE_URL, type DnsRecord, type EmbedModule, type EmbedToken, type EmbedTokenInput, type GrantModuleInput, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type ModuleEntitlement, type Paginated$1 as Paginated, type PartnerCompany, type PartnerConfig, type PartnerDomain, type PartnerOwnerInput, type PartnerUser, type PartnerUserInput, type RadioEvent, type RadioLevel, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, SignalbirdPartner, type SmsPreview, type StartConversationInput, type TeamEmbedTokenInput, type UpdateConversationInput, type UpdateVisitorInput, type UptimeIncident, type UptimeRange, type UptimeReport, type VerifyDomainResult, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };
+export { type AddDomainInput, type AddDomainResult, type AppDevice, type AppPlatform, type Batch, type BatchResult, type BulkContactsInput, type BulkContactsResult, type CampaignCreateResult, type CampaignDetail, type CannedReply, type CannedReplyInput, type Channel, type ChatConversation, type ChatMessage, type ChatVisitor, type Contact, type ContactInput, type ContactList, type ConversationStatus, type CreateCampaignInput, type CreateCompanyInput, type CreateCompanyResult, type CreateContactListInput, DEFAULT_BASE_URL, type DnsRecord, type EmailAttachment, type EmbedModule, type EmbedToken, type EmbedTokenInput, type GrantModuleInput, type Level, type ListAppDevicesQuery, type ListCampaignMessagesQuery, type ListCampaignsQuery, type ListChatMessagesQuery, type ListContactsQuery, type ListConversationsQuery, type ListMessagesQuery, type ListRadioEventsQuery, type LogInput, type LogResult, type ManagementConfig, type Message, type MessageClass, type MessagingConfig, type MessagingErrorCode, type ModuleEntitlement, type Paginated$1 as Paginated, type PartnerCompany, type PartnerConfig, type PartnerDomain, type PartnerOwnerInput, type PartnerUser, type PartnerUserInput, type RadioEvent, type RadioLevel, type ReplyInput, type SbResult$1 as SbResult, type SendEmailInput, type SendPushInput, type SendResult, type SendSmsInput, SignalbirdClient, type SignalbirdConfig, SignalbirdError, SignalbirdManagement, SignalbirdMessaging, SignalbirdPartner, type SmsPreview, type StartConversationInput, type TeamEmbedTokenInput, type UpdateConversationInput, type UpdateVisitorInput, type UptimeIncident, type UptimeRange, type UptimeReport, type VerifyDomainResult, management, resetManagement, resetSignalbird, signalbird, verifyWebhook };

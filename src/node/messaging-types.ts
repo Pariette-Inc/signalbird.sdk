@@ -7,7 +7,7 @@
  */
 
 export interface MessagingConfig {
-  /** Takım API anahtarı (`sb_…`). GİZLİDİR, yalnız sunucuda kullanılır. */
+  /** Gizli domain anahtarı (`sb_secret_live_…`). Yalnız sunucuda kullanılır. */
   domainKey: string;
   /** Varsayılan: https://live.signalbird.io/api */
   baseUrl?: string;
@@ -30,23 +30,98 @@ export type Channel = 'email' | 'sms' | 'push';
 
 // ── Gönderim ────────────────────────────────────────────────────────────
 
-export interface SendEmailInput {
-  to: string;
-  class: MessageClass;
-  subject: string;
-  body?: string;
-  template_hash?: string;
-  vars?: Record<string, unknown>;
-  sending_domain_id?: number;
-  contact_id?: number;
+/** E-posta eki - içerik base64; toplam çözülmüş boyut sınırı sunucudadır (7 MB). */
+export interface EmailAttachment {
+  filename: string;
+  mime?: string;
+  /** Dosya içeriği, base64. */
+  content_b64: string;
 }
 
-export interface SendSmsInput {
+/**
+ * `POST /v1/email/send` gövdesi - alanlar API doğrulamasıyla birebir
+ * (signalbird.api `Api\V1\MessagingController::sendEmail`).
+ *
+ * İçerik iki yoldan gelir: ya `subject` + `body`, ya panelde tanımlı bir
+ * şablon (`template` adıyla ya da `template_id` ile). Şablon verilmediyse
+ * `subject` ve `body` ZORUNLUDUR (API: `required_without_all:template_id,template`);
+ * verildiyse ikisi de şablondan gelir ve istenirse ezilebilir.
+ *
+ * Tip bilerek arayüz olarak kaldı (birleşim tipi değil): kullanıcı kodunda
+ * `extends SendEmailInput` yazan herkes kırılırdı.
+ */
+export interface SendEmailInput {
+  /** Alıcı e-posta adresi. */
   to: string;
+  /** Zorunlu, varsayılanı yok: işlemsel ile ticari arasındaki fark hukukidir. */
   class: MessageClass;
-  body: string;
-  brand_id?: number;
+  /** Konu (en fazla 255). Şablon yoksa zorunlu. */
+  subject?: string;
+  /** Gövde - HTML ya da düz metin. Şablon yoksa zorunlu. */
+  body?: string;
+  /** Panelde tanımlı şablonun ADI (en fazla 190). Ad tercih edilir: şablon yeniden yaratılsa da kod değişmez. */
+  template?: string;
+  /** Panelde tanımlı şablonun kimliği. */
+  template_id?: number;
+  /** Şablon/gövde değişkenleri - `{{ad}}` yerine geçer. */
+  vars?: Record<string, unknown>;
+  /**
+   * GÖNDERİCİ KANALI: panelde adresle birlikte açılan `email` modül anahtarı
+   * (`noReply`). From adresini kanal seçer - PHP'deki
+   * `Signalbird::sendMail('noReply')` karşılığı. Kanala adres bağlanmamışsa
+   * 422 `SENDER_NOT_CONFIGURED`; tanımsız kanal `MODULE_KEY_NOT_FOUND`.
+   */
+  module_key?: string;
+  /** Belirli bir doğrulanmış gönderen alan adından çıksın. */
+  sending_domain_id?: number;
+  /** Gönderen ADRES seçimi (destek@…); alan adını da belirler. `module_key` verilirse kanalınki geçerlidir. */
+  sending_address_id?: number;
+  /** Signalbird'deki kişi kaydı - açılma/tıklama geçmişi ona yazılsın. */
   contact_id?: number;
+  /** Görünen gönderen adı (en fazla 120). Zarf adresi değil. */
+  from_name?: string;
+  /** "Yanıtla" adresi. */
+  reply_to?: string;
+  /** En fazla 5 ek. */
+  attachments?: EmailAttachment[];
+  /**
+   * @deprecated API bu alanı hiç okumaz ve SDK onu GÖNDERMEZ (2.9.0). Şablon
+   * için `template` (ad) ya da `template_id` kullanın. Yalnız eski kodun tip
+   * denetiminde kırılmaması için tanımlı; başka bir alana eşlenmez.
+   */
+  template_hash?: string;
+}
+
+/**
+ * `POST /v1/sms/send` gövdesi - alanlar API doğrulamasıyla birebir
+ * (signalbird.api `Api\V1\MessagingController::sendSms`).
+ *
+ * İçerik ya `body` ya da panelde tanımlı bir şablondur (`template` adıyla ya
+ * da `template_id` ile). Şablon verilmediyse `body` ZORUNLUDUR (API:
+ * `required_without_all:template_id,template`).
+ *
+ * E-postanın aksine SMS ucunda gönderici KANALI (`module_key`) yoktur;
+ * gönderen adı `sender` ile seçilir.
+ */
+export interface SendSmsInput {
+  /** Alıcı telefon (en fazla 20). Sunucu normalize eder; geçersizse 422 `INVALID_PHONE`. */
+  to: string;
+  /** Zorunlu, varsayılanı yok: işlemsel ile ticari arasındaki fark hukukidir. */
+  class: MessageClass;
+  /** Mesaj metni (en fazla 1600). Şablon yoksa zorunlu. */
+  body?: string;
+  /** Panelde tanımlı şablonun ADI (en fazla 190). */
+  template?: string;
+  /** Panelde tanımlı şablonun kimliği. */
+  template_id?: number;
+  /** Şablon/gövde değişkenleri - `{{ad}}` yerine geçer. */
+  vars?: Record<string, unknown>;
+  /** Marka (SMS başlığı/kotası bu markadan). */
+  brand_id?: number;
+  /** Signalbird'deki kişi kaydı. */
+  contact_id?: number;
+  /** Onaylı SMS gönderici adı (en fazla 11). Verilmezse şirketin varsayılanı. */
+  sender?: string;
 }
 
 export interface SendPushInput {

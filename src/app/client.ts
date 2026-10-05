@@ -94,12 +94,12 @@ export class SignalbirdApp {
       throw new Error('Signalbird: publicKey zorunlu (sb_public_live_…).');
     }
 
-    // Takım anahtarı istemciye gömülürse tüm gönderim yetkisi sızar. Sunucu da
+    // Gizli anahtar istemciye gömülürse tüm gönderim yetkisi sızar. Sunucu da
     // reddederdi ama o noktada anahtar çoktan yayınlanmış olurdu.
     if (!config.publicKey.startsWith('sb_public_live_')) {
       throw new Error(
         'Signalbird: uygulama istemcisi açık domain anahtarı ister (sb_public_live_…). ' +
-        'Takım anahtarını (sb_…) istemci koduna KOYMAYIN.'
+        'Gizli anahtarı (sb_secret_live_…) istemci koduna KOYMAYIN.'
       );
     }
 

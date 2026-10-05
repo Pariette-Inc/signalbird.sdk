@@ -9,7 +9,7 @@ namespace Signalbird.Sdk;
 
 public sealed class SignalbirdKeyOptions
 {
-    /// <summary>Takım API anahtarı (<c>sb_…</c>). Telsiz anahtarı burada çalışmaz.</summary>
+    /// <summary>Gizli domain anahtarı (<c>sb_secret_live_…</c>). Açık anahtar burada çalışmaz.</summary>
     public string DomainKey { get; set; } = string.Empty;
 
     public string BaseUrl { get; set; } = "https://live.signalbird.io/api";

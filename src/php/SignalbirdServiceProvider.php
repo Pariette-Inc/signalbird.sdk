@@ -63,9 +63,8 @@ class SignalbirdServiceProvider extends ServiceProvider
 
         $this->app->alias(MessagingClient::class, 'signalbird.messaging');
 
-        // Yönetim istemcisi Gönderim ile AYNI anahtar ailesini kullanır
-        // (`sb_…`) ama farklı scope'lar ister. Ayrı bir anahtar tanımlanmadıysa
-        // gönderim anahtarına düşer - çoğu kurulumda tek anahtar vardır.
+        // Yönetim istemcisi Telsiz ve Gönderim ile AYNI gizli domain
+        // anahtarını (`sb_secret_live_…`) kullanır; scope yoktur (v2).
         $this->app->singleton(ManagementClient::class, function ($app) {
             $config = $app['config']['signalbird'];
 

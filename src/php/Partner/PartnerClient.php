@@ -13,7 +13,7 @@ use Signalbird\Sdk\SignalbirdException;
  *
  * **CLAUDE.md'deki "Admin yüzeyi OLMAYACAK" kuralının bilinçli istisnasıdır**
  * ve istisna olduğu için ayrı bir yüzeydir ve gizli domain anahtarı ister. Kural,
- * müşterinin kendi anahtarıyla (`sb_`) şirket açamaması içindi; o kural aynen
+ * müşterinin kendi anahtarıyla şirket açamaması içindi; o kural aynen
  * duruyor.
  *
  * Node karşılığı: src/node/partner.ts - davranış birebir aynıdır.

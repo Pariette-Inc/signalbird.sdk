@@ -1,5 +1,5 @@
 // src/shared/version.ts
-var SDK_VERSION = "2.8.1" ;
+var SDK_VERSION = "2.9.0" ;
 var SDK_HEADER = "X-Signalbird-Sdk";
 function sdkHeaderValue(platform) {
   return `${platform}/${SDK_VERSION}`;
@@ -16,6 +16,70 @@ function noteSdkStatus(headers) {
     if (typeof console !== "undefined") console.warn(message);
   } catch {
   }
+}
+
+// src/shared/serialize.ts
+var MAX_MESSAGE_LENGTH = 4e3;
+function truncateMessage(message) {
+  const text = typeof message === "string" ? message : String(message);
+  if (text.length <= MAX_MESSAGE_LENGTH) {
+    return text;
+  }
+  return Array.from(text).slice(0, MAX_MESSAGE_LENGTH).join("");
+}
+function toJsonSafe(value) {
+  const ancestors = [];
+  const walk = (current) => {
+    if (typeof current === "bigint") {
+      return current.toString();
+    }
+    if (current === null || typeof current !== "object") {
+      return current;
+    }
+    if (ancestors.includes(current)) {
+      return "[Circular]";
+    }
+    if (current instanceof Error) {
+      return { name: current.name, message: current.message, stack: current.stack };
+    }
+    const withToJson = current;
+    if (typeof withToJson.toJSON === "function") {
+      try {
+        ancestors.push(current);
+        return walk(withToJson.toJSON());
+      } catch {
+        return "[Unserializable]";
+      } finally {
+        ancestors.pop();
+      }
+    }
+    ancestors.push(current);
+    try {
+      if (Array.isArray(current)) {
+        return current.map((item) => walk(item));
+      }
+      const out = {};
+      for (const key of Object.keys(current)) {
+        let item;
+        try {
+          item = current[key];
+        } catch {
+          item = "[Unserializable]";
+        }
+        out[key] = walk(item);
+      }
+      return out;
+    } finally {
+      ancestors.pop();
+    }
+  };
+  return walk(value);
+}
+function safeContext(context) {
+  if (context === void 0 || context === null) {
+    return void 0;
+  }
+  return toJsonSafe(context);
 }
 
 // src/browser/index.ts
@@ -37,8 +101,33 @@ var SignalbirdBrowser = class {
       window.addEventListener("pagehide", () => this.flushBeacon());
     }
   }
+  /**
+   * Kanalı bağlar ve yazacı döner - sunucu istemcisindeki `radio()` ile aynı
+   * deyim (CONTRACT §1.1):
+   *
+   *     sb.radio('sepet').error('sepet güncellenemedi', { cartId })
+   *
+   * `critical` BİLEREK yoktur: istemci kodu herkesin elindedir ve oradan
+   * kritik alarm (sessiz saatleri delen bildirim) tetiklemek, kötü niyetli
+   * birine ekibin telefonunu çaldırma imkânı verirdi. Gerekirse
+   * `log(key, msg, 'critical')` hâlâ yazılabilir; kanal ayarı panelde durur.
+   */
+  radio(key) {
+    return {
+      debug: (message, context) => this.log(key, message, "debug", context),
+      info: (message, context) => this.log(key, message, "info", context),
+      warn: (message, context) => this.log(key, message, "warn", context),
+      error: (message, context) => this.log(key, message, "error", context)
+    };
+  }
   log(key, message, level, context) {
-    this.queue.push({ key, message, level, context, source: this.config.source });
+    this.queue.push({
+      key,
+      message: truncateMessage(message),
+      level,
+      context: safeContext(context),
+      source: this.config.source
+    });
     if (this.queue.length >= this.maxQueue) {
       void this.flush();
     }
@@ -106,7 +195,7 @@ var SignalbirdBrowser = class {
     if (this.queue.length === 0 || typeof navigator === "undefined") return;
     const blob = new Blob(
       [JSON.stringify({ events: this.queue.splice(0, 100) })],
-      { type: "application/json" }
+      { type: "text/plain;charset=UTF-8" }
     );
     navigator.sendBeacon?.(
       `${this.baseUrl}/v1/radio/log/batch?k=${encodeURIComponent(this.config.publicKey)}&sdk=${encodeURIComponent(sdkHeaderValue("browser"))}`,

@@ -1,8 +1,8 @@
 /**
  * Anahtarlı istemcilerin ortak taşıma katmanı.
  *
- * Gönderim ve Yönetim istemcileri aynı kapıyı kullanır (`Authorization: Bearer
- * sb_…`), aynı zarfı döner ve aynı kod eşlemesini uygular. İki yerde ayrı ayrı
+ * Gönderim ve Yönetim istemcileri aynı kapıyı kullanır (`X-Signalbird-Key:
+ * sb_secret_live_…`), aynı zarfı döner ve aynı kod eşlemesini uygular. İki yerde ayrı ayrı
  * yazılsaydı biri düzeltilip diğeri unutulurdu - hata kodları da sözleşmenin
  * bir parçasıdır.
  *

@@ -72,7 +72,7 @@ export interface LogResult {
   ok: boolean;
   /** Sunucunun döndüğü olay kimliği (rev_…). */
   eventId?: string;
-  /** Reddedildiyse sebep: INVALID_KEY, MODULE_DISABLED, LIMIT_REACHED… */
+  /** Reddedildiyse sebep: DOMAIN_KEY_INVALID, MODULE_DISABLED, MODULE_KEY_DISABLED, LIMIT_REACHED… */
   code?: string;
   status?: number;
 }

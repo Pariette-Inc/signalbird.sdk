@@ -1,6 +1,6 @@
 """Gönderim (Messaging) istemcisi - sunucu tarafı.
 
-Takım API anahtarıyla (``sb_…``) e-posta/SMS/push gönderir, kişi ve liste
+Gizli domain anahtarıyla (``sb_secret_live_…``) e-posta/SMS/push gönderir, kişi ve liste
 yönetir, kampanya açar, mesaj durumlarını okur.
 
 Metot adları diğer dillerle birebir aynıdır; Python'da snake_case yazılır

@@ -17,7 +17,7 @@ var SignalbirdError = class extends Error {
 var DEFAULT_BASE_URL = "https://live.signalbird.io/api";
 
 // src/shared/version.ts
-var SDK_VERSION = "2.8.1" ;
+var SDK_VERSION = "2.9.0" ;
 var SDK_HEADER = "X-Signalbird-Sdk";
 function sdkHeaderValue(platform) {
   return `${platform}/${SDK_VERSION}`;
@@ -34,6 +34,70 @@ function noteSdkStatus(headers) {
     if (typeof console !== "undefined") console.warn(message);
   } catch {
   }
+}
+
+// src/shared/serialize.ts
+var MAX_MESSAGE_LENGTH = 4e3;
+function truncateMessage(message) {
+  const text = typeof message === "string" ? message : String(message);
+  if (text.length <= MAX_MESSAGE_LENGTH) {
+    return text;
+  }
+  return Array.from(text).slice(0, MAX_MESSAGE_LENGTH).join("");
+}
+function toJsonSafe(value) {
+  const ancestors = [];
+  const walk = (current) => {
+    if (typeof current === "bigint") {
+      return current.toString();
+    }
+    if (current === null || typeof current !== "object") {
+      return current;
+    }
+    if (ancestors.includes(current)) {
+      return "[Circular]";
+    }
+    if (current instanceof Error) {
+      return { name: current.name, message: current.message, stack: current.stack };
+    }
+    const withToJson = current;
+    if (typeof withToJson.toJSON === "function") {
+      try {
+        ancestors.push(current);
+        return walk(withToJson.toJSON());
+      } catch {
+        return "[Unserializable]";
+      } finally {
+        ancestors.pop();
+      }
+    }
+    ancestors.push(current);
+    try {
+      if (Array.isArray(current)) {
+        return current.map((item) => walk(item));
+      }
+      const out = {};
+      for (const key of Object.keys(current)) {
+        let item;
+        try {
+          item = current[key];
+        } catch {
+          item = "[Unserializable]";
+        }
+        out[key] = walk(item);
+      }
+      return out;
+    } finally {
+      ancestors.pop();
+    }
+  };
+  return walk(value);
+}
+function safeContext(context) {
+  if (context === void 0 || context === null) {
+    return void 0;
+  }
+  return toJsonSafe(context);
 }
 var SignalbirdClient = class {
   constructor(config) {
@@ -79,13 +143,19 @@ var SignalbirdClient = class {
       critical: (message, context) => this.critical(key, message, context)
     };
   }
-  /** Tek kayıt gönderir. */
+  /**
+   * Tek kayıt gönderir.
+   *
+   * `message` 4000 kod noktasına kırpılır (API sınırı; aşan satır 422 alırdı)
+   * ve `context` güvenli kopyaya çevrilir: döngüsel nesne ya da BigInt artık
+   * `NETWORK_ERROR` gibi görünen bir istisnaya dönüşmez.
+   */
   async log(input) {
     return this.send("/v1/radio/log", {
       key: input.key,
-      message: input.message,
+      message: truncateMessage(input.message),
       level: input.level,
-      context: input.context,
+      context: safeContext(input.context),
       source: input.source ?? this.source
     });
   }
@@ -94,14 +164,17 @@ var SignalbirdClient = class {
    *
    * Kısmi başarı normaldir (kota tam ortada dolabilir), o yüzden sonuç tek bir
    * durum değil satır satır döner.
+   *
+   * Doğrulama ise satır satır DEĞİLDİR: tek bir geçersiz satır (4000'i aşan
+   * mesaj) bütün paketi 422 ile düşürür. Bu yüzden kırpma burada da yapılır.
    */
   async batch(events) {
     const payload = {
       events: events.slice(0, 100).map((event) => ({
         key: event.key,
-        message: event.message,
+        message: truncateMessage(event.message),
         level: event.level,
-        context: event.context,
+        context: safeContext(event.context),
         source: event.source ?? this.source
       }))
     };
@@ -188,7 +261,7 @@ var SignalbirdClient = class {
     if (!response) {
       return { ok: false, code: "NETWORK_ERROR" };
     }
-    if (!response.ok) {
+    if (!response.ok || response.body?.ok === false) {
       const code = response.body?.code ?? "UNKNOWN";
       if (this.throwOnError) {
         throw new SignalbirdError(`Signalbird: ${code}`, response.status, code);
@@ -260,7 +333,11 @@ var SignalbirdMessaging = class {
   }
   // ── Gönderim ──────────────────────────────────────────────────────────
   sendEmail(input) {
-    return this.request("POST", "/v1/email/send", input);
+    const { template_hash: _ignored, ...body } = input;
+    if (_ignored !== void 0 && this.debug) {
+      console.warn("[signalbird] sendEmail: template_hash kullan\u0131mdan kalkt\u0131 ve g\xF6nderilmiyor; template ya da template_id kullan\u0131n.");
+    }
+    return this.request("POST", "/v1/email/send", body);
   }
   sendSms(input) {
     return this.request("POST", "/v1/sms/send", input);

@@ -9,9 +9,9 @@ import (
 // BulkChunk - toplu kişi yüklemede tek istekteki üst sınır.
 const BulkChunk = 1000
 
-// KeyConfig - takım anahtarıyla çalışan istemcilerin (Gönderim, Yönetim) ayarı.
+// KeyConfig - gizli domain anahtarıyla çalışan istemcilerin (Gönderim, Yönetim) ayarı.
 type KeyConfig struct {
-	// DomainKey, takım API anahtarıdır (sb_…). Telsiz anahtarı burada çalışmaz.
+	// DomainKey, gizli domain anahtarıdır (sb_secret_live_…). Açık anahtar burada çalışmaz.
 	DomainKey  string
 	BaseURL string
 	// Timeout boşsa 15 saniye - toplu kişi yükleme uzun sürebilir.

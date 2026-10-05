@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * yazar - elle değiştirmeyin.
  */
 object SignalbirdSdk {
-    const val VERSION = "2.8.1"
+    const val VERSION = "2.9.0"
 
     internal const val HEADER = "X-Signalbird-Sdk"
     internal val headerValue: String get() = "kotlin/$VERSION"

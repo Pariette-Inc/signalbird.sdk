@@ -1,9 +1,9 @@
 /**
  * Gönderim (Messaging) istemcisi - sunucu tarafı.
  *
- * Takım API anahtarıyla (`sb_…`) e-posta/SMS/push gönderir, kişi ve liste
+ * Gizli domain anahtarıyla (`sb_secret_live_…`) e-posta/SMS/push gönderir, kişi ve liste
  * yönetir, kampanya açar, mesaj durumlarını okur. Telsiz istemcisinden
- * (`SignalbirdClient`) ayrıdır: farklı anahtar, farklı kapı, farklı kota.
+ * (`SignalbirdClient`) ayrıdır: anahtar aynı, kapı ve kota farklı.
  *
  * Bağımlılığı yoktur (Node 18+ `fetch`). Retry yoktur: aynı iletiyi iki kez
  * göndermek, hiç göndermemekten pahalıdır - yeniden deneme kararı çağıranındır.
@@ -78,7 +78,15 @@ export class SignalbirdMessaging {
   // ── Gönderim ──────────────────────────────────────────────────────────
 
   sendEmail(input: SendEmailInput): Promise<SbResult<SendResult>> {
-    return this.request('POST', '/v1/email/send', input);
+    // `template_hash` API'de yok (2.9.0'da kullanımdan kalktı): gönderilmez ve
+    // başka alana EŞLENMEZ - sessiz eşleme yanlış şablonla posta demek olurdu.
+    const { template_hash: _ignored, ...body } = input;
+
+    if (_ignored !== undefined && this.debug) {
+      console.warn('[signalbird] sendEmail: template_hash kullanımdan kalktı ve gönderilmiyor; template ya da template_id kullanın.');
+    }
+
+    return this.request('POST', '/v1/email/send', body);
   }
 
   sendSms(input: SendSmsInput): Promise<SbResult<SendResult>> {

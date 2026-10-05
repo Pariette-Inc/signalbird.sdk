@@ -5,11 +5,12 @@
  * Node betikleri buradan alır. TARAYICI için `signalbird/browser`
  * kullanılır - gizli anahtar istemciye inmez.
  *
- * Üç sunucu istemcisi vardır; anahtarları ve kapıları farklıdır:
- *  - `SignalbirdClient`     → Telsiz (log yazma), `sb_secret_live_…`
- *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya), `sb_…`
- *  - `SignalbirdManagement` → Yönetim (Telsiz projesi, sohbet gelen kutusu,
- *                             uygulama kaydı), `sb_…` + `radio|chat|apps` scope'ları
+ * Sunucu istemcilerinin HEPSİ aynı gizli domain anahtarını (`sb_secret_live_…`)
+ * kullanır; ayrım anahtarda değil, kapıdadır:
+ *  - `SignalbirdClient`     → Telsiz (log yazma)
+ *  - `SignalbirdMessaging`  → Gönderim (e-posta/SMS/push/kişi/kampanya)
+ *  - `SignalbirdManagement` → Yönetim (olay akışı, modül anahtarları, sohbet
+ *                             gelen kutusu)
  *  - `SignalbirdPartner`    → Partner (müşteri sağlama, modül yetkisi, gömme),
  *                             gizli anahtar - yalnız sözleşmeli platformlar
  *
@@ -50,6 +51,7 @@ export type {
   MessageClass,
   Channel,
   SendEmailInput,
+  EmailAttachment,
   SendSmsInput,
   SendPushInput,
   SendResult,
@@ -151,8 +153,8 @@ let managementSingleton: SignalbirdManagement | null = null;
 /**
  * Ortam değişkeninden kurulan paylaşımlı yönetim istemcisi.
  *
- * `SIGNALBIRD_DOMAIN_KEY` okunur (yoksa `SIGNALBIRD_DOMAIN_KEY` - ikisi de aynı
- * takım anahtarı ailesidir ve çoğu kurulumda tek anahtar kullanılır).
+ * `SIGNALBIRD_DOMAIN_KEY` okunur - Telsiz ve Gönderim ile aynı gizli domain
+ * anahtarı (`sb_secret_live_…`).
  *
  *   import { management } from 'signalbird'
  *   await management().createModuleKey('logger', { title: 'Kritik API hatası' })

@@ -11,6 +11,7 @@
  * yoktur çünkü gereken tek şey bir fonksiyon çağrısıdır.
  */
 import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
+import { safeContext, truncateMessage } from '../shared/serialize';
 
 export type Level = 'debug' | 'info' | 'warn' | 'error' | 'critical';
 
@@ -64,8 +65,43 @@ export class SignalbirdBrowser {
     }
   }
 
+  /**
+   * Kanalı bağlar ve yazacı döner - sunucu istemcisindeki `radio()` ile aynı
+   * deyim (CONTRACT §1.1):
+   *
+   *     sb.radio('sepet').error('sepet güncellenemedi', { cartId })
+   *
+   * `critical` BİLEREK yoktur: istemci kodu herkesin elindedir ve oradan
+   * kritik alarm (sessiz saatleri delen bildirim) tetiklemek, kötü niyetli
+   * birine ekibin telefonunu çaldırma imkânı verirdi. Gerekirse
+   * `log(key, msg, 'critical')` hâlâ yazılabilir; kanal ayarı panelde durur.
+   */
+  radio(key: string) {
+    return {
+      debug: (message: string, context?: Record<string, unknown>) => this.log(key, message, 'debug', context),
+      info: (message: string, context?: Record<string, unknown>) => this.log(key, message, 'info', context),
+      warn: (message: string, context?: Record<string, unknown>) => this.log(key, message, 'warn', context),
+      error: (message: string, context?: Record<string, unknown>) => this.log(key, message, 'error', context),
+    };
+  }
+
   log(key: string, message: string, level?: Level, context?: Record<string, unknown>): void {
-    this.queue.push({ key, message, level, context, source: this.config.source });
+    /*
+     * Kırpma ve güvenli kopya KUYRUĞA GİRERKEN yapılır, gönderirken değil:
+     *  - 4000'i aşan tek mesaj bütün toplu paketi 422 ile düşürürdü;
+     *  - döngüsel `context` `JSON.stringify`'da patlar, `flush()` paketi geri
+     *    kuyruğa koyar ve aynı satır her turda tekrar patlayıp arkasındaki
+     *    bütün logları sonsuza dek bekletirdi;
+     *  - kopya o anki durumu saklar; nesne gönderime kadar değişse bile log,
+     *    yazıldığı andaki değeri taşır.
+     */
+    this.queue.push({
+      key,
+      message: truncateMessage(message),
+      level,
+      context: safeContext(context),
+      source: this.config.source,
+    });
 
     // Kuyruk dolduysa beklemeden gönder: bellekte sonsuza kadar biriktirmek,
     // logu hiç göndermemekten kötüdür.
@@ -148,9 +184,16 @@ export class SignalbirdBrowser {
   private flushBeacon(): void {
     if (this.queue.length === 0 || typeof navigator === 'undefined') return;
 
+    /*
+     * `text/plain`, `application/json` DEĞİL: `sendBeacon` CORS ön kontrolü
+     * (preflight) yapamaz; "basit" olmayan içerik türü taşıyan cross-origin
+     * beacon'ı tarayıcı hiç göndermez ve sayfa kapanırken son loglar sessizce
+     * kaybolurdu. Gövde yine JSON'dur; API Telsiz log uçlarında text/plain
+     * gövdeyi JSON olarak ayrıştırır. `fetch` yolu `application/json` kalır.
+     */
     const blob = new Blob(
       [JSON.stringify({ events: this.queue.splice(0, 100) })],
-      { type: 'application/json' }
+      { type: 'text/plain;charset=UTF-8' }
     );
 
     // sendBeacon özel başlık taşıyamaz; anahtar ve SDK sürümü sorgu dizesinden gider.

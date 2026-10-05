@@ -15,8 +15,8 @@ type Management struct {
 	http *transport
 }
 
-// NewManagement kurar. Gönderim ile aynı anahtar ailesini kullanır (sb_…) ama
-// radio:*, chat:*, apps:* scope'larını ister.
+// NewManagement kurar. Telsiz ve Gönderim ile aynı gizli domain anahtarını
+// (sb_secret_live_…) kullanır; scope yoktur (v2).
 func NewManagement(config KeyConfig) (*Management, error) {
 	http, err := newKeyTransport(config)
 	if err != nil {

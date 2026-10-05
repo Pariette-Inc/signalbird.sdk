@@ -40,7 +40,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>Gönderim istemcisi (<c>sb_…</c>).</summary>
+    /// <summary>Gönderim istemcisi (<c>sb_secret_live_…</c>).</summary>
     public static IServiceCollection AddSignalbirdMessaging(this IServiceCollection services, Action<SignalbirdKeyOptions> configure)
     {
         var options = new SignalbirdKeyOptions();
@@ -55,7 +55,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>Yönetim istemcisi (<c>sb_…</c> + <c>radio|chat|apps</c> scope'ları).</summary>
+    /// <summary>Yönetim istemcisi (<c>sb_secret_live_…</c>; scope yoktur).</summary>
     public static IServiceCollection AddSignalbirdManagement(this IServiceCollection services, Action<SignalbirdKeyOptions> configure)
     {
         var options = new SignalbirdKeyOptions();
