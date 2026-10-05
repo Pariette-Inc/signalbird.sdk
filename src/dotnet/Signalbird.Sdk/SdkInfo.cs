@@ -19,7 +19,7 @@ namespace Signalbird.Sdk;
 public static class SdkInfo
 {
     /// <summary>Kurulu SDK sürümü.</summary>
-    public const string Version = "2.9.0";
+    public const string Version = "2.9.1";
 
     internal const string Header = "X-Signalbird-Sdk";
 

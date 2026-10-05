@@ -17,7 +17,9 @@ node scripts/check-parity.mjs     # beş dilde metot paritesi
 npm run typecheck && npm run build
 vendor/bin/phpunit
 
-# 3. Commit + etiket
+# 3. Commit + etiket - ÖNCE main'i çek: Packagist yanlış commit'e atılan
+#    etiketi kalıcı kilitler, sonradan taşımak işe yaramaz (2.9.0 olayı)
+git checkout main && git pull --ff-only
 git add -A && git commit -m "v1.5.0 - …"
 git tag v1.5.0
 git push && git push --tags
