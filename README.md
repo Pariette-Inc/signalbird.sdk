@@ -1,13 +1,13 @@
 # Signalbird SDK
 
-**Tek paket, dört yüzey, on iki giriş noktası.** Panelde tıklayarak yapabildiğiniz her şey
+**Tek paket, beş yüzey, on iki giriş noktası.** Panelde tıklayarak yapabildiğiniz her şey
 kodla da yapılabilir.
 
 | Yüzey | Ne yapar | Anahtar | Nerede |
 |---|---|---|---|
-| **Telsiz** (Radio) | projenizden bir **kanala** log/olay yazar | `sb_secret_live_…` / `sb_public_live_…` | sunucu / tarayıcı |
-| **Gönderim** (Messaging) | e-posta, SMS, push gönderir; kişi, liste, kampanya yönetir; mesaj durumu okur; webhook imzası doğrular | `sb_…` | yalnız sunucu |
-| **Yönetim** (Management) | Telsiz projesi/kanalı açar, olay akışını okur, **sohbet gelen kutusunu** işler, uygulama ve cihaz yönetir | `sb_…` + scope | yalnız sunucu |
+| **Telsiz** (Radio) | uygulamanızdan bir **kanala** log/olay yazar | `sb_secret_live_…` / `sb_public_live_…` | sunucu / tarayıcı |
+| **Gönderim** (Messaging) | e-posta, SMS, push gönderir; kişi, liste, kampanya yönetir; mesaj durumu okur; webhook imzası doğrular | `sb_secret_live_…` | yalnız sunucu |
+| **Yönetim** (Management) | kanal (modül anahtarı) açar, olay akışını okur, **sohbet gelen kutusunu** işler, push cihazlarını listeler | `sb_secret_live_…` | yalnız sunucu |
 | **Uygulama** (App) | müşterinizin **son kullanıcısına** canlı sohbet + push cihaz kaydı | `sb_public_live_…` | web, iOS, Android |
 | **Partner** | Signalbird'ü kendi ürününde satan **sözleşmeli platform** müşterisini sağlar ve yetkilendirir | `sb_secret_live_…` | yalnız sunucu |
 
@@ -32,8 +32,8 @@ Bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
 | Kotlin (Android) | ✓ | - | - | ✓ | `io.signalbird:signalbird-sdk` |
 
 Metot adları diller arasında **birebir** aynıdır; her dil kendi yazım
-geleneğini korur (`createRadioProject` / `create_radio_project` /
-`CreateRadioProject`). `node scripts/check-parity.mjs` bunu her derlemede
+geleneğini korur (`createModuleKey` / `create_module_key` /
+`CreateModuleKey` / `CreateModuleKeyAsync`). `node scripts/check-parity.mjs` bunu her derlemede
 denetler.
 
 Uygulama yüzeyi mobil ve tarayıcı içindir: gizli anahtar oraya gömülmez.
@@ -41,7 +41,7 @@ Gönderim ve Yönetim yüzeyleri yalnız sunucudadır.
 
 ## Telsiz
 
-Telsiz'in tek işi vardır: projenizden bir **kanala** mesaj yazmak.
+Telsiz'in tek işi vardır: uygulamanızdan bir **kanala** mesaj yazmak.
 
 Bildirimin kime gideceği, hangi kanaldan (push/e-posta), sessiz saatlerde ne
 olacağı ve aynı mesajın kaç kez uyarı üreteceği **sunucuda, kanal ayarlarında**
@@ -49,10 +49,13 @@ durur. Kod tarafında bunlar yoktur ve olmamalıdır: bildirim kuralını
 değiştirmek için uygulamanızı yeniden yayınlamanız gerekmesin.
 
 ```
-proje  →  penyu.io        (anahtarın sahibi)
-kanal  →  critical, info, deploy…   (bildirim kuralı burada)
-olay   →  tek bir kayıt
+domain anahtarı  →  sb_secret_live_… / sb_public_live_…   (kimlik: alan adınızın anahtarı)
+modül anahtarı   →  odemeHatasi, deploy, browser…         (kanal adı; bildirim kuralı burada)
+olay             →  tek bir kayıt
 ```
+
+Kanal adı (modül anahtarı) **gizli değildir** ve kodun içinde durur: domain
+anahtarı olmadan hiçbir işe yaramaz. Gövdede `key` alanıyla gider.
 
 ## Tek anahtar
 
@@ -62,13 +65,13 @@ olay   →  tek bir kayıt
 SIGNALBIRD_DOMAIN_KEY=sb_secret_live_…
 ```
 
-Takım anahtarı (`sb_…`) her şeyi kapsar: e-posta, SMS, push, kişi ve kampanya,
-sohbet, uygulama, domain, Telsiz log yazımı. Ne yapabileceğini anahtarın
-kapsamları belirler; panelde üretilirken seçersiniz. **Adres yazmanız
-gerekmez** - üretim kökü paketin içindedir.
-
-Ayrı anahtar isteğe bağlıdır: bir sunucunun yalnız log yazıp gönderim
-yapamamasını istiyorsanız o sunucuya dar kapsamlı ikinci bir anahtar verirsiniz.
+Bu, alan adınızın **gizli domain anahtarıdır** (Panel → Alan adları →
+Anahtarlar) ve sunucu yüzeylerinin hepsini kapsar: Telsiz log yazımı, e-posta,
+SMS, push, kişi ve kampanya, Yönetim. Kapsam (scope) listesi yoktur (v2.0);
+ayrım anahtarın **türündedir** - gizli (`sb_secret_live_…`, sunucu) ya da açık
+(`sb_public_live_…`, istemci). Hangi kanala yazdığınızı **modül anahtarı**
+(kanal adı) belirler. **Adres yazmanız gerekmez** - üretim kökü paketin
+içindedir.
 
 Bir de **açık** anahtarlar vardır; onlar `.env`'e değil, sayfanın içine gömülür
 ve gizli olmadıkları için ayrı durmak zorundadırlar:
@@ -76,7 +79,7 @@ ve gizli olmadıkları için ayrı durmak zorundadırlar:
 | Anahtar | Nerede | Ne yapar |
 |---|---|---|
 | `sb_public_live_…` | `<script data-key data-channel>` | sohbet widget'ı, push cihaz kaydı |
-| `sb_public_live_…` | tarayıcı log istemcisi | yalnız izinli alan adlarından |
+| `sb_public_live_…` | tarayıcı log istemcisi | yalnız izinli kökenlerden (alan adları) |
 
 Gizli anahtar tarayıcıya **gömülemez**: sunucu, `Origin` başlığı taşıyan bir
 istekte gizli anahtarı reddeder (`SECRET_KEY_IN_BROWSER`). Bu bir kolaylık
@@ -125,7 +128,10 @@ const sb = new SignalbirdClient({
   throwOnError: false,     // üretimde kapalı kalmalı
 })
 
-await sb.log({ channel: 'deploy', message: 'v2.4.0 yayında', level: 'info' })
+await sb.log({ key: 'deploy', message: 'v2.4.0 yayında', level: 'info' })
+
+// Kanalı bir kez bağlayıp yazmak:
+await sb.radio('deploy').info('v2.4.0 yayında')
 ```
 
 **Yakalanmamış hatalar:**
@@ -138,8 +144,8 @@ signalbird().captureUncaught('critical')
 
 ```ts
 const result = await signalbird().batch([
-  { channel: 'info', message: 'iş 1 bitti' },
-  { channel: 'info', message: 'iş 2 bitti' },
+  { key: 'isler', message: 'iş 1 bitti', level: 'info' },
+  { key: 'isler', message: 'iş 2 bitti', level: 'info' },
 ])
 ```
 
@@ -178,10 +184,22 @@ const sb = initSignalbird({
 
 sb.captureErrors('browser')   // window.onerror + unhandledrejection
 sb.error('browser', 'sepet güncellenemedi', { cartId })
+
+// Kanalı bir kez bağlamak (2.9.0): debug · info · warn · error
+const sepet = sb.radio('sepet')
+sepet.warn('stok azaldı', { sku })
 ```
 
+Tarayıcı istemcisinin metotları: `log(key, message, level?, context?)`,
+`info`, `warn`, `error`, `radio(key)`, `captureErrors(key?)`, `flush()`,
+`destroy()`. Ayrı bir `critical()` / `debug()` kısayolu **yoktur**: istemci
+kodu herkesin elindedir ve oradan kritik alarm çaldırmak kötüye kullanıma
+açıktır (gerekirse `log(key, msg, 'critical')`; kanalın bildirimi panelde
+susturulabilir).
+
 Kayıtlar tek tek değil, **toplu** gider (varsayılan 3 saniyede bir) ve sekme
-kapanırken `sendBeacon` ile boşaltılır.
+kapanırken `sendBeacon` ile boşaltılır (`text/plain` gövde - tarayıcı
+cross-origin beacon'da JSON içerik türüne izin vermez).
 
 **React** - `app/providers.tsx` ya da `main.tsx`:
 
@@ -209,9 +227,12 @@ export class SignalbirdErrorHandler implements ErrorHandler {
 }
 ```
 
-Panelde bu projenin **izinli kökenlerini** ve **izinli kanallarını** açmayı
-unutmayın; ikisi de boşken tarayıcı anahtarı hiçbir şey yapamaz. Kritik
-kanalları tarayıcıya açmayın: istemci kodu herkesin elindedir.
+Panelde açık anahtarın **izinli kökenlerini** (alan adlarını) tanımlamayı
+unutmayın; liste boşken tarayıcı anahtarı hiçbir şey yazamaz
+(`ORIGIN_NOT_ALLOWED`). Kanal bazında bir kısıt **yoktur**: açık anahtar,
+izinli kökenden her kanala yazabilir. Bu yüzden tarayıcıdan yazılan kanalları
+(`browser` gibi) sunucunun kritik kanallarından ayrı tutun ve bildirim
+kurallarını ona göre verin - istemci kodu herkesin elindedir.
 
 ## PHP / Laravel
 
@@ -238,13 +259,15 @@ SIGNALBIRD_SOURCE=api-01
 'signalbird' => [
     'driver'  => 'monolog',
     'handler' => \Signalbird\Sdk\SignalbirdLogHandler::class,
-    'with'    => ['channel' => 'laravel'],
+    'with'    => ['key' => 'laravel'],   // kanal adı (modül anahtarı)
     'level'   => 'error',
 ],
 ```
 
 Sonra `LOG_STACK=single,signalbird`. Mevcut `Log::error()` satırlarınız olduğu
-gibi çalışır; tek satır kod yazmadan Telsiz'e düşerler.
+gibi çalışır; tek satır kod yazmadan Telsiz'e düşerler. `context` içindeki
+istisna (`['exception' => $e]`) sınıf, mesaj, dosya, satır ve ilk 20 yığın
+çerçevesiyle gider (2.9.0).
 
 Laravel dışı PHP:
 
@@ -254,6 +277,36 @@ use Signalbird\Sdk\Signalbird;
 Signalbird::configure('sb_secret_live_…');
 Signalbird::error('api', 'veritabanı bağlantısı koptu');
 ```
+
+## AWS / webhook ile Telsiz'e yazmak
+
+SDK kurmanın mümkün olmadığı ya da gereksiz olduğu kaynaklar (AWS alarmları,
+CI, üçüncü parti servisler) Telsiz kanalına **gelen bağlantı adresiyle**
+yazar. Her kanalın kendi adresi vardır; panelde **Telsiz → Kanallar → AWS /
+Webhook** altında oluşturulur:
+
+```
+POST https://live.signalbird.io/api/v1/radio/hook/sbh_…
+```
+
+- Kimlik URL'deki kanal jetonudur (`sbh_…`), domain anahtarı değil: jetonun
+  yetkisi yalnız o kanala log yazmaktır. Jetonu bir sır gibi saklayın;
+  sızarsa panelden yenileyin.
+- **AWS SNS:** konuya HTTPS aboneliği olarak bu adresi ekleyin. Abonelik
+  onayı (`SubscriptionConfirmation`) kendiliğinden yapılır ve her SNS
+  mesajının imzası doğrulanır.
+- **CloudWatch alarmları:** `ALARM` → `critical`, `OK` → `info` seviyesinde
+  yazılır.
+- **Herhangi bir sistem** JSON gönderebilir:
+
+```bash
+curl -X POST https://live.signalbird.io/api/v1/radio/hook/sbh_… \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "yedekleme başarısız", "level": "error"}'
+```
+
+`level` verilmezse kanalın varsayılan seviyesi geçerlidir; isteğe bağlı
+`context` (nesne) ve `source` alanları da kabul edilir. SDK gerekmez.
 
 ## Davranış kuralları
 
@@ -268,6 +321,11 @@ Signalbird::error('api', 'veritabanı bağlantısı koptu');
 - **Kritik seviye sessiz saatleri deler.** Gece üçte ölen servis sabahı bekleyemez.
 - **Tekrar bastırma kaydı değil bildirimi susturur.** Aynı mesaj kanalın
   `dedupe` süresi içinde tekrar gelirse ikinci bildirim gitmez ama kayıt tutulur.
+- **Mesaj 4000 karaktere kırpılır (2.9.0).** API daha uzununu 422 ile reddeder
+  ve toplu gönderimde tek uzun satır bütün paketi düşürürdü; SDK göndermeden
+  önce kırpar. `context` güvenle serileştirilir: döngüsel başvuru
+  `"[Circular]"`, `Error` `{name, message, stack}`, `BigInt` metin olur (PHP'de
+  `Throwable` → `class, message, code, file, line, trace`).
 - **SDK sürümünü bildirir (2.6.0).** Her istek `X-Signalbird-Sdk:
   <platform>/<sürüm>` taşır. Yeni sürüm çıktığında SDK süreç başına **bir kez**
   uyarı yazar; eski sürümdeki anahtarların sahiplerine panel bildirimi gider.
@@ -280,9 +338,9 @@ Signalbird::error('api', 'veritabanı bağlantısı koptu');
 
 ## Gönderim (Messaging)
 
-Takım API anahtarı (`sb_…`, panelde **Konsol → API anahtarları**, scope'lu)
-ile çalışır. Telsiz anahtarı burada geçmez - istemci kurulurken
-`WRONG_KEY_TYPE` ile reddeder. Yalnız sunucuda kullanılır.
+Telsiz ile **aynı** gizli domain anahtarıyla (`sb_secret_live_…`) çalışır.
+Açık anahtar burada geçmez - istemci kurulurken `WRONG_KEY_TYPE` ile reddeder.
+Yalnız sunucuda kullanılır.
 
 Node:
 
@@ -298,6 +356,16 @@ const r = await sb.sendEmail({
   body: '<p>Merhaba {{first_name}}…</p>',
 })
 if (!r.ok) console.error(r.code, r.message)   // ok:false → code + message
+
+// Panelde tanımlı şablonla ve gönderici kanalıyla (PHP: Signalbird::sendMail('noReply')):
+await sb.sendEmail({
+  to: 'ali@example.com',
+  class: 'transactional',
+  template: 'Sipariş Onayı',     // ad ya da template_id; varken subject/body gerekmez
+  vars: { ad: 'Ali', no: 'S-1234' },
+  module_key: 'noReply',         // From adresini kanal seçer
+  reply_to: 'destek@ornek.com',
+})
 
 await sb.sendSms({ to: '+905551112233', class: 'transactional', body: 'Kodunuz: 4821' })
 await sb.sendPush({ to: 'external:user-1042', class: 'transactional', subject: 'Yeni mesaj', body: '…' })
@@ -332,7 +400,8 @@ if (! $r['ok']) { Log::warning($r['code'], $r); }
 
 `.env`: `SIGNALBIRD_DOMAIN_KEY=sb_secret_live_…` (isteğe bağlı `SIGNALBIRD_MESSAGING_URL`,
 `SIGNALBIRD_MESSAGING_TIMEOUT`). Laravel dışı PHP:
-`Signalbird::configureMessaging('sb_…')` ya da `new MessagingClient('sb_…')`.
+`Signalbird::configureMessaging('sb_secret_live_…')` ya da
+`new MessagingClient('sb_secret_live_…')`.
 
 Metot kümesi iki dilde aynıdır: `sendEmail` `sendSms` `previewSms` `sendPush` ·
 `listContacts` `createContact` `updateContact` `deleteContact` `bulkContacts` ·
@@ -371,26 +440,29 @@ değil.
 takımın kayıtlarına dokunur. Kullanıcı, faturalama ve abonelik işlemleri SDK'da
 yoktur.
 
-Panelden `radio:*`, `chat:*`, `apps:*` scope'larıyla bir `sb_…` anahtarı açın.
+Aynı gizli domain anahtarıyla (`sb_secret_live_…`) çalışır; ayrı anahtar ya
+da kapsam (scope) gerekmez. Domain anahtarının kendisi panelden üretilir ve
+döndürülür - SDK anahtar üretmez.
 
 ```ts
 import { management } from 'signalbird'
 
-// Yeni ortam kurulumu: proje aç, kanalını tanımla, anahtarı sakla
-const { data } = await management().createRadioProject({ name: 'ödeme-servisi' })
-
-// `secret` YALNIZ burada döner - sunucuda yalnız özeti saklanır
-await vault.write('SIGNALBIRD_DOMAIN_KEY', data!.secret)
-
-await management().createRadioChannel(data!.project.id, {
-  key: 'odeme',
-  name: 'Ödeme',
+// Yeni ortam kurulumu: Telsiz kanalını (modül anahtarını) bildirim kuralıyla aç
+const { data } = await management().createModuleKey('logger', {
+  key: 'odeme',            // kodda kullanacağınız ad: signalbird().radio('odeme')
+  title: 'Ödeme',
   level: 'critical',
-  notify_push: true,
+  notify: ['push'],
   quiet_from: 0,
-  quiet_to: 7,        // kritik seviye sessiz saatleri yine de deler
+  quiet_to: 7,             // kritik seviye sessiz saatleri yine de deler
 })
+console.log(data?.module_key.id)
 ```
+
+`module` ∈ `logger` (Telsiz) · `email` · `sms` · `push` · `chat`. Diğer
+metotlar: `listModuleKeys`, `getModuleKey`, `updateModuleKey` (ad
+değiştirilebilir; eski ad 30 gün kabul edilir), `deleteModuleKey`,
+`listModuleKeyDevices`, `radioSummary`, `radioEvents`.
 
 Sohbet gelen kutusunu kendi botunuzla işleyin:
 
@@ -414,25 +486,26 @@ const { data } = await management().embedToken({ module: 'chat' })
 // data.url → 120 saniyelik, TEK KULLANIMLIK adres; doğrudan <iframe>'e verin
 ```
 
-Anahtar `embed:issue` kapsamı ister - jeton 60 dakikalık bir panel oturumuna
-çevrildiği için bu kapsam bilerek ayrıdır.
+Anahtarın panelde **gömme jetonu üretebilir** (`can_issue_embed`) onayı
+taşıması gerekir; yoksa 403 `EMBED_NOT_ALLOWED`. Jeton 60 dakikalık bir panel
+oturumuna çevrildiği için bu onay bilerek ayrıdır.
 
 Aynısı PHP, Python, Go ve .NET'te birebir aynı metot adlarıyla:
 
 ```php
-Signalbird::management()->createRadioProject(['name' => 'ödeme-servisi']);
+Signalbird::management()->createModuleKey('logger', ['key' => 'odeme', 'title' => 'Ödeme']);
 ```
 
 ```python
-signalbird.SignalbirdManagement(api_key=key).create_radio_project({"name": "ödeme-servisi"})
+signalbird.SignalbirdManagement(domain_key=key).create_module_key("logger", {"key": "odeme", "title": "Ödeme"})
 ```
 
 ```go
-admin.CreateRadioProject(ctx, map[string]any{"name": "ödeme-servisi"})
+admin.CreateModuleKey(ctx, "logger", map[string]any{"key": "odeme", "title": "Ödeme"})
 ```
 
 ```csharp
-await management.CreateRadioProjectAsync(new { name = "ödeme-servisi" });
+await management.CreateModuleKeyAsync("logger", new Dictionary<string, object?> { ["key"] = "odeme", ["title"] = "Ödeme" });
 ```
 
 Tam liste (40 metot): `docs/CONTRACT.md § 10`.
@@ -494,8 +567,8 @@ zaten saklanmıyor.
 ## Gönderim - müşterinin kendi sisteminden
 
 Bir platformun (SubmitCMS, veribenim…) müşterisiyseniz kendi sunucunuzdan da
-gönderim yapabilirsiniz. Gereken tek şey **kendi takım anahtarınızdır**
-(`sb_…`); panelinizdeki entegrasyon kartında durur.
+gönderim yapabilirsiniz. Gereken tek şey **kendi gizli domain anahtarınızdır**
+(`sb_secret_live_…`); panelde Alan adları → Anahtarlar altında durur.
 
 ```ts
 import { SignalbirdMessaging } from 'signalbird'
@@ -726,20 +799,40 @@ Sunucu tarafı tek çağrıdır (`Signalbird::partner()->createEmbedToken(...)`,
 
 ## Hata kodları
 
-| Kod | Anlamı |
-|---|---|
-| `INVALID_KEY` | Anahtar yok, yanlış ya da proje pasif |
-| `SECRET_KEY_IN_BROWSER` | Gizli anahtar tarayıcıdan kullanıldı |
-| `ORIGIN_NOT_ALLOWED` | Tarayıcı anahtarı bu alan adına açık değil |
-| `CHANNEL_NOT_ALLOWED` | Tarayıcı anahtarı bu kanala yazamaz |
-| `MODULE_DISABLED` | Paketinizde Telsiz (`logger`) modülü yok |
-| `LIMIT_REACHED` | Aylık kayıt limitiniz doldu |
-| `CHANNEL_DISABLED` | Kanal kapalı - kayıt yazılmaz, kota da harcanmaz |
+Telsiz (`/v1/radio/log`, `/v1/radio/log/batch`) ve bütün anahtarlı uçların
+ortak kapısı:
 
-Gönderim ve Yönetim istemcilerine özgü: `WRONG_KEY_TYPE` (kurulumda),
-`API_KEY_INVALID`, `API_KEY_SCOPE` (anahtarda gereken scope yok),
-`VALIDATION_ERROR` (422), `NO_CONSENT`, `SUPPRESSED`, `NO_SENDING_DOMAIN`,
-`LIST_NOT_FOUND`, `MODULE_DISABLED`, `NETWORK_ERROR`, `TIMEOUT`, `HTTP_<durum>`.
+| Kod | HTTP | Anlamı |
+|---|---|---|
+| `DOMAIN_KEY_MISSING` | 401 | `X-Signalbird-Key` başlığı yok |
+| `DOMAIN_KEY_INVALID` | 401 | Anahtar tanınmadı ya da kullanım dışı (iptal edilmiş) |
+| `SECRET_KEY_IN_BROWSER` | 401 | Gizli anahtar `Origin` taşıyan (tarayıcı) bir istekte kullanıldı |
+| `SECRET_KEY_IN_QUERY` | 401 | Gizli anahtar sorgu dizesinde (`?k=`) gönderildi |
+| `SECRET_KEY_REQUIRED` | 403 | Uç gizli anahtar ister; açık anahtar verildi |
+| `ORIGIN_REQUIRED` | 403 | Açık (web) anahtar `Origin`'siz, yani sunucudan kullanıldı |
+| `ORIGIN_NOT_ALLOWED` | 403 | İstek kökeni açık anahtarın izinli kökenleri arasında değil |
+| `APP_KEY_IN_BROWSER` | 403 | Mobil uygulama anahtarı web sayfasından kullanıldı |
+| `DOMAIN_INACTIVE` / `TEAM_INACTIVE` | 403 | Alan adı ya da takım pasif |
+| `MODULE_DISABLED` | 403 | Paketinizde Telsiz (`logger`) modülü yok |
+| `MODULE_KEY_INVALID` | 422 | Kanal adı (`key`) geçersiz - normalize edilince boş kalıyor |
+| `MODULE_KEY_DISABLED` | **202** | Kanal panelde kapalı - kayıt yazılmaz, kota da harcanmaz; yanıt `ok: false` taşır, tekrar denemeyin |
+| `LIMIT_REACHED` | 429 | Aylık kayıt limitiniz doldu |
+| `OVERAGE_CEILING_REACHED` | 429 | Aşım tavanına ulaşıldı |
+| `NETWORK_ERROR` | - | SDK sunucuya ulaşamadı (istemci tarafı) |
+
+Toplu uçta (`/log/batch`) kapı hatası tüm isteği reddeder; `MODULE_*` ve
+kota kodları ise satır satır `results[i].code` içinde döner. Gövde
+doğrulaması (ör. 4000 karakteri aşan `message`) satır satır DEĞİLDİR - tek
+geçersiz satır bütün paketi 422 ile düşürür; SDK bu yüzden mesajı göndermeden
+kırpar (2.9.0).
+
+Gönderim ve Yönetim istemcilerine özgü: `WRONG_KEY_TYPE` (kurulumda, SDK),
+`NO_CONSENT`, `SUPPRESSED`, `NO_SENDING_DOMAIN`, `SENDER_NOT_CONFIGURED`
+(gönderici kanalına adres bağlanmamış), `MODULE_KEY_NOT_FOUND`,
+`LIST_NOT_FOUND`, `EMBED_NOT_ALLOWED`, `MODULE_DISABLED`. SDK eşlemeleri
+(sunucu kod döndürmediğinde): 401 → `API_KEY_INVALID`, 422 →
+`VALIDATION_ERROR`, diğerleri `HTTP_<durum>`; ağ tarafı `NETWORK_ERROR`,
+`TIMEOUT`.
 
 Uygulama yüzeyi ve widget: `VISITOR_INVALID` (yerel kimlik silinir, yeni
 oturum açılır), `CHAT_UNAVAILABLE` (kota - "sohbet kullanılamıyor" bandı),

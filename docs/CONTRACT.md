@@ -52,6 +52,9 @@ kayıt düşmez ama bildirim de gitmez.
 `level` ve `context` isteğe bağlıdır. `level` verilmezse **kanalın kendi
 varsayılanı** geçerlidir - istemci burada bir varsayılan uydurmaz.
 
+Kanal YALNIZ gövdedeki `key` alanından okunur; Telsiz uçları
+`X-Signalbird-Module-Key` başlığına bakmaz.
+
 ## 1.1 Kanalı bağlama (`radio()`) - sözdizimi şekeri
 
 ```php
@@ -65,9 +68,41 @@ Kanal adını her satırda tekrar etmemek içindir; her metodu `log()`'a gider v
 gövde birebir aynıdır. **Yeni bir yüzey DEĞİLDİR** ve bu yüzden diller arası
 parite denetiminden muaftır (§4): dilin kendi deyimi, API yüzeyi değil.
 
-PHP ve TypeScript'te vardır. Python, Go, .NET, Swift ve Kotlin'de `log()` ve
+PHP ve TypeScript'te vardır; tarayıcı istemcisinde (`signalbird/browser`,
+2.9.0) `radio(key)` yalnız `debug` · `info` · `warn` · `error` döner -
+`critical` bilerek yoktur (istemci kodundan kritik alarm çaldırılmasın).
+Python, Go, .NET, Swift ve Kotlin'de `log()` ve
 seviye kısayolları zaten kanalı ilk argüman olarak alıyor; oralarda ek bir
 sarmalayıcı okunurluk kazandırmıyor.
+
+## 1.2 Gövdenin hazırlanması (2.9.0)
+
+Sunucu satırları `key` ≤ 64, `message` ≤ 4000 (karakter, `mb_strlen`),
+`level` ≤ 20, `source` ≤ 120 ile doğrular ve toplu uçta doğrulama **satır
+satır değildir**: tek geçersiz satır bütün paketi 422 ile düşürür. Bu yüzden
+her dil göndermeden önce:
+
+- `message`'ı **4000 kod noktasına** kırpar (UTF-16 birimi ya da bayt değil -
+  vekil çift/çok baytlı harf ortadan bölünürse sunucu gövdeyi ayrıştıramaz);
+- `context`'i güvenle serileştirir: döngüsel başvuru `"[Circular]"`, hata
+  nesnesi okunur yapı (TS: `{name, message, stack}`; PHP: `{class, message,
+  code, file, line, trace[≤20], previous?}`), `BigInt` metin. Serileştirme
+  hatası `NETWORK_ERROR` gibi görünmemeli, log da kaybolmamalı.
+
+Uygulanan diller: Node, tarayıcı, PHP (`SignalbirdClient::log/batch` →
+`SignalbirdLogHandler` dahil). Python, Go, .NET, Swift, Kotlin henüz
+uygulamadı - sunucu sınırı onlarda 422 olarak görünür.
+
+## 1.3 Tarayıcı: `sendBeacon` gövdesi
+
+Sekme kapanırken son paket `navigator.sendBeacon` ile gider. Beacon CORS ön
+kontrolü yapamaz; cross-origin beacon'da "basit" olmayan içerik türü
+(`application/json`) taşıyan istek tarayıcı tarafından GÖNDERİLMEZ. Gövde bu
+yüzden `text/plain;charset=UTF-8` Blob olarak gider (içerik yine JSON'dur) ve
+anahtar `?k=` sorgu dizesindedir (yalnız açık anahtar). Sunucu Telsiz log
+uçlarında `text/plain` gövdeyi JSON olarak ayrıştırır (signalbird.api, Eki 2026 -
+bu değişiklik yayına çıkmadan beacon paketi 422 alır). Normal `fetch` yolu
+`application/json` kalır.
 
 ## 2. Kimlik
 
@@ -76,7 +111,8 @@ sarmalayıcı okunurluk kazandırmıyor.
 | Sunucu | `X-Signalbird-Key: <key>` (ya da `Authorization: Bearer`) | `sb_secret_live_…` |
 | Tarayıcı / mobil | `X-Signalbird-Key: <key>` | `sb_public_live_…` |
 | Tarayıcı (yalnız `sendBeacon`) | `?k=<key>` | `sb_public_live_…` |
-| Kanal (her ortam) | `X-Signalbird-Module-Key: <slug>` | gizli değil |
+| Kanal - Uygulama (`/v1/sdk/*`) ve `email/send` gönderici kanalı | `X-Signalbird-Module-Key: <slug>` (ya da gövdede `module_key`) | gizli değil |
+| Kanal - Telsiz (`/v1/radio/log*`) | gövdede `key` (başlık OKUNMAZ) | gizli değil |
 
 **Origin matrisi güvenliğin kendisidir.** Tarayıcı her cross-origin isteğe
 `Origin` koyar ve sayfa JavaScript'i bunu silemez:
@@ -106,7 +142,7 @@ Her dil istemcisi şu metotları sunar:
 
 | Metot | Anlamı |
 |---|---|
-| `log(channel, message, level?, context?)` | Temel çağrı |
+| `log(key, message, level?, context?)` | Temel çağrı - `key` modül anahtarı (kanal adı) |
 | `debug` `info` `warn` `error` `critical` | Seviye kısayolları |
 | `batch(events)` | En fazla 100 kayıt, satır satır sonuç |
 
@@ -119,6 +155,11 @@ Varsayılan **sessiz hata**: ağ ya da sunucu hatasında istisna fırlatılmaz,
 `ok: false` + `code` döner. Log göndermek uygulamanın asıl işi değildir.
 
 `throwOnError` açıksa istisna fırlatılır. Bu bayrak geliştirme içindir.
+
+Başarı yalnız HTTP durumundan okunmaz: panelde kapatılmış kanal
+(`MODULE_KEY_DISABLED`) **202 + `ok: false`** döner (kabul edildi ama
+yazılmadı; tekrar denenmez). İstemci bunu `ok: false` + kod olarak raporlar -
+Node 2.9.0'a kadar başarı sayıyordu.
 
 ## 6. Zaman aşımı
 
@@ -135,10 +176,10 @@ maliyettir.
 
 ## 8. Gönderim (Messaging) istemcisi
 
-Telsiz'den ayrı ikinci bir yüzeydir: **takım API anahtarı** (`sb_…`) ile
-e-posta / SMS / push gönderir, kişi ve liste yönetir, kampanya açar, mesaj
-durumlarını okur. Farklı anahtar, farklı kapı, farklı kota - Telsiz
-istemcisiyle karışmaz. Yalnız **sunucuda** çalışır; tarayıcı girişi yoktur.
+Telsiz'den ayrı ikinci bir yüzeydir: **aynı gizli domain anahtarıyla**
+(`sb_secret_live_…`) e-posta / SMS / push gönderir, kişi ve liste yönetir,
+kampanya açar, mesaj durumlarını okur. Anahtar aynı; kapı ve kota farklı -
+Telsiz istemcisiyle karışmaz. Yalnız **sunucuda** çalışır; tarayıcı girişi yoktur.
 
 | Dil | Sınıf |
 |---|---|
@@ -154,7 +195,8 @@ istemcisiyle karışmaz. Yalnız **sunucuda** çalışır; tarayıcı girişi yo
 | `timeout` | 15 s | toplu kişi yükleme uzun sürebilir |
 | `throwOnError` | `false` | açıksa `SignalbirdError` / `SignalbirdException` |
 
-Kimlik: `Authorization: Bearer <sb_…>` - her istekte.
+Kimlik: `X-Signalbird-Key: <sb_secret_live_…>` - her istekte (`Authorization:
+Bearer` de kabul edilir).
 
 ### 8.2 Sonuç biçimi
 
@@ -180,7 +222,7 @@ denetler. Alan adları API ile aynıdır (snake_case) - SDK yeniden adlandırmaz
 
 | Alan | Metot | HTTP |
 |---|---|---|
-| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, template_hash?, vars?, sending_domain_id?, sending_address_id?, module_key?, contact_id?, from_name?, reply_to?, attachments?})` - `attachments`: en çok 5 × `{filename, mime?, content_b64}`, toplam çözülmüş 7 MB (`ATTACHMENTS_TOO_LARGE`); `module_key`: gönderici KANALI, From adresini panelde adrese bağlı `email` kanalı seçer (v2.3.0) | `POST /v1/email/send` |
+| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, vars?, sending_domain_id?, sending_address_id?, module_key?, contact_id?, from_name?, reply_to?, attachments?})` - `attachments`: en çok 5 × `{filename, mime?, content_b64}`, toplam çözülmüş 7 MB (`ATTACHMENTS_TOO_LARGE`); `module_key`: gönderici KANALI, From adresini panelde adrese bağlı `email` kanalı seçer (v2.3.0) | `POST /v1/email/send` |
 | SMS | `sendSms({to, class, body, brand_id?, contact_id?})` · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
 | push | `sendPush({to, class, subject, body, vars?, contact_id?})` - `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
 | olay | `track({event, contact:{email?|phone?|external_id?}, data?})` - kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
@@ -192,10 +234,14 @@ denetler. Alan adları API ile aynıdır (snake_case) - SDK yeniden adlandırmaz
 `class` (`transactional` | `commercial`) zorunludur ve **varsayılanı yoktur** -
 hukuki kapı çağıranın elindedir.
 
-**Şablon seçimi** üç biçimde olur ve biri yeterlidir: `template` (panelde
-yazan AD, büyük/küçük harfe duyarsız), `template_id` (sayı) ya da
-`template_hash` (gövde parmak izi - kampanya yolunda üretilir). Şablon
-verildiğinde `subject` ve `body` isteğe bağlıdır: konu şablondan gelir, ama
+**Şablon seçimi** iki biçimde olur ve biri yeterlidir: `template` (panelde
+yazan AD, büyük/küçük harfe duyarsız) ya da `template_id` (sayı).
+`template_hash` e-posta ucunda **yoktur** - API onu doğrulama listesinde
+taşımadığı için sessizce düşürür; Node `SendEmailInput.template_hash` 2.9.0'da
+`@deprecated` oldu ve gövdeye konmaz (başka alana da eşlenmez). Kampanya ucu
+(`createCampaign`) `template_hash`'i hâlâ kabul eder. Şablon
+verilmediyse `subject` ve `body` zorunludur (`required_without_all`); şablon
+verildiğinde ikisi de isteğe bağlıdır: konu şablondan gelir, ama
 istekte konu varsa **çağıranınki kazanır**. Bulunamayan şablon 422
 `TEMPLATE_NOT_FOUND` döner - yok sayılıp gövdesiz posta gönderilmez.
 
@@ -219,7 +265,8 @@ yoktur. Uygulamanın mevcut `Mailable` sınıfları için bu gerekmez:
 `MAIL_MAILER=signalbird` ile hepsi zaten Signalbird'den çıkar (§8.8).
 
 **Gönderici kanalı ve ekler (v2.3.x):** `Signalbird::sendMail('noReply')` =
-`mail()->channel('noReply')` - kanal `module_key` olarak gövdede gider, From
+`mail()->channel('noReply')` - kanal `module_key` olarak gövdede gider (Node:
+`sendEmail({ …, module_key: 'noReply' })`; ayrı metot yoktur, parite bozulmaz), From
 adresini panelde adresle birlikte açılan `email` kanalı seçer (Telsiz'in
 `radio('kanal')` modeli; yeni anahtar üretilmez). `->attach(filename, content,
 mime?)` / `->attachFile(path)` ekler; `->body(...)` = `html(...)`. Taşıyıcı
@@ -517,8 +564,8 @@ fırlatmaz**; hata konsola yazılır ve yutulur. `init` öncesi kaydedilen
 ## 10. Yönetim (Management) istemcisi
 
 Dördüncü değil **üçüncü sunucu yüzeyi**: müşterinin panelde tıklayarak yaptığı
-her şeyi kodla yapar. Telsiz projesi ve kanalı açar, olay akışını okur, sohbet
-gelen kutusunu işler, uygulama kaydı ve cihaz listesi yönetir.
+her şeyi kodla yapar. Kanal (modül anahtarı) açar, olay akışını okur, sohbet
+gelen kutusunu işler, push cihaz listesini okur.
 
 **Bu bir ADMIN yüzeyi DEĞİLDİR.** Anahtar tek bir takıma bağlıdır ve yalnız o
 takımın kayıtlarına dokunur; başka takımın kaydı 404 döner (varlık sızdırılmaz).
@@ -535,26 +582,26 @@ olmayacaktır - onlar panelin ve şirket sahibinin işidir.
 
 ### 10.1 Kurucu
 
-Gönderim istemcisiyle (§8.1) **aynı** kuralları taşır: `sb_` dışı anahtar
-kurulum anında `WRONG_KEY_TYPE`, boş anahtar `NO_KEY`; `baseUrl` serbest,
-sondaki `/` kırpılır; `timeout` 15 s; `throwOnError` varsayılan `false`.
+Gönderim istemcisiyle (§8.1) **aynı** kuralları taşır: `sb_secret_live_` dışı
+anahtar kurulum anında `WRONG_KEY_TYPE`, boş anahtar `NO_KEY`; `baseUrl`
+serbest, sondaki `/` kırpılır; `timeout` 15 s; `throwOnError` varsayılan
+`false`.
 
-Gerektirdiği scope'lar (`ApiKey::SCOPES`): `radio:read` · `radio:write` ·
-`chat:read` · `chat:write` · `apps:read` · `apps:write`. Yazma scope'u okumayı
-kapsar (sunucu tarafında `SCOPE_FALLBACKS`); ikisini ayrı ayrı işaretlemeye
-zorlamak, ilk entegrasyonda 403 alıp anahtarı yeniden üretmek demekti.
+Kapsam (scope) yoktur (v2): gizli domain anahtarı Yönetim uçlarının hepsine
+erişir; açık anahtar 403 `SECRET_KEY_REQUIRED` alır. Tek ek onay gömme
+jetonudur (`can_issue_embed`, §10.4).
 
 ### 10.2 Sonuç biçimi
 
 §8.2 ile birebir aynıdır - aynı zarf, aynı kod eşlemesi. İki yüzey aynı kapıyı
-(`Authorization: Bearer sb_…`) kullanır; hata kodlarının ayrışması müşterinin
+(`X-Signalbird-Key: sb_secret_live_…`) kullanır; hata kodlarının ayrışması müşterinin
 tek bir hata işleyicisi yazmasını imkânsız kılardı.
 
 ### 10.3 Metot kümesi - 36 metot
 
 Adlar diller arasında birebir aynıdır; her dil kendi yazım geleneğini korur
-(`createRadioProject` / `create_radio_project` / `CreateRadioProject` /
-`CreateRadioProjectAsync` aynı metottur). Alan adları API ile aynıdır
+(`createModuleKey` / `create_module_key` / `CreateModuleKey` /
+`CreateModuleKeyAsync` aynı metottur). Alan adları API ile aynıdır
 (snake_case) - SDK yeniden adlandırmaz.
 
 **Telsiz okuma + modül anahtarları (8)**
@@ -761,7 +808,7 @@ Sunucu sözleşmesi: `signalbird.api/docs/PARTNER_PLATFORM_2026-08-20.md`.
 `CLAUDE.md` "Admin yüzeyi OLMAYACAK: kullanıcı yönetimi, faturalama, abonelik,
 plan, şirket/takım CRUD" der. Partner yüzeyi bunu **bilerek** deler.
 
-Kural, müşterinin kendi anahtarıyla (`sb_…`) şirket açamaması içindi ve o kural
+Kural, müşterinin kendi anahtarıyla şirket açamaması içindi ve o kural
 aynen duruyor: `sb_` anahtarı hâlâ tek takıma bağlıdır. Partner **farklı bir
 taraftır** - sözleşmesi vardır, müşterisini kendi panelinden yönetir ve
 Signalbird onun için bir alt sistemdir. Bu yüzden ayrı anahtar türü, ayrı
