@@ -1,5 +1,5 @@
 // src/shared/version.ts
-var SDK_VERSION = "2.8.1" ;
+var SDK_VERSION = "2.9.0" ;
 var SDK_HEADER = "X-Signalbird-Sdk";
 function sdkHeaderValue(platform) {
   return `${platform}/${SDK_VERSION}`;
@@ -58,7 +58,7 @@ var SignalbirdApp = class {
     }
     if (!config.publicKey.startsWith("sb_public_live_")) {
       throw new Error(
-        "Signalbird: uygulama istemcisi a\xE7\u0131k domain anahtar\u0131 ister (sb_public_live_\u2026). Tak\u0131m anahtar\u0131n\u0131 (sb_\u2026) istemci koduna KOYMAYIN."
+        "Signalbird: uygulama istemcisi a\xE7\u0131k domain anahtar\u0131 ister (sb_public_live_\u2026). Gizli anahtar\u0131 (sb_secret_live_\u2026) istemci koduna KOYMAYIN."
       );
     }
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");

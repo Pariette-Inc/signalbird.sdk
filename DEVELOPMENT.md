@@ -1,5 +1,25 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-10-05 - v2.9.0: Telsiz sağlamlığı, `SendEmailInput` eşitlemesi, belge temizliği
+
+| Yüzey | Değişiklik |
+|---|---|
+| Telsiz Node / tarayıcı / PHP | `message` göndermeden önce 4000 KOD NOKTASINA kırpılır (API `max:4000`; toplu uçta tek uzun satır bütün paketi 422 ile düşürüyordu). PHP'de `SignalbirdLogHandler` de `batch()` üzerinden kapsanır |
+| Telsiz Node / tarayıcı | `context` güvenli kopya (`src/shared/serialize.ts`): döngüsel → `"[Circular]"`, `Error` → `{name,message,stack}`, `BigInt` → metin. Node'da `NETWORK_ERROR` görünümü, tarayıcıda kuyruğu kilitleyen paket (her 3 sn yeniden patlıyordu) bitti |
+| Telsiz PHP | yeni `RadioPayload`: `context` içindeki `Throwable` → `class, message, code, file, line, trace(≤20), previous?` (`json_encode` `{}` yazıyordu); `json_encode` geçersiz UTF-8'de artık boş gövde göndermez |
+| Telsiz Node | 202 + `ok:false` (`MODULE_KEY_DISABLED`) artık başarı sayılmaz |
+| `signalbird/browser` | `sendBeacon` Blob'u `text/plain;charset=UTF-8` (cross-origin beacon `application/json`'u göndermiyordu; API tarafı text/plain'i JSON ayrıştıracak). Yeni `radio(key)` → `{debug, info, warn, error}`; `critical` bilerek yok |
+| Gönderim Node `SendEmailInput` | API doğrulamasıyla birebir: `subject`/`body` şablonla isteğe bağlı; `template`, `template_id`, `sending_address_id`, `from_name`, `reply_to`, `attachments`, `module_key` (PHP `sendMail('kanal')` karşılığı) eklendi; `template_hash` `@deprecated`, gönderilmez |
+| README / CONTRACT | `channel` → `key`; proje→kanal ve `sb_…`+scope anlatımı kaldırıldı; `createModuleKey` örnekleri; gerçek hata kodu tablosu; Laravel `'with' => ['key' => …]`; CONTRACT §1.2/§1.3/§2/§5; yeni "AWS / webhook ile Telsiz'e yazmak" (`/v1/radio/hook/sbh_…`) |
+| Yorumlar | beş dilde eski `sb_…` takım anahtarı / scope anlatımı temizlendi |
+
+Parite değişmedi (yeni metot yok; tarayıcı paritede değil, PHP yardımcıları
+ayrı sınıfta). Test: `vendor/bin/phpunit` (+`RadioPayloadTest`),
+`npm run test:widget`. Python, Go, .NET, Swift, Kotlin'de kırpma/serileştirme
+henüz yok (CONTRACT §1.2). Yayın sahibin adımı: `git tag v2.9.0`, npm +
+Packagist + `sdk:release 2.9.0`; beacon değişikliği API'nin text/plain
+ayrıştırması yayına çıkınca etkili olur.
+
 ## 2026-09-25 - v2.8.1: kimliksiz init/açılış ziyaretçiye dokunmaz
 
 | Yüzey | Değişiklik |

@@ -19,6 +19,23 @@ declare class SignalbirdBrowser {
     private readonly baseUrl;
     private readonly maxQueue;
     constructor(config: BrowserConfig);
+    /**
+     * Kanalı bağlar ve yazacı döner - sunucu istemcisindeki `radio()` ile aynı
+     * deyim (CONTRACT §1.1):
+     *
+     *     sb.radio('sepet').error('sepet güncellenemedi', { cartId })
+     *
+     * `critical` BİLEREK yoktur: istemci kodu herkesin elindedir ve oradan
+     * kritik alarm (sessiz saatleri delen bildirim) tetiklemek, kötü niyetli
+     * birine ekibin telefonunu çaldırma imkânı verirdi. Gerekirse
+     * `log(key, msg, 'critical')` hâlâ yazılabilir; kanal ayarı panelde durur.
+     */
+    radio(key: string): {
+        debug: (message: string, context?: Record<string, unknown>) => void;
+        info: (message: string, context?: Record<string, unknown>) => void;
+        warn: (message: string, context?: Record<string, unknown>) => void;
+        error: (message: string, context?: Record<string, unknown>) => void;
+    };
     log(key: string, message: string, level?: Level, context?: Record<string, unknown>): void;
     info(key: string, message: string, context?: Record<string, unknown>): void;
     warn(key: string, message: string, context?: Record<string, unknown>): void;
