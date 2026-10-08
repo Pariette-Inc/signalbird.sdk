@@ -186,13 +186,19 @@ export class UI {
 
     this.badge = h('span', { class: 'badge' });
     const text = o.settings.launcher_text;
+    // Baloncuğun tamamı müşterinin görseliyse (`launcher_image_url`) işaret
+    // ve zemin çizilmez; özel zemin rengi (`launcher_color`) başlık renginden
+    // bağımsız boyar (8 Eki 2026).
+    const custom = safeUrl(o.settings.launcher_image_url);
+    const launcherColor = typeof o.settings.launcher_color === 'string' && /^#[0-9a-f]{3,8}$/i.test(o.settings.launcher_color) ? o.settings.launcher_color : null;
     this.launcher = h(
       'button',
       {
-        class: `ln${text ? '' : ' icon-only'}`,
+        class: `ln${text ? '' : ' icon-only'}${custom ? ' ln-img' : ''}`,
         type: 'button',
         'aria-label': text || t.launcher,
         onclick: () => this.onLauncher(),
+        style: launcherColor && !custom ? `--sb-grad:${launcherColor};--sb-ring:${launcherColor}66` : undefined,
       },
       h('span', { class: 'lm' }, this.launcherMark()),
       text ? h('span', { class: 'lt' }, text) : null,
@@ -1215,7 +1221,9 @@ export class UI {
   private launcherMark(): Node {
     const s = this.o.settings;
     const logo = safeUrl(s.logo_url);
+    const custom = safeUrl(s.launcher_image_url);
 
+    if (custom) return h('img', { class: 'lg lg-full', src: custom, alt: '' });
     if (s.launcher_icon === 'logo' && logo) return h('img', { class: 'lg', src: logo, alt: '' });
     if (s.launcher_icon === 'chat') return icon('chat', 25);
 

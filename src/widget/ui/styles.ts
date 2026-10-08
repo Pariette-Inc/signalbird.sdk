@@ -104,6 +104,13 @@ background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 55%)
 .ln .lg{width:32px;height:32px;border-radius:50%;object-fit:cover}
 .ln .lm{position:relative;transition:transform .35s var(--sb-spring)}
 .ln:hover .lm{transform:rotate(-8deg) scale(1.06)}
+/* Tamamı müşterinin görseli olan baloncuk: zemin, parlama ve gölge çizilmez,
+   görsel 60px'lik daireyi doldurur (8 Eki 2026). */
+.ln.ln-img{background:transparent;box-shadow:none}
+.ln.ln-img::before{display:none}
+.ln.ln-img.icon-only{width:auto}
+.ln .lg.lg-full{width:60px;height:60px;border-radius:50%;box-shadow:0 2px 6px rgba(16,20,30,.16),0 12px 28px -8px rgba(16,20,30,.3)}
+.ln:hover .lm:has(.lg-full){transform:scale(1.04)}
 
 /* Ajanın çevrimiçi olduğunu balonda söylüyoruz: sohbete girmeden önce
    "şu an biri var mı" sorusunun cevabı görünsün. */

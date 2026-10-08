@@ -1,5 +1,20 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-10-08 - Widget: baloncuk görseli ve baloncuk rengi
+
+Sahibi: "müşteriler isterlerse kendi logolarını canlı destek baloncuğuna
+yükleyebilmeli, baloncuğun zemin rengini seçebilmeli veya yuvarlak bir tasarım
+yükleyip tüm baloncuğu kendileri tasarlayabilmeli".
+
+| Ayar | Davranış |
+|---|---|
+| `launcher_image_url` | Yuvarlak PNG/SVG; varsa baloncuğun tamamı bu görsel (`.ln-img`, zemin/parlama/gölge yok), işaret çizilmez |
+| `launcher_color` | Yalnız baloncuğun zemini (`--sb-grad`); boşsa başlık rengi (`color`) |
+
+Panel karşılığı `signalbird.web` kanal ayarları › Görünüm; sunucu varsayılanları
+`ModuleKey::chatSettings`. Widget `npm run build` ile `signalbird.web/public/sdk/v1/signalbird.js`'e
+kopyalandı; npm sürümü çıkarılmadı (paket API'si değişmedi, yalnız widget).
+
 ## 2026-10-05 - v2.9.1 (yalnız sürüm numarası)
 
 Kod 2.9.0 ile birebir aynı. `v2.9.0` etiketi ilk önce eski commit'e (2.8.1
