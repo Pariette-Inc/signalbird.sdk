@@ -3,22 +3,104 @@
 namespace Signalbird\Sdk\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Signalbird\Sdk\Mail\MailBuilder;
+use Signalbird\Sdk\Management\ManagementClient;
+use Signalbird\Sdk\Messaging\MessagingClient;
+use Signalbird\Sdk\Partner\PartnerClient;
 
 /**
- * @method static array info(string $title, string $message)
- * @method static array warn(string $title, string $message)
- * @method static array error(string $title, string $message)
- * @method static array critical(string $title, string $message)
- * @method static array confirm(string $title, string $message)
- * @method static array debug(string $title, string $message)
- * @method static array send(string $title, string $message, string $level = 'info')
+ * Telsiz cephesi. Yedi log metodu `SignalbirdClient`'a yönlendirilir;
+ * Gönderim (e-posta/SMS/push, kişi, kampanya) için `Signalbird::messaging()`,
+ * Yönetim (Telsiz projesi, sohbet gelen kutusu, uygulama) için
+ * `Signalbird::management()` konteynerdeki tekili döner.
  *
- * @see \Signalbird\Sdk\Signalbird
+ * @method static \Signalbird\Sdk\RadioChannel radio(string $key)
+ * @method static array log(string $key, string $message, ?string $level = null, ?array $context = null)
+ * @method static array debug(string $key, string $message, ?array $context = null)
+ * @method static array info(string $key, string $message, ?array $context = null)
+ * @method static array warn(string $key, string $message, ?array $context = null)
+ * @method static array error(string $key, string $message, ?array $context = null)
+ * @method static array critical(string $key, string $message, ?array $context = null)
+ * @method static array batch(array $events)
+ * @method static string identityHash(string $externalId)
+ *
+ * @see \Signalbird\Sdk\SignalbirdClient
+ * @see \Signalbird\Sdk\Messaging\MessagingClient
+ * @see \Signalbird\Sdk\Management\ManagementClient
+ * @see \Signalbird\Sdk\Partner\PartnerClient
  */
 class Signalbird extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
         return 'signalbird';
+    }
+
+    /**
+     * Gönderim istemcisi. Laravel konteyneri varsa oradaki tekil
+     * (`signalbird.messaging`), yoksa ortam değişkenlerinden kurulan örnek.
+     */
+    public static function messaging(): MessagingClient
+    {
+        return static::$app
+            ? static::$app->make(MessagingClient::class)
+            : \Signalbird\Sdk\Signalbird::messaging();
+    }
+
+    /**
+     * Zincirlenebilir e-posta gönderimi - şablon, değişken, gönderen adı.
+     *
+     *   Signalbird::mail()->to($u->email)->template('Hoş Geldiniz')
+     *       ->vars(['ad' => $u->name])->transactional()->send();
+     *
+     * Mevcut Mailable'larınız için buna gerek yok: `MAIL_MAILER=signalbird`
+     * ile hepsi zaten Signalbird'den çıkar. Bu yol, gövdenin PANELDE durduğu
+     * gönderimler içindir.
+     */
+    public static function mail(): MailBuilder
+    {
+        return new MailBuilder(static::messaging());
+    }
+
+    /**
+     * Kanaldan e-posta - gönderici KANALI ile (2 Eyl 2026, Ahmet).
+     *
+     *   Signalbird::sendMail('noReply')
+     *       ->to('ayse@ornek.com')
+     *       ->subject('Makbuzunuz')
+     *       ->body('<p>…</p>')
+     *       ->attach('makbuz.pdf', $pdf, 'application/pdf')
+     *       ->transactional()
+     *       ->send();
+     *
+     * Kanal, panelde adresle birlikte açılan `email` modül anahtarıdır; From
+     * adresini o seçer. Yeni anahtar üretilmez - kimlik domain anahtarında,
+     * davranış kanalda (Telsiz `radio('kanal')` ile aynı model).
+     */
+    public static function sendMail(string $channel): MailBuilder
+    {
+        return static::mail()->channel($channel);
+    }
+
+    /**
+     * Yönetim istemcisi. Laravel konteyneri varsa oradaki tekil
+     * (`signalbird.management`), yoksa ortam değişkenlerinden kurulan örnek.
+     */
+    public static function management(): ManagementClient
+    {
+        return static::$app
+            ? static::$app->make(ManagementClient::class)
+            : \Signalbird\Sdk\Signalbird::management();
+    }
+
+    /**
+     * Partner istemcisi - yalnız sözleşmeli platformlar (veribenim, submitcms).
+     * Laravel konteyneri varsa oradaki tekil (`signalbird.partner`).
+     */
+    public static function partner(): PartnerClient
+    {
+        return static::$app
+            ? static::$app->make(PartnerClient::class)
+            : \Signalbird\Sdk\Signalbird::partner();
     }
 }

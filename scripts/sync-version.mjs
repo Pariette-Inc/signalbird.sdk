@@ -7,10 +7,11 @@
  *
  * Her registry sürümü aynı yerden okumaz:
  *   - npm      → package.json "version"           (bu betik yazar)
+ *   - PyPI     → pyproject.toml [project].version  (bu betik yazar)
+ *   - NuGet    → Signalbird.Sdk.csproj <Version>   (bu betik yazar)
+ *   - Maven    → build.gradle.kts version          (bu betik yazar)
  *   - Packagist→ git etiketi                       (composer.json'da version ALANI OLMAZ;
  *                                                   repoya atılan vX.Y.Z etiketi belirler)
- *   - NuGet    → .csproj <Version>                 (eklendiğinde TARGETS'a gir)
- *   - Maven    → pom.xml / gradle.properties       (eklendiğinde TARGETS'a gir)
  *   - Go, SPM  → git etiketi                       (dosyaya yazılmaz)
  *
  * Etiketten sürüm alan diller için kilidi `--check-tag` sağlar; CI sürüm
@@ -43,7 +44,87 @@ if (checkTagIndex !== -1) {
 
 /** Manifestinde "version" alanı taşıyan diller (kökte dururlar). */
 const TARGETS = [
-  'package.json',   // npm → @signalbird/sdk
+  'package.json',   // npm → signalbird
+]
+
+/**
+ * JSON olmayan manifestler: sürüm satırı düzenli ifadeyle değiştirilir.
+ *
+ * Her biri için desen DAR tutulur - `build.gradle.kts` içinde birden çok
+ * `version` geçer (bağımlılık sürümleri) ve geniş bir desen onları da bozardı.
+ */
+const TEXT_TARGETS = [
+  {
+    file: 'pyproject.toml',
+    pattern: /^(version = ")([^"]+)(")$/m,
+    label: 'PyPI',
+  },
+  {
+    file: 'Signalbird.Sdk.csproj',
+    pattern: /^(\s*<Version>)([^<]+)(<\/Version>)$/m,
+    label: 'NuGet',
+  },
+  {
+    file: 'build.gradle.kts',
+    pattern: /^(version = ")([^"]+)(")$/m,
+    label: 'Maven',
+  },
+  {
+    file: 'src/python/signalbird/_version.py',
+    pattern: /^(__version__ = ")([^"]+)(")$/m,
+    label: 'python __version__',
+  },
+
+  // İstek başlığındaki sürüm (CONTRACT §14: `X-Signalbird-Sdk: php/2.6.0`).
+  // Etiketten sürüm alan diller (PHP, Go, Swift) kodun içinde sürümü
+  // bilmiyordu; API'ye "hangi sürümdeyim" diyebilmeleri için sabit gerekti.
+  // TypeScript sürümü derlemede tsup `define` ile alır, burada yoktur.
+  {
+    file: 'src/php/SdkVersion.php',
+    pattern: /^(\s*public const VERSION = ')([^']+)(';)$/m,
+    label: 'PHP SdkVersion::VERSION',
+  },
+  {
+    file: 'src/go/signalbird/version.go',
+    pattern: /^(const Version = ")([^"]+)(")$/m,
+    label: 'Go Version',
+  },
+  {
+    file: 'src/dotnet/Signalbird.Sdk/SdkInfo.cs',
+    pattern: /^(\s*public const string Version = ")([^"]+)(";)$/m,
+    label: '.NET SdkInfo.Version',
+  },
+  {
+    file: 'src/swift/Sources/Signalbird/SdkVersion.swift',
+    pattern: /^(\s*public static let version = ")([^"]+)(")$/m,
+    label: 'Swift SignalbirdSdk.version',
+  },
+  {
+    file: 'src/kotlin/src/main/kotlin/io/signalbird/sdk/SdkVersion.kt',
+    pattern: /^(\s*const val VERSION = ")([^"]+)(")$/m,
+    label: 'Kotlin SignalbirdSdk.VERSION',
+  },
+
+  // Belgelerdeki Gradle satırı. Maven koordinatı sürümü metin olarak taşır ve
+  // hiçbir manifest onu güncellemez: v1.2.0'da yazıldı, v1.4.0'a kadar öyle
+  // kaldı. Elle bakılan her sayı er geç bayatlar, o yüzden kilide bağlandı.
+  //
+  // signalbird.web yolları çapraz depodur ama tek yönlüdür ve zaten var olan
+  // bir desen: `publish-web.mjs` de widget'ı oraya kopyalıyor. Depo yoksa
+  // aşağıdaki döngü sessizce atlar.
+  ...[
+    'README.md',
+    '../signalbird.web/public/docs/tr/sdk-kotlin.md',
+    '../signalbird.web/public/docs/tr/sdk-app.md',
+    '../signalbird.web/src/app/[locale]/(marketing)/sdk/examples.ts',
+    '../signalbird.web/src/app/[locale]/(marketing)/sdk/[slug]/page.tsx',
+  ].map((file) => ({
+    file,
+    pattern: /(io\.signalbird:signalbird-sdk:)(\d+\.\d+\.\d+)()/,
+    label: 'Gradle koordinatı',
+    // Belgede eksik olması yayını durdurmaz: dil bir belgede hiç anılmıyor olabilir.
+    optional: true,
+  })),
 ]
 
 let changed = 0
@@ -66,6 +147,42 @@ for (const rel of TARGETS) {
   writeFileSync(path, JSON.stringify(data, null, indent) + '\n')
 
   console.log(`  ✓ ${rel}: ${previous} → ${version}`)
+  changed++
+}
+
+for (const target of TEXT_TARGETS) {
+  const path = join(root, target.file)
+
+  let raw
+
+  try {
+    raw = readFileSync(path, 'utf8')
+  } catch {
+    console.log(`  · ${target.file} yok, atlandı`)
+    continue
+  }
+
+  const match = raw.match(target.pattern)
+
+  if (!match) {
+    if (target.optional) {
+      console.log(`  · ${target.file}: ${target.label} geçmiyor, atlandı`)
+      continue
+    }
+
+    // Sessizce geçmek, bir paketin eski sürümle yayınlanması demek olurdu.
+    console.error(`  ✗ ${target.file}: sürüm satırı bulunamadı (${target.label})`)
+    process.exitCode = 1
+    continue
+  }
+
+  if (match[2] === version) {
+    console.log(`  = ${target.file} (zaten ${version})`)
+    continue
+  }
+
+  writeFileSync(path, raw.replace(target.pattern, `$1${version}$3`))
+  console.log(`  ✓ ${target.file}: ${match[2]} → ${version}`)
   changed++
 }
 

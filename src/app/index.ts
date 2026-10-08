@@ -1,0 +1,33 @@
+/**
+ * `signalbird/app` - son kullanıcı (uygulama) yüzeyi.
+ *
+ * Müşterinin MÜŞTERİSİ için: canlı sohbet ve push cihaz kaydı. Açık uygulama
+ * anahtarıyla (`sb_public_live_…`) çalışır ve yalnız ziyaretçinin kendi verisine
+ * dokunur - gönderim yapmaz, kişi listesi okumaz.
+ *
+ * Çatı uyarlamaları bunun üstüne oturur:
+ *   `signalbird/react` · `/vue` · `/angular` · `/react-native`
+ *
+ * Hazır arayüz isteyen (kod yazmadan) `signalbird.js` widget'ını gömer.
+ */
+export { SignalbirdApp, clientId } from './client';
+export { ChatSession, type ChatListener, type ChatSessionOptions, type ChatState } from './session';
+export type {
+  AppConfig,
+  AppStorage,
+  Attachment,
+  BootstrapResult,
+  Conversation,
+  ConversationQuery,
+  DevicePlatform,
+  IdentifyInput,
+  IdentityHashInput,
+  Message,
+  MessageSender,
+  RegisterDeviceInput,
+  SbResult,
+  SendMessageInput,
+  SessionInput,
+  StartConversationInput,
+  Visitor,
+} from './types';

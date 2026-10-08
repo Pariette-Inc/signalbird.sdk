@@ -2,68 +2,121 @@
 
 namespace Signalbird\Sdk;
 
+use Signalbird\Sdk\Management\ManagementClient;
+use Signalbird\Sdk\Messaging\MessagingClient;
+use Signalbird\Sdk\Partner\PartnerClient;
+
+/**
+ * Laravel dışı PHP projeleri için tekil erişim.
+ *
+ * Laravel kullanıyorsanız `Signalbird\Sdk\Facades\Signalbird` cephesini
+ * kullanın - o, servis sağlayıcısı üzerinden yapılandırmayı okur.
+ *
+ * Telsiz için `Signalbird::info(...)` (statik yönlendirme), Gönderim için
+ * `Signalbird::messaging()->sendEmail([...])`, Yönetim için
+ * `Signalbird::management()->createRadioProject([...])`.
+ */
 class Signalbird
 {
-    private SignalbirdClient $client;
+    private static ?SignalbirdClient $client = null;
 
-    public function __construct(string $apiKey, string $mode = 'production', int $timeout = 10)
+    private static ?MessagingClient $messaging = null;
+
+    private static ?ManagementClient $management = null;
+
+    private static ?PartnerClient $partner = null;
+
+    public static function configure(
+        string $domainKey,
+        ?string $baseUrl = null,
+        ?string $source = null,
+    ): void {
+        self::$client = new SignalbirdClient($domainKey, $baseUrl, $source);
+    }
+
+    public static function client(): SignalbirdClient
     {
-        $this->client = new SignalbirdClient($apiKey, $mode, $timeout);
+        if (! self::$client) {
+            $key = getenv('SIGNALBIRD_DOMAIN_KEY') ?: '';
+            self::$client = new SignalbirdClient(
+                $key,
+                getenv('SIGNALBIRD_URL') ?: null,
+                getenv('SIGNALBIRD_SOURCE') ?: null,
+            );
+        }
+
+        return self::$client;
+    }
+
+    /** Gönderim istemcisini elle yapılandırır (gizli domain anahtarı). */
+    public static function configureMessaging(string $domainKey, ?string $baseUrl = null): void
+    {
+        self::$messaging = new MessagingClient($domainKey, $baseUrl);
     }
 
     /**
-     * Bilgi bildirimi gönder.
+     * Gönderim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_DOMAIN_KEY` ve
+     * `SIGNALBIRD_MESSAGING_URL` (yoksa `SIGNALBIRD_URL`) ortam değişkenlerinden okunur.
      */
-    public function info(string $title, string $message): array
+    public static function messaging(): MessagingClient
     {
-        return $this->client->trigger($title, $message, 'info');
+        if (! self::$messaging) {
+            self::$messaging = new MessagingClient(
+                getenv('SIGNALBIRD_DOMAIN_KEY') ?: '',
+                (getenv('SIGNALBIRD_MESSAGING_URL') ?: null) ?: (getenv('SIGNALBIRD_URL') ?: null),
+            );
+        }
+
+        return self::$messaging;
+    }
+
+    /** Yönetim istemcisini elle yapılandırır (gizli domain anahtarı, `sb_secret_live_…`). */
+    public static function configureManagement(string $domainKey, ?string $baseUrl = null): void
+    {
+        self::$management = new ManagementClient($domainKey, $baseUrl);
     }
 
     /**
-     * Uyarı bildirimi gönder.
+     * Yönetim istemcisi. Yapılandırılmadıysa `SIGNALBIRD_DOMAIN_KEY` ortam
+     * değişkeninden okunur - Telsiz ve Gönderim ile aynı gizli domain anahtarı.
      */
-    public function warn(string $title, string $message): array
+    public static function management(): ManagementClient
     {
-        return $this->client->trigger($title, $message, 'warn');
+        if (! self::$management) {
+            self::$management = new ManagementClient(
+                (getenv('SIGNALBIRD_DOMAIN_KEY') ?: null) ?: (getenv('SIGNALBIRD_DOMAIN_KEY') ?: ''),
+                (getenv('SIGNALBIRD_MESSAGING_URL') ?: null) ?: (getenv('SIGNALBIRD_URL') ?: null),
+            );
+        }
+
+        return self::$management;
+    }
+
+    /** @param array<int, mixed> $arguments */
+    public static function __callStatic(string $method, array $arguments): mixed
+    {
+        return self::client()->{$method}(...$arguments);
+    }
+
+    /** Partner istemcisini elle yapılandırır (gizli domain anahtarı). */
+    public static function configurePartner(string $domainKey, ?string $baseUrl = null): void
+    {
+        self::$partner = new PartnerClient($domainKey, $baseUrl);
     }
 
     /**
-     * Hata bildirimi gönder.
+     * Partner istemcisi - YALNIZ sözleşmeli platformlar için. Yapılandırılmadıysa
+     * `SIGNALBIRD_DOMAIN_KEY` okunur.
      */
-    public function error(string $title, string $message): array
+    public static function partner(): PartnerClient
     {
-        return $this->client->trigger($title, $message, 'error');
-    }
+        if (! self::$partner) {
+            self::$partner = new PartnerClient(
+                getenv('SIGNALBIRD_DOMAIN_KEY') ?: '',
+                (getenv('SIGNALBIRD_MESSAGING_URL') ?: null) ?: (getenv('SIGNALBIRD_URL') ?: null),
+            );
+        }
 
-    /**
-     * Kritik alarm gönder (sesli + yüksek öncelikli push).
-     */
-    public function critical(string $title, string $message): array
-    {
-        return $this->client->trigger($title, $message, 'critical');
-    }
-
-    /**
-     * Onay/başarı bildirimi gönder.
-     */
-    public function confirm(string $title, string $message): array
-    {
-        return $this->client->trigger($title, $message, 'confirm');
-    }
-
-    /**
-     * Debug bildirimi gönder.
-     */
-    public function debug(string $title, string $message): array
-    {
-        return $this->client->trigger($title, $message, 'debug');
-    }
-
-    /**
-     * Özel seviyede bildirim gönder.
-     */
-    public function send(string $title, string $message, string $level = 'info'): array
-    {
-        return $this->client->trigger($title, $message, $level);
+        return self::$partner;
     }
 }

@@ -2,55 +2,205 @@
 
 namespace Signalbird\Sdk;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-
+/**
+ * Telsiz istemcisi (PHP / sunucu tarafı).
+ *
+ * Guzzle'a bağımlı DEĞİLDİR: cURL uzantısı her PHP kurulumunda vardır ve bir
+ * log kütüphanesinin müşterinin projesine HTTP istemcisi sürümü dayatması,
+ * sürüm çakışmalarının en sık sebebidir.
+ *
+ * Varsayılan davranış SESSİZ HATA'dır: telsiz erişilemezse müşterinin ödeme
+ * akışı çökmemeli. `throwOnError` ile geliştirme sırasında açılabilir.
+ */
 class SignalbirdClient
 {
-    private Client $http;
-    private string $apiKey;
+    public const LEVELS = ['debug', 'info', 'warn', 'error', 'critical'];
 
-    private const PRODUCTION_URL = 'https://live.signalbird.io/api';
-    private const TEST_URL = 'http://localhost/api';
+    private string $baseUrl;
 
-    public function __construct(string $apiKey, string $mode = 'production', int $timeout = 10)
-    {
-        $this->apiKey = $apiKey;
+    public function __construct(
+        private string $domainKey,
+        ?string $baseUrl = null,
+        private ?string $source = null,
+        private int $timeout = 5,
+        private bool $throwOnError = false,
+    ) {
+        if ($domainKey === '') {
+            throw new SignalbirdException('Signalbird: anahtar boş.');
+        }
 
-        $baseUrl = $mode === 'test' ? self::TEST_URL : self::PRODUCTION_URL;
+        /*
+         * Yanlış anahtar türü KURULUMDA yakalanır, ilk istekte değil.
+         * Açık anahtar sunucuda `ORIGIN_REQUIRED` alır ve sebebi log'da
+         * görünmez; haftalar sonra fark etmektense burada durmak yeğdir.
+         */
+        if (! str_starts_with($domainKey, 'sb_secret_live_')) {
+            throw new SignalbirdException(
+                'Signalbird: bu istemci GİZLİ domain anahtarı ister (sb_secret_live_…). '
+                . 'Açık anahtar (sb_public_live_…) yalnız tarayıcı ve mobil içindir.'
+            );
+        }
 
-        $this->http = new Client([
-            'base_uri' => rtrim($baseUrl, '/') . '/',
-            'timeout'  => $timeout,
-            'headers'  => [
-                'Content-Type' => 'application/json',
-                'Accept'       => 'application/json',
-            ],
-        ]);
+        $this->baseUrl = rtrim($baseUrl ?: 'https://live.signalbird.io/api', '/');
     }
 
     /**
-     * @throws SignalbirdException
+     * Kanalı bağlar ve yazacı döner.
+     *
+     *     Signalbird::radio('penyuCritical')->error('Ödeme düğümü öldü', $ctx);
+     *
+     * Kanal adını her satırda tekrar etmemek için; `log()`'un kısaltmasıdır.
      */
-    public function trigger(string $title, string $message, string $level): array
+    public function radio(string $key): RadioChannel
     {
-        try {
-            $response = $this->http->post("sdk/log/{$this->apiKey}", [
-                'json' => [
-                    'title'   => $title,
-                    'message' => $message,
-                    'level'   => $level,
-                ],
-            ]);
+        return new RadioChannel($this, $key);
+    }
 
-            return json_decode((string) $response->getBody(), true);
-        } catch (RequestException $e) {
-            $statusCode = $e->getResponse()?->getStatusCode() ?? 0;
-            $body = $e->getResponse() ? (string) $e->getResponse()->getBody() : $e->getMessage();
-            $decoded = json_decode($body, true);
-            $detail = $decoded['message'] ?? $body;
+    /**
+     * Bir kanala kayıt gönderir.
+     *
+     * `message` 4000 karaktere kırpılır (API sınırı - aşan satır 422 alırdı) ve
+     * `context` içindeki istisnalar okunur diziye çevrilir (`json_encode` onları
+     * `{}` yazıyordu). Ayrıntı: RadioPayload.
+     *
+     * @param  array<string, mixed>|null  $context
+     * @return array{ok: bool, event_id?: string, code?: string}
+     */
+    public function log(string $key, string $message, ?string $level = null, ?array $context = null): array
+    {
+        return $this->post('/v1/radio/log', array_filter([
+            'key' => $key,
+            'message' => RadioPayload::message($message),
+            'level' => $level,
+            'context' => RadioPayload::context($context),
+            'source' => $this->source,
+        ], fn ($value) => $value !== null));
+    }
 
-            throw new SignalbirdException($detail, $statusCode, $decoded);
+    /**
+     * Toplu gönderim (en fazla 100).
+     *
+     * Doğrulama satır satır DEĞİLDİR: tek bir geçersiz satır bütün paketi 422
+     * ile düşürür. Kırpma ve istisna dönüşümü bu yüzden burada da yapılır -
+     * `SignalbirdLogHandler` her şeyi bu yoldan gönderir.
+     *
+     * @param  array<int, array{key: string, message: string, level?: string, context?: array}>  $events
+     * @return array{accepted: int, total: int, results: array}
+     */
+    public function batch(array $events): array
+    {
+        $payload = array_map(function (array $event) {
+            return array_filter([
+                'key' => $event['key'],
+                'message' => RadioPayload::message((string) $event['message']),
+                'level' => $event['level'] ?? null,
+                'context' => RadioPayload::context($event['context'] ?? null),
+                'source' => $event['source'] ?? $this->source,
+            ], fn ($value) => $value !== null);
+        }, array_slice($events, 0, 100));
+
+        $response = $this->post('/v1/radio/log/batch', ['events' => $payload]);
+
+        return [
+            'accepted' => (int) ($response['accepted'] ?? 0),
+            'total' => (int) ($response['total'] ?? count($events)),
+            'results' => $response['results'] ?? [],
+        ];
+    }
+
+    /**
+     * Kimlik doğrulama hash'i (CONTRACT §15.2).
+     *
+     *   identity_hash = hex(HMAC-SHA256(hex(SHA-256(secretKey)), externalId))
+     *
+     * Sohbet/push ziyaretçisinin `external_id`'si ancak bu hash'le birlikte
+     * gelirse güvenilir sayılır (kişi bağlama, cihaz hedefleme, ajan araçları).
+     * Hash sunucuda üretilir ve sayfaya yazılır; gizli anahtar istemciye inmez.
+     */
+    public function identityHash(string $externalId): string
+    {
+        // Sunucu (Laravel TrimStrings) değeri kırpılmış alır; imza da kırpılmış değerin (§15.2).
+        return hash_hmac('sha256', trim($externalId), hash('sha256', $this->domainKey));
+    }
+
+    public function debug(string $key, string $message, ?array $context = null): array
+    {
+        return $this->log($key, $message, 'debug', $context);
+    }
+
+    public function info(string $key, string $message, ?array $context = null): array
+    {
+        return $this->log($key, $message, 'info', $context);
+    }
+
+    public function warn(string $key, string $message, ?array $context = null): array
+    {
+        return $this->log($key, $message, 'warn', $context);
+    }
+
+    public function error(string $key, string $message, ?array $context = null): array
+    {
+        return $this->log($key, $message, 'error', $context);
+    }
+
+    public function critical(string $key, string $message, ?array $context = null): array
+    {
+        return $this->log($key, $message, 'critical', $context);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function post(string $path, array $payload): array
+    {
+        $handle = curl_init($this->baseUrl . $path);
+        $sdkHeaders = [];
+
+        curl_setopt_array($handle, [
+            CURLOPT_HEADERFUNCTION => SdkVersion::collector($sdkHeaders),
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $this->timeout,
+            CURLOPT_CONNECTTIMEOUT => $this->timeout,
+            // Geçersiz UTF-8 (ör. ikili veri taşıyan context) `json_encode`'u
+            // `false` döndürür ve curl BOŞ gövde gönderirdi; bozuk bayt U+FFFD olur.
+            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json',
+                'X-Signalbird-Key: ' . $this->domainKey,
+                SdkVersion::headerLine(),
+            ],
+        ]);
+
+        $body = curl_exec($handle);
+        $status = (int) curl_getinfo($handle, CURLINFO_HTTP_CODE);
+        $error = curl_error($handle);
+        curl_close($handle);
+
+        SdkVersion::note($sdkHeaders);
+
+        if ($body === false) {
+            if ($this->throwOnError) {
+                throw new SignalbirdException("Signalbird: bağlanılamadı ({$error})", 'NETWORK_ERROR', 0);
+            }
+
+            return ['ok' => false, 'code' => 'NETWORK_ERROR'];
         }
+
+        $decoded = json_decode((string) $body, true) ?: [];
+
+        if ($status >= 400) {
+            $code = $decoded['code'] ?? 'UNKNOWN';
+
+            if ($this->throwOnError) {
+                throw new SignalbirdException("Signalbird: {$code} (HTTP {$status})", (string) $code, $status, $decoded);
+            }
+
+            return ['ok' => false, 'code' => $code];
+        }
+
+        return $decoded + ['ok' => true];
     }
 }

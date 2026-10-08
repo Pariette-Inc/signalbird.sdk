@@ -1,44 +1,294 @@
-import axios, { AxiosInstance } from 'axios'
-import { SignalbirdConfig, API_URLS, TriggerResponse, SignalbirdError } from './types'
+/**
+ * Telsiz istemcisi (sunucu tarafı).
+ *
+ * Bağımlılığı yoktur: Node 18+ ile gelen `fetch` kullanılır. Bir log
+ * kütüphanesinin kendi bağımlılık zincirini müşterinin projesine taşıması,
+ * sürüm çakışmalarının en sinir bozucu kaynağıdır.
+ */
+import {
+  DEFAULT_BASE_URL,
+  PUBLIC_PREFIX,
+  SECRET_PREFIX,
+  SignalbirdError,
+  type BatchResult,
+  type Level,
+  type LogInput,
+  type LogResult,
+  type SignalbirdConfig,
+} from './types';
+import { SDK_HEADER, noteSdkStatus, sdkHeaderValue } from '../shared/version';
+import { safeContext, truncateMessage } from '../shared/serialize';
+import { createHash, createHmac } from 'node:crypto';
 
 export class SignalbirdClient {
-  private http: AxiosInstance
-  readonly apiKey: string
+  private readonly baseUrl: string;
+  private readonly timeout: number;
+  private readonly throwOnError: boolean;
+  private readonly debug: boolean;
+  private readonly source?: string;
 
-  constructor(config: SignalbirdConfig) {
-    this.apiKey = config.apiKey
-    const baseURL = API_URLS[config.mode ?? 'production']
+  constructor(private readonly config: SignalbirdConfig) {
+    if (!config.domainKey) {
+      throw new SignalbirdError('Signalbird: domainKey zorunlu.', 0, 'NO_KEY');
+    }
 
-    this.http = axios.create({
-      baseURL,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      timeout: config.timeout ?? 10000,
-    })
+    /*
+     * Yanlış anahtar türü KURULUMDA yakalanır, ilk istekte değil.
+     *
+     * Açık anahtarı sunucuda kullanmak sessiz bir hatadır: istek gider,
+     * `ORIGIN_REQUIRED` döner ve sebebi log'da görünmez. Haftalar sonra fark
+     * etmektense burada durmak yeğdir.
+     */
+    if (config.domainKey.startsWith(PUBLIC_PREFIX)) {
+      throw new SignalbirdError(
+        'Signalbird: sunucu istemcisine AÇIK anahtar (sb_public_live_…) verildi. ' +
+        'Gizli anahtarı (sb_secret_live_…) kullanın; açık anahtar tarayıcı içindir.',
+        0,
+        'WRONG_KEY_TYPE'
+      );
+    }
 
-    this.http.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response) {
-          const data = error.response.data
-          throw new SignalbirdError(
-            data?.message || error.message,
-            error.response.status,
-            data
-          )
-        }
-        throw new SignalbirdError(error.message, 0)
-      }
-    )
+    if (!config.domainKey.startsWith(SECRET_PREFIX)) {
+      throw new SignalbirdError(
+        'Signalbird: anahtar biçimi tanınmadı. Gizli domain anahtarı ' +
+        '`sb_secret_live_` ile başlar (Panel → Alan adları → Anahtarlar).',
+        0,
+        'WRONG_KEY_TYPE'
+      );
+    }
+
+    this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, '');
+    this.timeout = config.timeout ?? 5000;
+    this.throwOnError = config.throwOnError ?? false;
+    this.debug = config.debug ?? process.env.NODE_ENV !== 'production';
+    this.source = config.source;
   }
 
-  async trigger(title: string, message: string, level: string): Promise<TriggerResponse> {
-    const response = await this.http.post<TriggerResponse>(
-      `/sdk/log/${this.apiKey}`,
-      { title, message, level }
-    )
-    return response.data
+  /**
+   * Kanalı bağlar ve yazacı döner.
+   *
+   *     signalbird().radio('penyuCritical').error('Ödeme düğümü öldü', ctx)
+   *
+   * Kanal adını her satırda tekrar etmemek için; `log()`'un kısaltmasıdır.
+   * Sözdizimi şekeridir, yeni bir yüzey değil.
+   */
+  radio(key: string) {
+    return {
+      log: (message: string, level?: Level, context?: Record<string, unknown>) =>
+        this.log({ key, message, level, context }),
+      debug: (message: string, context?: Record<string, unknown>) => this.debugLog(key, message, context),
+      info: (message: string, context?: Record<string, unknown>) => this.info(key, message, context),
+      warn: (message: string, context?: Record<string, unknown>) => this.warn(key, message, context),
+      error: (message: string, context?: Record<string, unknown>) => this.error(key, message, context),
+      critical: (message: string, context?: Record<string, unknown>) => this.critical(key, message, context),
+    };
+  }
+
+  /**
+   * Tek kayıt gönderir.
+   *
+   * `message` 4000 kod noktasına kırpılır (API sınırı; aşan satır 422 alırdı)
+   * ve `context` güvenli kopyaya çevrilir: döngüsel nesne ya da BigInt artık
+   * `NETWORK_ERROR` gibi görünen bir istisnaya dönüşmez.
+   */
+  async log(input: LogInput): Promise<LogResult> {
+    return this.send('/v1/radio/log', {
+      key: input.key,
+      message: truncateMessage(input.message),
+      level: input.level,
+      context: safeContext(input.context),
+      source: input.source ?? this.source,
+    });
+  }
+
+  /**
+   * Toplu gönderim - 100 kayda kadar.
+   *
+   * Kısmi başarı normaldir (kota tam ortada dolabilir), o yüzden sonuç tek bir
+   * durum değil satır satır döner.
+   *
+   * Doğrulama ise satır satır DEĞİLDİR: tek bir geçersiz satır (4000'i aşan
+   * mesaj) bütün paketi 422 ile düşürür. Bu yüzden kırpma burada da yapılır.
+   */
+  async batch(events: LogInput[]): Promise<BatchResult> {
+    const payload = {
+      events: events.slice(0, 100).map((event) => ({
+        key: event.key,
+        message: truncateMessage(event.message),
+        level: event.level,
+        context: safeContext(event.context),
+        source: event.source ?? this.source,
+      })),
+    };
+
+    const response = await this.request('/v1/radio/log/batch', payload);
+
+    if (!response) {
+      return { accepted: 0, total: events.length, results: {} };
+    }
+
+    const results: BatchResult['results'] = {};
+
+    for (const [index, row] of Object.entries(response.body?.results ?? {})) {
+      const value = row as { ok: boolean; event_id?: string; code?: string };
+      results[Number(index)] = { ok: value.ok, eventId: value.event_id, code: value.code };
+    }
+
+    return {
+      accepted: Number(response.body?.accepted ?? 0),
+      total: Number(response.body?.total ?? events.length),
+      results,
+    };
+  }
+
+  // ── Seviye kısayolları ────────────────────────────────────────────────
+  // İlk argüman MODÜL ANAHTARIDIR (panelde açtığınız kanalın adı), seviye
+  // değil: `sb.error('kritikApiHatasi', '…')`.
+
+  debugLog(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'debug', context });
+  }
+
+  info(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'info', context });
+  }
+
+  warn(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'warn', context });
+  }
+
+  error(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'error', context });
+  }
+
+  critical(key: string, message: string, context?: Record<string, unknown>) {
+    return this.log({ key, message, level: 'critical', context });
+  }
+
+  /**
+   * Kimlik doğrulama hash'i (CONTRACT §15.2) - sohbet/push ziyaretçisinin
+   * `external_id`'sini GÜVENİLİR kılar.
+   *
+   *     identity_hash = hex(HMAC-SHA256(hex(SHA-256(secretKey)), externalId))
+   *
+   * Anahtar gizli anahtarın kendisi değil SHA-256 özetidir: sunucu anahtarı
+   * düz saklamaz. Hash sunucuda üretilir, sayfaya `external_id` ile birlikte
+   * yazılır; gizli anahtar istemciye İNMEZ.
+   */
+  identityHash(externalId: string): string {
+    const key = createHash('sha256').update(this.config.domainKey).digest('hex');
+
+    return createHmac('sha256', key).update(String(externalId).trim()).digest('hex'); // §15.2: kırpılmış değer imzalanır
+  }
+
+  /**
+   * Yakalanmamış hataları Telsiz'e bağlar.
+   *
+   * Kancayı takıp süreci ÖLDÜRMEYE devam eder: `uncaughtException` sonrası
+   * süreci ayakta tutmak, bozuk durumdaki bir uygulamayı çalıştırmaya devam
+   * etmek demektir - log göndermek bunu meşrulaştırmaz.
+   */
+  captureUncaught(key = 'critical'): () => void {
+    const onError = (error: Error) => {
+      void this.log({
+        key,
+        message: error.message,
+        level: 'critical',
+        context: { stack: error.stack?.split('\n').slice(0, 20).join('\n') },
+      });
+    };
+
+    const onRejection = (reason: unknown) => {
+      void this.log({
+        key,
+        message: reason instanceof Error ? reason.message : String(reason),
+        level: 'error',
+        context: reason instanceof Error ? { stack: reason.stack } : undefined,
+      });
+    };
+
+    process.on('uncaughtException', onError);
+    process.on('unhandledRejection', onRejection);
+
+    return () => {
+      process.off('uncaughtException', onError);
+      process.off('unhandledRejection', onRejection);
+    };
+  }
+
+  private async send(path: string, payload: unknown): Promise<LogResult> {
+    const response = await this.request(path, payload);
+
+    if (!response) {
+      return { ok: false, code: 'NETWORK_ERROR' };
+    }
+
+    /*
+     * `MODULE_KEY_DISABLED` 202 + `ok:false` döner (kabul edildi ama yazılmadı:
+     * istemci tekrar denemesin). Yalnız HTTP durumuna bakmak, panelde
+     * kapatılmış kanala yazılan kaydı "gönderildi" diye raporlardı.
+     */
+    if (!response.ok || response.body?.ok === false) {
+      const code = response.body?.code ?? 'UNKNOWN';
+
+      if (this.throwOnError) {
+        throw new SignalbirdError(`Signalbird: ${code}`, response.status, code);
+      }
+
+      if (this.debug) {
+        console.warn(`[signalbird] gönderilemedi: ${code} (HTTP ${response.status})`);
+      }
+
+      return { ok: false, code, status: response.status };
+    }
+
+    return { ok: true, eventId: response.body?.event_id, status: response.status };
+  }
+
+  private async request(
+    path: string,
+    payload: unknown
+  ): Promise<{ ok: boolean; status: number; body: any } | null> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(this.baseUrl + path, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          // Kanonik başlık `X-Signalbird-Key`; `Authorization: Bearer` de
+          // kabul edilir ama anahtarın bir OAuth jetonu olmadığı açık olsun.
+          'X-Signalbird-Key': this.config.domainKey,
+          [SDK_HEADER]: sdkHeaderValue('node'),
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      noteSdkStatus(response.headers);
+      const body = await response.json().catch(() => ({}));
+
+      return { ok: response.ok, status: response.status, body };
+    } catch (error) {
+      if (this.throwOnError) {
+        throw new SignalbirdError(
+          error instanceof Error ? error.message : 'network error',
+          0,
+          'NETWORK_ERROR'
+        );
+      }
+
+      if (this.debug) {
+        console.warn('[signalbird] ulaşılamadı:', error);
+      }
+
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }
+
+export type { Level, LogInput, LogResult, BatchResult, SignalbirdConfig };

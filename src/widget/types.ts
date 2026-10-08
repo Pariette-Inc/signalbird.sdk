@@ -1,0 +1,349 @@
+/**
+ * Widget'ın konuştuğu SDK uçlarının şekilleri (docs/PLATFORM_EXPANSION §4.2).
+ *
+ * Alanlar sunucuyla birebir (snake_case). Yerel durum alanları `_` ile başlar
+ * ve sunucuya asla gönderilmez.
+ */
+
+export interface InitOptions {
+  /** Açık domain anahtarı (`sb_public_live_…`) - kimliği doğrular. */
+  publicKey: string;
+  /** Sohbet kanalı (`chat` modül anahtarı) - hangi widget, hangi gelen kutusu. */
+  chatKey?: string;
+  /** Varsayılan https://live.signalbird.io/api */
+  baseUrl?: string;
+  /** 'tr' | 'en' - verilmezse uygulama ayarı → navigator.language */
+  locale?: string;
+  /** Sayfa yüklenirken zaten bilinen kullanıcı (login sonrası). */
+  user?: IdentifyInput;
+  /**
+   * Biçimi kanal ayarının ÜSTÜNDE ezer (5 Eyl 2026).
+   *
+   * Ayar sitenin varsayılanıdır; tek bir sayfa ondan ayrılabilsin diye burası
+   * var: destek sayfası `layout: 'inline'` der, geri kalan sayfalarda balon
+   * çalışmaya devam eder. "Bir site ikisini de kullanabilsin" bunun içindir.
+   */
+  layout?: 'bubble' | 'sidebar' | 'inline';
+  /**
+   * `inline` biçiminde sohbetin çizileceği kap: CSS seçicisi ya da elemanın
+   * kendisi. Verilmezse kanal ayarındaki `inline_selector`, o da yoksa
+   * `#signalbird-chat` aranır.
+   */
+  container?: string | Element;
+  /**
+   * Kimlik doğrulama hash'i (CONTRACT §15.2) - `user.external_id` için,
+   * SUNUCUNUZDA `identityHash(externalId)` ile üretilir. Yoksa sunucu
+   * `external_id`/`email`'i doğrulanmamış sayar.
+   */
+  identityHash?: string;
+  debug?: boolean;
+}
+
+export interface IdentifyInput {
+  external_id?: string;
+  /** `external_id`'nin hash'i (CONTRACT §15.2). `identity_hash` da kabul. */
+  identityHash?: string;
+  identity_hash?: string;
+  email?: string;
+  name?: string;
+  phone?: string;
+  attributes?: Record<string, unknown>;
+}
+
+export interface PushRegisterInput {
+  token: string;
+  platform: 'web' | 'ios' | 'android';
+  provider?: 'fcm' | 'apns' | 'webpush';
+  external_id?: string;
+  /** Verilmezse ve `external_id` bilinen kimlikle aynıysa widget ekler. */
+  identity_hash?: string;
+  device_name?: string;
+  app_version?: string;
+  locale?: string;
+}
+
+export interface ChatSettings {
+  greeting: string | null;
+  offline_message: string | null;
+  color: string;
+  position: 'left' | 'right';
+  launcher_text: string | null;
+  prechat: { name: boolean; email: boolean; required: boolean };
+  working_hours: unknown;
+  push_visitor_on_reply: boolean;
+  sound: boolean;
+  locale: 'auto' | 'tr' | 'en' | string;
+  /**
+   * Sohbet sonunda gösterilecek puanlama/yorum bağlantısı (Trustpilot, Google
+   * İşletme…). Site sahibi panelden girer.
+   *
+   * `review_min_rating` bir nezaket kuralı değil ticari bir kuraldır: eşiğin
+   * altında puan veren müşteriye bağlantı HİÇ gösterilmez.
+   */
+  review_url?: string | null;
+  review_label?: string | null;
+  review_min_rating?: number;
+  max_attachment_mb?: number;
+
+  /**
+   * Tek mesajda en fazla karakter (2 Eyl 2026). SUNUCUDAN gelir; widget'a
+   * gömülmez. Aynı sayıyı iki yerde tutmak, birini değiştirip diğerini unutmak
+   * demekti: ziyaretçi yazabildiğini sanıp gönderdiğinde 422 alırdı.
+   */
+  max_message_chars?: number;
+
+  /**
+   * Ziyaretçinin yükleyebileceği MIME türleri - sunucudaki listenin aynısı.
+   * Joker YOKTUR ve bu güvenlik kararıdır: `image/*` betik çalıştırabilen
+   * `image/svg+xml`'i de içine alırdı.
+   */
+  attachment_mimes?: string[];
+
+  /**
+   * Marka - panelden yönetilir (29 Ağu 2026).
+   *
+   * `logo_url` başlık avatarında ve (seçilmişse) balonda kullanılır;
+   * `theme` widget'ın KENDİ yüzeyi içindir, sayfanınkini değiştirmez;
+   * `launcher_icon` balondaki işareti seçer.
+   */
+  logo_url?: string | null;
+  theme?: 'light' | 'dark' | 'auto';
+  launcher_icon?: 'bird' | 'chat' | 'logo';
+  /**
+   * Baloncuğun tamamı müşterinin görseli (8 Eki 2026): varsa işaret ve zemin
+   * yerine bu çizilir. `launcher_color` yalnız baloncuğun zeminini boyar.
+   */
+  launcher_image_url?: string | null;
+  launcher_color?: string | null;
+
+  /**
+   * Balonun görünürlüğü (30 Ağu 2026).
+   *
+   * `always` : balon her zaman durur.
+   * `manual` : balon hiç çizilmez; sitenin kendi düğmesi
+   *            `Signalbird.chat.open()` çağırır. Sohbet başlayınca balon
+   *            görünür olur (kapatılan pencerede yanıt görülebilsin),
+   *            ziyaretçi sohbeti BİTİRİNCE yeniden gizlenir.
+   */
+  launcher_mode?: 'always' | 'manual';
+
+  /**
+   * Panelin biçimi.
+   *
+   * `bubble`  : köşedeki küçük pencere (varsayılan).
+   * `sidebar` : ekran boyu, kenara yaslı çekmece.
+   * `inline`  : sayfanın İÇİNDE, verilen kabın içinde. Balon, açma/kapama,
+   *             sürükleme ve sayfa kaydırma kilidi yoktur - destek sayfasının
+   *             gövdesi sohbettir.
+   *
+   * `position` ilk ikisinde geçerlidir.
+   */
+  layout?: 'bubble' | 'sidebar' | 'inline';
+
+  /** `inline` biçiminde kabın CSS seçicisi. Varsayılan `#signalbird-chat`. */
+  inline_selector?: string | null;
+
+  /**
+   * Ziyaretçinin gördüğü ajan adı - kanal ayarı. Sunucu adları ZATEN buna
+   * göre çözer; alan burada bilgi olarak durur (panelin ayarı okuyan kodu
+   * aynı tipi kullanıyor).
+   */
+  agent_display_name?: string | null;
+
+  /**
+   * Dile göre metinler. Sunucu ziyaretçinin diline göre ÇÖZER ve tek dilli
+   * alanları (greeting, offline_message, launcher_text) doldurarak gönderir;
+   * widget burada bir şey hesaplamaz. Alan yine de tipte durur: müşterinin
+   * kendi panelinde ayarı okuyan kod aynı tipi kullanıyor.
+   */
+  texts?: Record<string, Record<string, string>> | null;
+  [key: string]: unknown;
+}
+
+export interface SdkApp {
+  id: number;
+  name: string;
+  platform: string;
+  chat_enabled: boolean;
+  push_enabled: boolean;
+  chat: ChatSettings;
+  max_attachment_mb?: number;
+}
+
+/**
+ * Ziyaretçinin seçebileceği destek konusu. Sunucu yalnız GÖRÜNÜR konuları
+ * yollar; widget listeyi olduğu gibi çizer, kendi süzgeci yoktur.
+ */
+export interface TopicOption {
+  id: number;
+  slug: string;
+  name: string;
+  description?: string | null;
+  parent_id?: number | null;
+}
+
+/**
+ * Canlı bağlantı bilgisi - YALNIZ ADRES. Anahtar ya da sır taşımaz: bağlanan
+ * taraf hiçbir şey göremez, odaya girmek imza ister ve imzayı API verir.
+ *
+ * Gömme etiketine yazılmaz: adres değişirse müşterinin sitesindeki tek satır
+ * yeniden düzenlenmek zorunda kalmasın. `enabled:false` ise widget polling ile
+ * çalışır - canlı bağlantı bir iyileştirmedir, onsuz da sistem tamdır.
+ */
+export interface RealtimeInfo {
+  enabled: boolean;
+  /** `https://ws.signalbird.io` - soket servisinin public adresi. */
+  url?: string;
+}
+
+export interface Bootstrap {
+  /**
+   * SDK sözleşmesinde alanın adı `channel` (1 Eyl 2026 - konuşma bir
+   * "uygulamaya" değil kanala aittir). `app` ESKİ sunucular içindir; widget
+   * ikisini de okur. 3 Eyl'e kadar widget yalnız `app` okuyordu ve yeni
+   * sunucuda HİÇ çizilmiyordu - canlı chat bu yüzden hiç açılmadı.
+   */
+  channel?: SdkApp;
+  /** @deprecated eski sunucu alanı; `channel` yoksa okunur. */
+  app?: SdkApp;
+  realtime?: RealtimeInfo;
+  online: boolean;
+  within_hours: boolean;
+  /** Boşsa ön-formda konu adımı HİÇ çizilmez. */
+  topics?: TopicOption[];
+  visitor?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    unread?: number;
+    verified?: boolean;
+    identity_verified?: boolean;
+  } | null;
+  conversation?: Conversation | null;
+  /**
+   * Cloudflare Turnstile (CONTRACT §15.1). `null` = gerekmez (kapalı ya da
+   * ziyaretçi zaten doğrulandı). Doluysa betik panel ilk açıldığında yüklenir.
+   */
+  captcha?: CaptchaConfig | null;
+}
+
+export interface CaptchaConfig {
+  provider: 'turnstile' | string;
+  site_key: string;
+  mode?: 'managed' | string;
+}
+
+export interface Visitor {
+  id: string;
+  /** Yalnız oluşturma anında döner; localStorage'da saklanır. */
+  secret?: string;
+  name?: string | null;
+  email?: string | null;
+  /** Captcha geçti (CONTRACT §15.1). */
+  verified?: boolean;
+  /** Geçerli `identity_hash` ile tanıtıldı (CONTRACT §15.2). */
+  identity_verified?: boolean;
+}
+
+export type ConversationStatus = 'open' | 'resolved' | 'closed';
+
+export interface Conversation {
+  id: string;
+  status: ConversationStatus;
+  subject?: string | null;
+  last_message_at?: string | null;
+  last_message_preview?: string | null;
+  last_message_sender?: 'visitor' | 'agent' | 'bot' | 'system' | null;
+  visitor_unread?: number;
+  rating?: number | null;
+  assigned_user_id?: number | null;
+  agent?: Agent | null;
+  [key: string]: unknown;
+}
+
+export interface Agent {
+  name: string;
+  avatar?: string | null;
+  online?: boolean;
+}
+
+export interface Attachment {
+  id: string | number;
+  name: string;
+  url: string;
+  mime: string;
+  size: number;
+  width?: number;
+  height?: number;
+}
+
+export interface MessageOption {
+  label: string;
+  value?: string;
+  url?: string;
+}
+
+export interface MessageMeta {
+  ai?: boolean;
+  agent_name?: string | null;
+  options?: MessageOption[];
+  [key: string]: unknown;
+}
+
+export interface Message {
+  id: string;
+  conversation_id?: string;
+  /**
+   * `bot` = kanal ajanı (yapay zekâ, 3 Eyl 2026). Ziyaretçi için karşı
+   * taraftır: ajan gibi çizilir, adı `agent.name`/`sender_name`.
+   */
+  sender_type: 'visitor' | 'agent' | 'bot' | 'system';
+  sender_id?: string | number | null;
+  sender_name?: string | null;
+  /** Sunucu kartı: ajan ya da bot (`bot:true`). */
+  agent?: { id: number | null; name: string; avatar_url?: string | null; bot?: boolean } | null;
+  type: 'text' | 'image' | 'file' | 'system';
+  body: string | null;
+  /**
+   * Anlık çeviri - ziyaretçinin diline (28 Ağu 2026).
+   *
+   * Ziyaretçi ÇEVİRİYİ okur; orijinal gövde de gelir ama widget onu
+   * göstermez. Ajanın Türkçe yazdığını bilmek ziyaretçinin işine yaramaz,
+   * bilmesi gereken tek şey kendi dilindeki cevaptır.
+   */
+  translation?: { lang: string; body: string; source?: string | null } | null;
+  attachments: Attachment[] | null;
+  reply_to_id?: string | null;
+  client_id?: string | null;
+  /** `{"👍": ["agent:3", "visitor"]}` */
+  reactions?: Record<string, string[]> | null;
+  delivered_at?: string | null;
+  read_at?: string | null;
+  edited_at?: string | null;
+  deleted_at?: string | null;
+  /**
+   * Sunucu meta'sı. `options`: kanal ajanının sunduğu dokunulabilir
+   * seçenekler - `url` varsa sayfa açılır, yoksa `value ?? label` ziyaretçinin
+   * mesajı olarak gönderilir.
+   */
+  meta?: MessageMeta | null;
+  created_at: string;
+  /** Yerel: sunucuya gitti mi */
+  _pending?: boolean;
+  _failed?: boolean;
+  /** Yerel: yüklenmeden önce görsel önizlemesi için */
+  _files?: File[];
+}
+
+export interface ConversationPayload {
+  conversation: Conversation;
+  messages: Message[];
+  agent_typing?: boolean;
+  agent?: Agent | null;
+}
+
+export type ApiResult<T> =
+  | { ok: true; status: number; data: T }
+  | { ok: false; status: number; code: string; message: string; data?: unknown };
+
+export type ChatEvent = 'unread' | 'open' | 'close';

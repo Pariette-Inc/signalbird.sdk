@@ -1,0 +1,304 @@
+/**
+ * Signalbird widget - `dist/signalbird.js` (IIFE, global `Signalbird`).
+ *
+ * Tek satır kurulum:
+ *   <script async src="https://signalbird.io/sdk/v1/signalbird.js"
+ *           data-key="sb_public_live_…" data-channel="destek"></script>
+ *
+ * Betik yüklenince `data-key` varsa kendini başlatır; yoksa ev sahibi
+ * `Signalbird.init({publicKey, chatKey})` çağırır. İki değer ayrıdır: anahtar
+ * kimliği doğrular, kanal davranışı seçer (1 Eyl 2026 anahtar mimarisi). Buradaki HER dışa açık fonksiyon
+ * try/catch içindedir: widget, ev sahibi sayfaya asla hata fırlatmaz -
+ * sohbet balonunun çökmesi müşterinin ödeme sayfasını çökertmemeli.
+ *
+ * Genel API (docs/PLATFORM_EXPANSION §3.2):
+ *   Signalbird.init({publicKey, chatKey?, baseUrl?, locale?, user?, identityHash?})
+ *   Signalbird.identify({external_id, identityHash?, email, name, phone, attributes})
+ *   Signalbird.chat.open() / close() / toggle() / isOpen() / on('unread', fn) / off(…)
+ *   Signalbird.inline('#destek')                  ← sayfa içi sohbet
+ *   Signalbird.push.register({token, platform, provider?})
+ *   Signalbird.embed({module, mint}).mount('#kap')   ← panel gömme (partner)
+ *   Signalbird.destroy()
+ *   Signalbird.reset()                           ← çıkışta ÇAĞRILMALI (CONTRACT §15.3)
+ */
+import { ChatController } from './chat';
+import { createEmbed } from '../embed/element';
+import type { ApiResult, ChatEvent, IdentifyInput, InitOptions, PushRegisterInput } from './types';
+
+declare const __SB_VERSION__: string;
+
+/** Paket sürümü (VERSION dosyasından build sırasında yazılır). */
+export const version: string = typeof __SB_VERSION__ === 'string' ? __SB_VERSION__ : '0.0.0';
+
+type Listener = (payload?: unknown) => void;
+
+let controller: ChatController | null = null;
+/**
+ * Sayfa içi sohbetler (5 Eyl 2026).
+ *
+ * Ana denetleyiciden AYRI tutulur: "bir site ikisini de kullanabilsin" isteği
+ * tam olarak budur - sayfada balon dururken destek bölümünde sayfa içi bir
+ * sohbet açılabilir. Her biri kendi kabına çizilir ve kendi turunu atar;
+ * `destroy()` hepsini birden söker.
+ */
+const inlineControllers: ChatController[] = [];
+/** Son `init` seçenekleri - `inline()` anahtarları oradan devralır. */
+let lastInit: InitOptions | null = null;
+/** `init` öncesi kaydedilen dinleyiciler; başlatınca denetleyiciye bağlanır. */
+const pendingListeners: Array<{ event: ChatEvent; fn: Listener }> = [];
+/** `init` öncesi gelen kimlik; başlatınca uygulanır. */
+let pendingIdentify: IdentifyInput | null = null;
+
+function safe<T>(fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch (error) {
+    try {
+      console.warn('[signalbird]', error);
+    } catch {
+      /* konsol bile yoksa sessiz */
+    }
+    return fallback;
+  }
+}
+
+function swallow(promise: Promise<unknown>): void {
+  promise.catch(() => undefined);
+}
+
+/**
+ * Widget'ı başlatır. İkinci çağrı öncekini yıkar ve yeniden kurar
+ * (SPA'da anahtar/locale değişince). Anahtarsız çağrı hiçbir şey yapmaz.
+ */
+export function init(options: InitOptions): void {
+  safe(() => {
+    if (!options || !options.publicKey) {
+      console.warn('[signalbird] init: publicKey zorunlu');
+      return;
+    }
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    lastInit = options;
+
+    if (controller) controller.destroy();
+    controller = new ChatController(options);
+
+    for (const { event, fn } of pendingListeners) controller.on(event, fn);
+    if (pendingIdentify) {
+      const input = pendingIdentify;
+      pendingIdentify = null;
+      swallow(controller.identify(input));
+    }
+  }, undefined);
+}
+
+/** Oturum açmış kullanıcıyı ziyaretçiye bağlar (kişi upsert + sohbet oturumu). */
+export function identify(input: IdentifyInput): void {
+  safe(() => {
+    if (!input) return;
+    if (!controller) {
+      pendingIdentify = { ...(pendingIdentify || {}), ...input };
+      return;
+    }
+    swallow(controller.identify(input));
+  }, undefined);
+}
+
+export const chat = {
+  open(): void {
+    safe(() => controller?.open(), undefined);
+  },
+  close(): void {
+    safe(() => controller?.close(), undefined);
+  },
+  toggle(): void {
+    safe(() => controller?.toggle(), undefined);
+  },
+  isOpen(): boolean {
+    return safe(() => !!controller?.isOpen(), false);
+  },
+  /** `unread` (sayı), `open`, `close` */
+  on(event: ChatEvent, fn: Listener): void {
+    safe(() => {
+      if (typeof fn !== 'function') return;
+      pendingListeners.push({ event, fn });
+      controller?.on(event, fn);
+    }, undefined);
+  },
+  off(event: ChatEvent, fn: Listener): void {
+    safe(() => {
+      const idx = pendingListeners.findIndex((l) => l.event === event && l.fn === fn);
+      if (idx >= 0) pendingListeners.splice(idx, 1);
+      controller?.off(event, fn);
+    }, undefined);
+  },
+};
+
+/**
+ * Sayfanın içine sohbet çizer.
+ *
+ *   <div id="destek" style="height:640px"></div>
+ *   <script>Signalbird.inline('#destek')</script>
+ *
+ * `init()` çağrılmışsa anahtarlar oradan devralınır; çağrılmamışsa
+ * seçeneklerde `publicKey` verilmelidir. Aynı kaba ikinci kez çizilmez.
+ */
+export function inline(
+  target: string | Element,
+  options?: Partial<InitOptions>,
+): void {
+  safe(() => {
+    if (typeof document === 'undefined') return;
+
+    const merged = { ...(lastInit || {}), ...(options || {}) } as InitOptions;
+
+    if (!merged.publicKey) {
+      console.warn('[signalbird] inline: publicKey zorunlu (önce init çağırın)');
+      return;
+    }
+
+    // Aynı kaba ikinci kez çizilmez: React/Vue gibi çerçevelerde `inline()`
+    // yeniden çalıştırıldığında üst üste iki sohbet binerdi.
+    const el = typeof target === 'string' ? document.querySelector(target) : target;
+    if (!el || el.querySelector('#signalbird-widget')) return;
+
+    inlineControllers.push(
+      new ChatController({ ...merged, layout: 'inline', container: target }),
+    );
+  }, undefined);
+}
+
+export const push = {
+  /**
+   * Cihaz token'ını kaydeder (`POST /v1/sdk/devices`). Token'ı almak
+   * (FCM/APNs/Web Push izni) ev sahibinin işidir; widget yalnız iletir.
+   */
+  register(input: PushRegisterInput): Promise<ApiResult<unknown>> {
+    return safe(
+      () => {
+        if (!controller) {
+          return Promise.resolve<ApiResult<unknown>>({
+            ok: false,
+            status: 0,
+            code: 'NOT_INITIALIZED',
+            message: 'Signalbird.init çağrılmadı',
+          });
+        }
+        return controller.pushRegister(input).catch(
+          (error): ApiResult<unknown> => ({ ok: false, status: 0, code: 'NETWORK_ERROR', message: String(error) })
+        );
+      },
+      Promise.resolve<ApiResult<unknown>>({ ok: false, status: 0, code: 'WIDGET_ERROR', message: 'widget error' })
+    );
+  },
+};
+
+/**
+ * Panel gömme - ziyaretçi sohbetiyle İLGİSİ YOKTUR, aynı betikte olmasının
+ * sebebi tek kurulumdur: partner paneline zaten bir `<script>` koyuyorsa
+ * ikincisini koymasın (KARAR 2026-08-27: "nereye çakarsak orda çalışsın").
+ *
+ *   Signalbird.embed({ module: 'chat', mint }).mount('#sb-chat')
+ *
+ * `init()` GEREKMEZ: gömme kimliği jetondan gelir, uygulama anahtarından değil.
+ */
+export const embed = createEmbed;
+
+/**
+ * Oturumu kapatılan kullanıcının izini siler ve widget'ı ANONİM olarak
+ * yeniden kurar (25 Eyl 2026 güvenlik düzeltmesi, CONTRACT §15.3).
+ *
+ * Ürün kullanıcıyı çıkış yaptırdığında ÇAĞIRMALIDIR: tarayıcıdaki ziyaretçi
+ * sırrı (`localStorage['sb_visitor']`), konuşma durumu ve bilinen kimlik
+ * silinir; aynı tarayıcıyı kullanan sonraki kişi öncekinin sohbetini
+ * görmez, destek ajanı onu önceki kullanıcı sanmaz. `init` hiç
+ * çağrılmadıysa yalnız depo temizlenir.
+ */
+export function reset(): void {
+  safe(() => {
+    pendingIdentify = null;
+
+    try {
+      localStorage.removeItem('sb_visitor');
+    } catch {
+      /* gizli sekme */
+    }
+
+    const previous = lastInit;
+    const inlineTargets = inlineControllers.length;
+
+    controller?.destroy();
+    controller = null;
+    for (const c of inlineControllers.splice(0)) c.destroy();
+
+    if (!previous) return;
+
+    // Aynı anahtar ve kanal, kimliksiz: yeni anonim ziyaretçi.
+    const anonymous: InitOptions = { ...previous, user: undefined, identityHash: undefined };
+    lastInit = anonymous;
+
+    if (typeof document === 'undefined') return;
+
+    controller = new ChatController(anonymous);
+    for (const { event, fn } of pendingListeners) controller.on(event, fn);
+
+    if (inlineTargets > 0) {
+      console.warn('[signalbird] reset: sayfa içi sohbetler kaldırıldı; gerekiyorsa inline() yeniden çağrılmalı');
+    }
+  }, undefined);
+}
+
+/**
+ * Widget'ı kaldırır: polling durur, DOM silinir. Ziyaretçi sırrı
+ * localStorage'da kalır; imzalı kimlikle açılmış ziyaretçi BAŞKA kullanıcılı
+ * `init`'te yeniden kullanılmaz (§15.3). Kullanıcı çıkışı için `reset()`.
+ */
+export function destroy(): void {
+  safe(() => {
+    controller?.destroy();
+    controller = null;
+    for (const c of inlineControllers.splice(0)) c.destroy();
+  }, undefined);
+}
+
+// ── Otomatik başlatma ──────────────────────────────────────────────────
+// `<script data-key data-channel>` - `document.currentScript` yalnız betik çalışırken
+// doludur (async dahil); module/defer dışı senaryolarda da tutar. Bulunamazsa
+// aynı isimde bir script etiketi aranır (ör. tag manager enjeksiyonu).
+safe(() => {
+  if (typeof document === 'undefined') return;
+  const current =
+    (document.currentScript as HTMLScriptElement | null) ||
+    (document.querySelector('script[data-key][src*="signalbird"]') as HTMLScriptElement | null);
+  const ds = current?.dataset;
+  if (!ds || !ds.key) return;
+
+  const start = () =>
+    init({
+      publicKey: ds.key!,
+      // Kanal verilmezse sunucu 400 `MODULE_KEY_MISSING` döner ve widget
+      // çizilmez - sessizce yanlış gelen kutusuna yazmaktansa doğrusu bu.
+      chatKey: ds.channel || undefined,
+      baseUrl: ds.baseUrl || undefined,
+      locale: ds.locale || undefined,
+      /*
+       * `data-layout="inline" data-container="#destek"` - tek satırlık
+       * kurulumla sayfa içi sohbet. Betiği ikinci kez koymak yerine bu
+       * niteliklerin olması, kurulum kılavuzunu tek satırda tutuyor.
+       */
+      layout: (ds.layout as InitOptions['layout']) || undefined,
+      container: ds.container || undefined,
+      /*
+       * `data-external-id` + `data-identity-hash` (CONTRACT §15.2): sunucuda
+       * çizilen sayfa, oturumdaki kullanıcıyı tek satırda doğrulanmış olarak
+       * tanıtabilsin. Hash SUNUCUDA üretilir; gizli anahtar sayfaya inmez.
+       */
+      user: ds.externalId ? { external_id: ds.externalId } : undefined,
+      identityHash: ds.identityHash || undefined,
+      debug: ds.debug === 'true' || ds.debug === '1',
+    });
+
+  // Body henüz yoksa (head içine konmuş, defer'siz) DOM hazır olunca başla.
+  if (document.body) start();
+  else document.addEventListener('DOMContentLoaded', start, { once: true });
+}, undefined);

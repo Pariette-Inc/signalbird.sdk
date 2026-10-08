@@ -1,0 +1,154 @@
+package signalbird
+
+import (
+	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"os"
+	"strings"
+	"time"
+)
+
+// Level - beş seviye. Fazlası eklenmez: kanal ayarını anlaşılır tutar.
+type Level string
+
+const (
+	LevelDebug    Level = "debug"
+	LevelInfo     Level = "info"
+	LevelWarn     Level = "warn"
+	LevelError    Level = "error"
+	LevelCritical Level = "critical"
+)
+
+// Config - Telsiz istemcisinin ayarları.
+type Config struct {
+	// DomainKey, sunucu anahtarıdır (sb_secret_live_…). Bu anahtar GİZLİDİR ve
+	// tarayıcıya gömülemez.
+	DomainKey string
+	// BaseURL boşsa DefaultBaseURL kullanılır.
+	BaseURL string
+	// Source, her olaya eklenen köken adıdır (sunucu ya da servis adı).
+	Source string
+	// Timeout boşsa 5 saniye. Bir log çağrısı isteği bekletmemeli.
+	Timeout time.Duration
+	// ThrowOnError açıksa metotlar error döner. Varsayılan kapalıdır:
+	// telsiz erişilemezse müşterinin ödeme akışı çökmemeli.
+	ThrowOnError bool
+	Debug        bool
+}
+
+// Event - toplu gönderimdeki tek satır.
+type Event struct {
+	Key     string         `json:"key"`
+	Message string         `json:"message"`
+	Level   Level          `json:"level,omitempty"`
+	Context map[string]any `json:"context,omitempty"`
+	Source  string         `json:"source,omitempty"`
+}
+
+// Client - Telsiz (log yazma) istemcisi.
+type Client struct {
+	http   *transport
+	source string
+}
+
+// NewClient, sunucu anahtarıyla Telsiz istemcisi kurar.
+//
+// Açık anahtarın (sb_public_live_…) sunucuda kullanılması sessiz bir güvenlik
+// hatasıdır: çalışır görünür, sonra kanal kısıtına takılır. Baştan reddedilir.
+func NewClient(config Config) (*Client, error) {
+	if config.DomainKey == "" {
+		return nil, ErrNoKey
+	}
+
+	if strings.HasPrefix(config.DomainKey, "sb_public_live_") {
+		return nil, ErrWrongKeyType
+	}
+
+	timeout := config.Timeout
+	if timeout == 0 {
+		timeout = 5 * time.Second
+	}
+
+	return &Client{
+		http:   newTransport(config.DomainKey, config.BaseURL, timeout, config.ThrowOnError, config.Debug),
+		source: config.Source,
+	}, nil
+}
+
+// NewClientFromEnv, SIGNALBIRD_DOMAIN_KEY / SIGNALBIRD_URL / SIGNALBIRD_SOURCE okur.
+func NewClientFromEnv() (*Client, error) {
+	return NewClient(Config{
+		DomainKey:  os.Getenv("SIGNALBIRD_DOMAIN_KEY"),
+		BaseURL: os.Getenv("SIGNALBIRD_URL"),
+		Source:  os.Getenv("SIGNALBIRD_SOURCE"),
+	})
+}
+
+// Log, bir kanala kayıt gönderir. level boşsa kanalın kendi varsayılanı geçerlidir.
+func (c *Client) Log(ctx context.Context, key, message string, level Level, fields map[string]any) (Result, error) {
+	return c.http.request(ctx, "POST", "/v1/radio/log", Event{
+		Key: key,
+		Message: message,
+		Level:   level,
+		Context: fields,
+		Source:  c.source,
+	}, nil)
+}
+
+// IdentityHash, kimlik doğrulama hash'idir (CONTRACT §15.2):
+//
+//	identity_hash = hex(HMAC-SHA256(hex(SHA-256(secretKey)), externalID))
+//
+// Sohbet/push ziyaretçisinin external_id'si ancak bununla güvenilir sayılır.
+// Hash sunucuda üretilir ve sayfaya yazılır; gizli anahtar istemciye inmez.
+func (c *Client) IdentityHash(externalID string) string {
+	sum := sha256.Sum256([]byte(c.http.domainKey))
+	mac := hmac.New(sha256.New, []byte(hex.EncodeToString(sum[:])))
+	mac.Write([]byte(strings.TrimSpace(externalID))) // §15.2: kırpılmış değer imzalanır
+
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+func (c *Client) Debug(ctx context.Context, key, message string, fields map[string]any) (Result, error) {
+	return c.Log(ctx, key, message, LevelDebug, fields)
+}
+
+func (c *Client) Info(ctx context.Context, key, message string, fields map[string]any) (Result, error) {
+	return c.Log(ctx, key, message, LevelInfo, fields)
+}
+
+func (c *Client) Warn(ctx context.Context, key, message string, fields map[string]any) (Result, error) {
+	return c.Log(ctx, key, message, LevelWarn, fields)
+}
+
+func (c *Client) Error(ctx context.Context, key, message string, fields map[string]any) (Result, error) {
+	return c.Log(ctx, key, message, LevelError, fields)
+}
+
+func (c *Client) Critical(ctx context.Context, key, message string, fields map[string]any) (Result, error) {
+	return c.Log(ctx, key, message, LevelCritical, fields)
+}
+
+// Batch - en fazla 100 kayıt, satır satır sonuç.
+//
+// Kısmi başarı normaldir (kota tam ortada dolabilir). Başarısız satırlar
+// YENİDEN DENENMEZ: aynı logu iki kez yazmak da bir maliyettir.
+func (c *Client) Batch(ctx context.Context, events []Event) (Result, error) {
+	if len(events) > 100 {
+		events = events[:100]
+	}
+
+	rows := make([]Event, 0, len(events))
+
+	for _, event := range events {
+		if event.Source == "" {
+			event.Source = c.source
+		}
+
+		rows = append(rows, event)
+	}
+
+	return c.http.request(ctx, "POST", "/v1/radio/log/batch", map[string]any{"events": rows}, nil)
+}
