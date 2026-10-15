@@ -50,7 +50,7 @@ indiremeyeceği bir sürüm için "güncelleyin" denir.
 | **PyPI** (`signalbird`) | iş akışı | `PYPI_TOKEN` |
 | **NuGet** (`Signalbird.Sdk`) | iş akışı | `NUGET_API_KEY` |
 | **Packagist** (`pariette/signalbird`) | GitHub webhook'u ile kendiliğinden | - (ilk kayıt elle) |
-| **Go** (`go get …/signalbird.sdk`) | yayın yok, etiket okunur | - |
+| **Go** (`go get …/signalbird.sdk/v2`) | yayın yok, etiket okunur | - |
 | **SPM** (Swift) | yayın yok, etiket okunur | - |
 | **Maven** (Kotlin) | henüz yayınlanmıyor | - |
 

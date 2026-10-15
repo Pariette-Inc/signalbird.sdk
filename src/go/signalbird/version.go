@@ -8,7 +8,7 @@ import (
 
 // Version SDK sürümüdür. `scripts/sync-version.mjs` kökteki VERSION
 // dosyasından yazar - elle değiştirmeyin.
-const Version = "2.10.0"
+const Version = "2.10.1"
 
 // sdkHeader her isteğe `go/<sürüm>` olarak eklenir (docs/CONTRACT.md § 14).
 const sdkHeader = "X-Signalbird-Sdk"
@@ -30,7 +30,7 @@ func noteSdkStatus(h http.Header) {
 		}
 
 		if status == "unsupported" {
-			log.Printf("[signalbird] Bu SDK sürümü (%s) artık desteklenmiyor. Son sürüm: %s. go get github.com/Pariette-Inc/signalbird.sdk@latest", Version, latest)
+			log.Printf("[signalbird] Bu SDK sürümü (%s) artık desteklenmiyor. Son sürüm: %s. go get github.com/Pariette-Inc/signalbird.sdk/v2@latest", Version, latest)
 			return
 		}
 
