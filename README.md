@@ -26,7 +26,7 @@ Bir seçenek daha var ve kod yazmaz: hazır sohbet widget'ı
 | React Native / Expo | ✓ | - | - | ✓ | `signalbird/react-native` |
 | PHP / Laravel | ✓ | ✓ | ✓ | - | `composer require pariette/signalbird` |
 | Python | ✓ | ✓ | ✓ | - | `pip install signalbird` |
-| Go | ✓ | ✓ | ✓ | - | `go get github.com/Pariette-Inc/signalbird.sdk` |
+| Go | ✓ | ✓ | ✓ | - | `go get github.com/Pariette-Inc/signalbird.sdk/v2` |
 | .NET / ASP.NET Core | ✓ | ✓ | ✓ | - | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS) | ✓ | - | - | ✓ | SPM: `Signalbird` |
 | Kotlin (Android) | ✓ | - | - | ✓ | `io.signalbird:signalbird-sdk` |
@@ -94,10 +94,10 @@ değil, kasıtlı bir duvardır - anahtar bir kez istemciye indiğinde herkesind
 | React Native, Expo | `npm install signalbird` → `/react-native` |
 | PHP, Laravel | `composer require pariette/signalbird` |
 | Python (Django, FastAPI, Flask, Celery) | `pip install signalbird` |
-| Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
+| Go | `go get github.com/Pariette-Inc/signalbird.sdk/v2` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.10.0")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.10.1")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır - ayrı SDK reposu ya da

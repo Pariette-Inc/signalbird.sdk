@@ -1,5 +1,40 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-10-15 (2) - v2.10.1: Go modül yolu `/v2`
+
+Panelde dil başına güncelleme komutu gösterilirken (signalbird.api #143,
+signalbird.web #133) bulundu: `go.mod` modül yolu
+`github.com/Pariette-Inc/signalbird.sdk` iken etiketler v2.x. Go, v2 ve üstü
+etiketleri yalnız büyük sürüm son ekli modül yolundan çözer. Boş bir modülde
+denendi (go 1.27.1):
+
+- `go get github.com/Pariette-Inc/signalbird.sdk@v2.10.0` → hata:
+  `module path must match major version (".../signalbird.sdk/v2")`
+- `go get github.com/Pariette-Inc/signalbird.sdk@latest` → **v1.9.2** kuruldu
+  (31 Ağu 2026). `go list -m -versions` yalnız v1.4.0…v1.9.2 gösteriyor.
+
+Yani v2.0.0'dan bu yana hiçbir Go kullanıcısı v2'yi kuramıyordu; "güncelle"
+komutu onları eski v1'e düşürüyordu.
+
+**Değişiklik**
+
+- `go.mod`: `module github.com/Pariette-Inc/signalbird.sdk/v2`. Paket içi
+  import yok, kod değişmedi.
+- Import yolu: `github.com/Pariette-Inc/signalbird.sdk/v2/src/go/signalbird`.
+  Kurulum: `go get github.com/Pariette-Inc/signalbird.sdk/v2@latest`.
+- README, RELEASE.md, `version.go` uyarı mesajı ve signalbird.web belgeleri
+  (`/sdk` örnekleri, `public/docs/{tr,en}/sdk-go.md`) yeni yola göre.
+- Sürüm 2.10.1: yeni yol yalnız `v2.10.1` etiketiyle çözülür (v2.10.0 ve
+  öncesi `/v2` olmadan etiketlendiği için `/v2` altında da görünmez).
+
+**Kırıcı mı?** v2 etiketleri zaten kurulamadığı için v2 kullanan Go projesi
+yok. v1.x kullananlar (eski yol) aynen çalışmaya devam eder; v2'ye geçerken
+import yolunu `/v2` ile değiştirmeleri gerekir - bu Go'nun standart büyük
+sürüm geçişi.
+
+**Yayın günü:** `git tag v2.10.1` (main'den). Sonra boş dizinde
+`go get github.com/Pariette-Inc/signalbird.sdk/v2@v2.10.1` ile doğrula.
+
 ## 2026-10-15 - v2.10.0: Swift/Kotlin kanal başlığı (`chatKey`, `pushKey`)
 
 Panelde push kurulumunu sohbetten ayırırken (signalbird.web #132) bulundu:
@@ -694,7 +729,7 @@ de aynı numarayı yayınlamak (sürüm kilidi kuralı bozulmaz).
 | npm | `signalbird` (kapsamsız) | ad müsait, yayınlanmadı |
 | Packagist | `pariette/signalbird` | ad müsait, kaydedilmedi |
 | PyPI | `signalbird` | ad müsait, yayınlanmadı |
-| Go | `github.com/Pariette-Inc/signalbird.sdk` | modül yolu depo adresidir, değiştirilemez |
+| Go | `github.com/Pariette-Inc/signalbird.sdk` | modül yolu depo adresidir (v2.10.1 itibarıyla `/v2` son ekiyle, bkz. 2026-10-15 kaydı) |
 | NuGet | `Signalbird.Sdk` | değişmedi |
 | Maven | `io.signalbird:signalbird-sdk` | değişmedi |
 
