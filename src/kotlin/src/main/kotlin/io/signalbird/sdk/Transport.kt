@@ -49,7 +49,8 @@ internal class Transport(
     private val baseUrl: String,
     private val timeoutMs: Int,
     private val throwOnError: Boolean,
-    private val headers: () -> Map<String, String>,
+    /** İsteğin yolunu alır: uygulama yüzeyinde kanal başlığı yola göre seçilir. */
+    private val headers: (path: String) -> Map<String, String>,
 ) {
     suspend fun request(
         method: String,
@@ -75,7 +76,7 @@ internal class Transport(
             connection.setRequestProperty("Accept", "application/json")
             connection.setRequestProperty(SignalbirdSdk.HEADER, SignalbirdSdk.headerValue)
 
-            for ((key, value) in headers()) {
+            for ((key, value) in headers(path)) {
                 connection.setRequestProperty(key, value)
             }
 

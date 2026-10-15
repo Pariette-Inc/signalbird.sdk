@@ -117,7 +117,7 @@ const TEXT_TARGETS = [
     '../signalbird.web/public/docs/tr/sdk-kotlin.md',
     '../signalbird.web/public/docs/tr/sdk-app.md',
     '../signalbird.web/src/app/[locale]/(marketing)/sdk/examples.ts',
-    '../signalbird.web/src/app/[locale]/(marketing)/sdk/[slug]/page.tsx',
+    '../signalbird.web/src/app/[locale]/(marketing)/sdk/[slug]/SdkDocView.tsx',
   ].map((file) => ({
     file,
     pattern: /(io\.signalbird:signalbird-sdk:)(\d+\.\d+\.\d+)()/,

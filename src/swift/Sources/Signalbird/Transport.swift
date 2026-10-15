@@ -53,14 +53,15 @@ struct Transport {
 
     /// Kimlik başlıkları - yüzeye göre değişir (`Authorization` ya da
     /// `X-Signalbird-Key` + `X-Signalbird-Module-Key` + ziyaretçi sırrı).
-    var headers: () -> [String: String]
+    /// İsteğin yolunu alır: uygulama yüzeyinde kanal başlığı yola göre seçilir.
+    var headers: (String) -> [String: String]
 
     init(
         baseURL: String,
         timeout: TimeInterval,
         throwOnError: Bool,
         session: URLSession = .shared,
-        headers: @escaping () -> [String: String]
+        headers: @escaping (String) -> [String: String]
     ) {
         var trimmed = baseURL
         while trimmed.hasSuffix("/") { trimmed.removeLast() }
@@ -87,7 +88,7 @@ struct Transport {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(SignalbirdSdk.headerValue, forHTTPHeaderField: SignalbirdSdk.header)
 
-        for (key, value) in headers() {
+        for (key, value) in headers(path) {
             request.setValue(value, forHTTPHeaderField: key)
         }
 

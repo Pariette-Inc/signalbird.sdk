@@ -59,7 +59,7 @@ public struct SignalbirdClient {
             baseURL: config.baseURL,
             timeout: config.timeout,
             throwOnError: config.throwOnError
-        ) { ["Authorization": "Bearer \(config.domainKey)"] }
+        ) { _ in ["Authorization": "Bearer \(config.domainKey)"] }
     }
 
     /// Seviye verilmezse kanalın kendi varsayılanı geçerlidir.

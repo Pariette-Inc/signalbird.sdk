@@ -1,5 +1,26 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-10-15 - v2.10.0: Swift/Kotlin kanal başlığı (`chatKey`, `pushKey`)
+
+Panelde push kurulumunu sohbetten ayırırken (signalbird.web #132) bulundu:
+Swift ve Kotlin `SignalbirdApp` `X-Signalbird-Module-Key` başlığını HİÇ
+göndermiyordu, `SignalbirdAppConfig`'te kanal alanı da yoktu. API
+`/v1/sdk/devices`, `/v1/sdk/push/opened` uçlarını `module-key:push`,
+`/v1/sdk/bootstrap` ve `/v1/sdk/chat/*` uçlarını `module-key:chat` ile
+koruduğu için bu iki dille ne cihaz kaydı ne sohbet çalışıyordu
+(400 `MODULE_KEY_MISSING`).
+
+| Değişiklik | Ayrıntı |
+|---|---|
+| `SignalbirdAppConfig` (Swift + Kotlin) | `chatKey`, `pushKey` (isteğe bağlı). Swift'te `publicKey`'in ardında (etiketli, kırılmaz); Kotlin'de data class'ın SONUNDA (konumsal kurulum kırılmasın) |
+| Başlık seçimi | JS (`src/app/client.ts`) ile aynı: `/v1/sdk/devices…` ve `/v1/sdk/push…` → `pushKey`, geri kalanı → `chatKey`; anahtar yoksa başlık gönderilmez |
+| `Transport` (Swift + Kotlin) | başlık kapanışı artık isteğin yolunu alır; Telsiz istemcisi yolu yok sayar |
+| Testler | ilk Swift (`src/swift/Tests/`, `URLProtocol` sahtesi) ve Kotlin (`src/kotlin/src/test/`, JDK `HttpServer`) testleri; CI `swift build` → `swift test`, `gradle compileKotlin` → `gradle test` |
+| Belgeler | README, CONTRACT §11.1, signalbird.web `sdk-{swift,kotlin,app}.md` (tr+en), `/sdk` örnekleri, panel push kurulumu (`PushDeviceSetup`) Swift/Kotlin örneği |
+| `sync-version.mjs` | Gradle koordinatı hedefi `[slug]/page.tsx` → `[slug]/SdkDocView.tsx` (sayfa bölünmüştü, satır 2.9.1'de kalmıştı) |
+
+Metot sayısı ve uçlar değişmedi (parite 17); geriye uyumlu (minor).
+
 ## 2026-10-08 - Widget: baloncuk görseli ve baloncuk rengi
 
 Sahibi: "müşteriler isterlerse kendi logolarını canlı destek baloncuğuna
