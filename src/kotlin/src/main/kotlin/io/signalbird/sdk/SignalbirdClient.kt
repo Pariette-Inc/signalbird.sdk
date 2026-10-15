@@ -45,7 +45,7 @@ class SignalbirdClient(private val config: SignalbirdConfig) {
             "Signalbird: sunucu istemcisine tarayıcı anahtarı verildi. sb_secret_live_… kullanın."
         }
 
-        http = Transport(config.baseUrl, config.timeoutMs, config.throwOnError) {
+        http = Transport(config.baseUrl, config.timeoutMs, config.throwOnError) { _ ->
             mapOf("Authorization" to "Bearer ${config.domainKey}")
         }
     }

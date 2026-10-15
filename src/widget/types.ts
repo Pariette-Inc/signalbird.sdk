@@ -109,6 +109,12 @@ export interface ChatSettings {
   logo_url?: string | null;
   theme?: 'light' | 'dark' | 'auto';
   launcher_icon?: 'bird' | 'chat' | 'logo';
+  /**
+   * Baloncuğun tamamı müşterinin görseli (8 Eki 2026): varsa işaret ve zemin
+   * yerine bu çizilir. `launcher_color` yalnız baloncuğun zeminini boyar.
+   */
+  launcher_image_url?: string | null;
+  launcher_color?: string | null;
 
   /**
    * Balonun görünürlüğü (30 Ağu 2026).

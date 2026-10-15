@@ -724,6 +724,15 @@ açmak hariç).
 ve `X-Signalbird-Visitor: <sır>`.
 Sır **yalnız** `startSession` yanıtında döner.
 
+**Kanal yola göre seçilir.** İstemci yapılandırması iki kanal taşır: `chatKey`
+(`chat` modülü) ve `pushKey` (`push` modülü). `/v1/sdk/devices…` ve
+`/v1/sdk/push/…` istekleri `pushKey`'i, geri kalan her `/v1/sdk/*` isteği
+`chatKey`'i `X-Signalbird-Module-Key` olarak gönderir; ilgili kanal verilmemişse
+başlık gönderilmez ve API 400 `MODULE_KEY_MISSING` döner. Kural bütün uygulama
+istemcilerinde aynıdır (TypeScript `src/app/client.ts`, Swift ve Kotlin
+`SignalbirdApp`; Swift/Kotlin 2.10.0'a kadar başlığı hiç göndermiyordu, yani
+bu iki dille sohbet ve cihaz kaydı çalışmıyordu).
+
 Her dil bir **saklama katmanı** ister ve bu isteğe bağlı değildir: sır cihazda
 kalmazsa kullanıcı uygulamayı her açtığında sohbet geçmişini kaybeder.
 

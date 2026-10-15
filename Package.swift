@@ -28,5 +28,10 @@ let package = Package(
             name: "Signalbird",
             path: "src/swift/Sources/Signalbird"
         ),
+        .testTarget(
+            name: "SignalbirdTests",
+            dependencies: ["Signalbird"],
+            path: "src/swift/Tests/SignalbirdTests"
+        ),
     ]
 )

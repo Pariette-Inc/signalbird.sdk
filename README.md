@@ -97,7 +97,7 @@ değil, kasıtlı bir duvardır - anahtar bir kez istemciye indiğinde herkesind
 | Go | `go get github.com/Pariette-Inc/signalbird.sdk` |
 | .NET, ASP.NET Core | `dotnet add package Signalbird.Sdk` |
 | Swift (iOS, macOS) | SPM: `https://github.com/Pariette-Inc/signalbird.sdk` |
-| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.9.1")` |
+| Kotlin (Android) | `implementation("io.signalbird:signalbird-sdk:2.10.0")` |
 | Canlı sohbet widget'ı (herhangi bir site) | `<script async src="https://signalbird.io/sdk/v1/signalbird.js" data-key="sb_public_live_…" data-channel="destek"></script>` |
 
 > Hepsi **bu repodan** çıkar ve **aynı sürümü** taşır - ayrı SDK reposu ya da
@@ -683,7 +683,13 @@ const { messages, send } = useNativeChat(client, { open: true, isForeground })
 **Swift (iOS)**
 
 ```swift
-let client = try SignalbirdApp(config: .init(publicKey: "sb_public_live_…"))
+// chatKey: sohbet kanalı, pushKey: push kanalı (panelde açtığınız modül anahtarları).
+// Biri verilmezse o kanalın uçları 400 MODULE_KEY_MISSING döner.
+let client = try SignalbirdApp(config: .init(
+    publicKey: "sb_public_live_…",
+    chatKey: "destek",
+    pushKey: "mobil"
+))
 
 try await client.startSession(["name": "Ayşe"])
 try await client.startConversation(body: "Kargom nerede?")
@@ -693,12 +699,25 @@ try await client.registerDevice(token: apnsToken)
 **Kotlin (Android)**
 
 ```kotlin
-val client = SignalbirdApp(SignalbirdAppConfig(publicKey = "sb_public_live_…", storage = prefsStorage))
+// chatKey: sohbet kanalı, pushKey: push kanalı (panelde açtığınız modül anahtarları).
+// Biri verilmezse o kanalın uçları 400 MODULE_KEY_MISSING döner.
+val client = SignalbirdApp(
+    SignalbirdAppConfig(
+        publicKey = "sb_public_live_…",
+        chatKey = "destek",
+        pushKey = "mobil",
+        storage = prefsStorage,
+    ),
+)
 
 client.startSession(mapOf("name" to "Ayşe"))
 client.startConversation("Kargom nerede?")
 client.registerDevice(token = fcmToken)
 ```
+
+Kanal başlığı (`X-Signalbird-Module-Key`) yola göre seçilir: `/v1/sdk/devices`
+ve `/v1/sdk/push` uçları `pushKey`, geri kalanı `chatKey` taşır - bütün
+dillerde aynı kural (Swift/Kotlin'de 2.10.0'dan beri).
 
 Tam liste (17 metot) ve yoklama merdiveni: `docs/CONTRACT.md § 11`.
 

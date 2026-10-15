@@ -3,6 +3,12 @@ import Foundation
 public struct SignalbirdAppConfig {
     /// Uygulama anahtarı (`sb_public_live_…`). Takım anahtarını (`sb_…`) BURAYA KOYMAYIN.
     public let publicKey: String
+    /// Sohbet kanalı - `chat` modülünün anahtarı (ör. `destek`). Sohbet uçları
+    /// (`bootstrap`, `chat/*`) bunu ister; yoksa API 400 `MODULE_KEY_MISSING` döner.
+    public let chatKey: String?
+    /// Push kanalı - `push` modülünün anahtarı. Cihaz kaydı
+    /// (`registerDevice`/`unregisterDevice`) ve `reportPushOpened` bunu ister.
+    public let pushKey: String?
     public let baseURL: String
     public let locale: String?
     public let timeout: TimeInterval
@@ -10,12 +16,16 @@ public struct SignalbirdAppConfig {
 
     public init(
         publicKey: String,
+        chatKey: String? = nil,
+        pushKey: String? = nil,
         baseURL: String = signalbirdDefaultBaseURL,
         locale: String? = nil,
         timeout: TimeInterval = 10,
         storage: SignalbirdStorage = UserDefaultsStorage()
     ) {
         self.publicKey = publicKey
+        self.chatKey = chatKey
+        self.pushKey = pushKey
         self.baseURL = baseURL
         self.locale = locale
         self.timeout = timeout
@@ -28,9 +38,11 @@ public struct SignalbirdAppConfig {
 /// Müşterinin MÜŞTERİSİ için: uygulama kullanıcısı. Yalnız ziyaretçinin KENDİ
 /// verisine dokunur; gönderim yapmaz, kişi listesi okumaz.
 ///
-/// Kimlik iki parçadır: açık uygulama anahtarı (`X-Signalbird-Key`) ve
-/// ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner
-/// ve `storage` içinde saklanır.
+/// Kimlik üç başlıktır: açık uygulama anahtarı (`X-Signalbird-Key`), kanal
+/// (`X-Signalbird-Module-Key`) ve ziyaretçi sırrı (`X-Signalbird-Visitor`).
+/// Kanal YOLA göre seçilir: `/v1/sdk/devices` ve `/v1/sdk/push` → `pushKey`,
+/// geri kalan her şey → `chatKey`. Sır yalnız oturum açılışında döner ve
+/// `storage` içinde saklanır.
 ///
 /// Sözleşme: docs/CONTRACT.md § 11
 public final class SignalbirdApp: @unchecked Sendable {
@@ -45,7 +57,12 @@ public final class SignalbirdApp: @unchecked Sendable {
     /// durum tek bir küçük kutudadır (`VisitorStore`) ve o kutu kendi kilidini
     /// taşır - bu, sohbet istemcisinin tamamını aktöre hapsetmekten hem daha
     /// basit hem SwiftUI'dan çağırması daha kolaydır.
-    public init(config: SignalbirdAppConfig) throws {
+    public convenience init(config: SignalbirdAppConfig) throws {
+        try self.init(config: config, session: .shared)
+    }
+
+    /// Testler sahte `URLSession` verir; müşteri `init(config:)` kullanır.
+    init(config: SignalbirdAppConfig, session: URLSession) throws {
         guard !config.publicKey.isEmpty else {
             throw SignalbirdError(code: "NO_KEY", status: 0, message: "publicKey zorunlu")
         }
@@ -69,15 +86,30 @@ public final class SignalbirdApp: @unchecked Sendable {
         self.http = Transport(
             baseURL: config.baseURL,
             timeout: config.timeout,
-            throwOnError: false
-        ) {
+            throwOnError: false,
+            session: session
+        ) { path in
             var headers = ["X-Signalbird-Key": config.publicKey]
+
+            if let moduleKey = SignalbirdApp.moduleKey(for: path, config: config) {
+                headers["X-Signalbird-Module-Key"] = moduleKey
+            }
 
             if let locale = config.locale { headers["X-Locale"] = locale }
             if let secret = store.secret { headers["X-Signalbird-Visitor"] = secret }
 
             return headers
         }
+    }
+
+    /// Kanal başlığı YOLA göre seçilir: cihaz ve push uçları push kanalını,
+    /// geri kalan her şey sohbet kanalını ister (JS SDK ile aynı kural).
+    static func moduleKey(for path: String, config: SignalbirdAppConfig) -> String? {
+        let key = path.hasPrefix("/v1/sdk/devices") || path.hasPrefix("/v1/sdk/push")
+            ? config.pushKey
+            : config.chatKey
+
+        return key.flatMap { $0.isEmpty ? nil : $0 }
     }
 
     /// Saklanan ziyaretçi kimliği (yoksa `nil`).

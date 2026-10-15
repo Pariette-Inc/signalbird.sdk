@@ -9,6 +9,18 @@ data class SignalbirdAppConfig(
     val locale: String? = null,
     val timeoutMs: Int = 10_000,
     val storage: SignalbirdStorage = MemoryStorage(),
+    // Kanal alanları SONDA: data class'ta araya girselerdi konumsal argümanla
+    // kurulan yapılandırma (2.9.x) kırılırdı.
+    /**
+     * Sohbet kanalı - `chat` modülünün anahtarı (ör. `destek`). Sohbet uçları
+     * (`bootstrap`, `chat/…`) bunu ister; yoksa API 400 `MODULE_KEY_MISSING` döner.
+     */
+    val chatKey: String? = null,
+    /**
+     * Push kanalı - `push` modülünün anahtarı. Cihaz kaydı
+     * (`registerDevice`/`unregisterDevice`) ve `reportPushOpened` bunu ister.
+     */
+    val pushKey: String? = null,
 )
 
 /**
@@ -17,8 +29,10 @@ data class SignalbirdAppConfig(
  * Müşterinin MÜŞTERİSİ için. Yalnız ziyaretçinin KENDİ verisine dokunur;
  * gönderim yapmaz, kişi listesi okumaz.
  *
- * Kimlik iki parçadır: açık uygulama anahtarı (`X-Signalbird-Key`) ve
- * ziyaretçi sırrı (`X-Signalbird-Visitor`). Sır yalnız oturum açılışında döner.
+ * Kimlik üç başlıktır: açık uygulama anahtarı (`X-Signalbird-Key`), kanal
+ * (`X-Signalbird-Module-Key`) ve ziyaretçi sırrı (`X-Signalbird-Visitor`).
+ * Kanal YOLA göre seçilir: `/v1/sdk/devices` ve `/v1/sdk/push` → `pushKey`,
+ * geri kalan her şey → `chatKey`. Sır yalnız oturum açılışında döner.
  *
  * Sözleşme: docs/CONTRACT.md § 11
  */
@@ -35,12 +49,29 @@ class SignalbirdApp(private val config: SignalbirdAppConfig) {
             "Signalbird: uygulama istemcisi açık uygulama anahtarı ister (sb_public_live_…)."
         }
 
-        http = Transport(config.baseUrl, config.timeoutMs, throwOnError = false) {
+        http = Transport(config.baseUrl, config.timeoutMs, throwOnError = false) { path ->
             buildMap {
                 put("X-Signalbird-Key", config.publicKey)
+                moduleKeyFor(path, config)?.let { put("X-Signalbird-Module-Key", it) }
                 config.locale?.let { put("X-Locale", it) }
                 visitor.secret?.let { put("X-Signalbird-Visitor", it) }
             }
+        }
+    }
+
+    internal companion object {
+        /**
+         * Kanal başlığı YOLA göre seçilir: cihaz ve push uçları push kanalını,
+         * geri kalan her şey sohbet kanalını ister (JS SDK ile aynı kural).
+         */
+        fun moduleKeyFor(path: String, config: SignalbirdAppConfig): String? {
+            val key = if (path.startsWith("/v1/sdk/devices") || path.startsWith("/v1/sdk/push")) {
+                config.pushKey
+            } else {
+                config.chatKey
+            }
+
+            return key?.takeIf { it.isNotEmpty() }
         }
     }
 

@@ -215,7 +215,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - run: swift build
+      - run: swift test
 
   kotlin:
     name: Kotlin
@@ -227,7 +227,7 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - run: gradle compileKotlin --no-daemon
+      - run: gradle test --no-daemon
 
   contract:
     name: Sözleşme ve sürüm
