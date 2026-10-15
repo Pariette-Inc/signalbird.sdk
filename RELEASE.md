@@ -30,6 +30,9 @@ Etiket gidince `.github/workflows/publish.yml` çalışır.
 ```bash
 # 4. Kullananlara haber ver (signalbird.api sunucusunda, paketler yayına çıktıktan SONRA)
 php artisan sdk:release 1.5.0 --notes="…"
+#    yalnız bazı diller değiştiyse: --platforms=swift,kotlin
+#      (verilmezse BÜTÜN dillerdeki eski kurulumlar "güncelleyin" şeridi ve
+#       bildirimi alır - 2.10.0'da PHP/Node kullananlara boşuna gitti)
 #    güvenlik yaması:         --security
 #    eskileri desteklemiyorsa: --min-supported=1.5.0
 ```
