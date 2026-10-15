@@ -1006,7 +1006,15 @@ okunabilmeleri için API CORS'ta `exposed_headers` olarak açar.
 ### 14.4 Bildirim sunucudadır
 
 Eski sürümdeki takıma panel bildirimi API'den gider (`php artisan
-sdk:release <sürüm>`); SDK'nın buna katkısı yalnız başlıktır. Sürüm
+sdk:release <sürüm>`); SDK'nın buna katkısı yalnız başlıktır.
+
+**Durum dile göredir (15 Eki 2026).** `sdk:release --platforms=swift,kotlin`
+sürümün yalnız bu dilleri değiştirdiğini kaydeder. `Signalbird-Sdk-Latest` ve
+`Signalbird-Sdk-Status` isteğin platformunu DEĞİŞTİREN en yeni sürüme göre
+hesaplanır: 2.10.0 yalnız Swift/Kotlin'i değiştirdiyse `php/2.9.1` `current`
+alır, `swift/2.9.1` `outdated`. Desteklenen taban (`min_supported`) dili
+kapsayan bütün sürümlerin en yükseğidir. Panel şeridi ve bildirim dil başına
+kurulu → son sürümü ve güncelleme komutunu gösterir. Sürüm
 yayınlandıktan sonra `sdk:release` çalıştırılmazsa kimse haberdar olmaz:
 yayın adımlarının parçasıdır (RELEASE.md).
 
