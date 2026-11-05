@@ -1,5 +1,15 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-11-05 - Widget: ajan mesajı ziyaretçide görünür
+
+Müşteri panelden yazılan mesajı göremiyordu. Üç neden düzeltildi:
+
+- **Okunmamış sayısı:** widget `visitor_unread` okuyordu, sunucu `unread` gönderiyordu. Sayaç her yoklamada sıfırlanıyor; rozet, önizleme ve otomatik açılma çalışmıyordu. Artık ikisi de okunur.
+- **Açık panel:** panel yalnız mevcut konuşmayı yokluyordu. Artık her 5. turda ve soket haberinde konuşma listesine bakar, okunmamış açık konuşmaya geçer.
+- **Kapatılmış balon:** X ile gizlenen balon, rozet ve önizlemeyi de gizliyordu. Yeni mesaj gelince ya da açılışta okunmamış mesaj varsa balon geri gelir.
+
+Yayın: `npm run build` çıktısı `signalbird.web/public/sdk/v1/signalbird.js` dosyasına kopyalanmalı. Widget npm paketine girmez.
+
 ## 2026-10-15 (2) - v2.10.1: Go modül yolu `/v2`
 
 Panelde dil başına güncelleme komutu gösterilirken (signalbird.api #143,
