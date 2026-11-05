@@ -254,6 +254,8 @@ export interface Conversation {
   last_message_at?: string | null;
   last_message_preview?: string | null;
   last_message_sender?: 'visitor' | 'agent' | 'bot' | 'system' | null;
+  /** Sunucunun yeni adı. Eski sürümler yalnız `visitor_unread` döner. */
+  unread?: number;
   visitor_unread?: number;
   rating?: number | null;
   assigned_user_id?: number | null;

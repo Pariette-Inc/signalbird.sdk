@@ -40,6 +40,11 @@ interface Pending {
   replyTo: string | null;
 }
 
+/** Okunmamış sayısı. Sunucu alanı `unread` adıyla döner; eski yanıtta `visitor_unread` vardır. */
+function unreadOf(c: Conversation): number {
+  return c.unread ?? c.visitor_unread ?? 0;
+}
+
 export class ChatController {
   private api: Api;
   private store: Store;
@@ -83,6 +88,8 @@ export class ChatController {
    * bir daha getirmez, dolayısıyla çeviri ya da düzenleme ekrana yansımaz.
    */
   private forceFull = false;
+  /** Soket haberi geldi: açık panel bir sonraki turda konuşma listesine de bakar. */
+  private checkConversations = false;
   private baseUrl: string;
   /**
    * Canlı bağlantı. `null` = sunucu kapalı diyor ya da tarayıcı desteklemiyor;
@@ -283,11 +290,13 @@ export class ChatController {
     document.addEventListener('visibilitychange', this.onVisibility);
 
     this.ui.mount();
+    // Okunmamış mesaj varken balon gizli kalmaz: rozet ve önizleme balonun üstündedir.
+    if ((visitor?.unread || (conversation ? unreadOf(conversation) : 0)) > 0) this.restoreDismissed();
     this.ui.setDismissed(this.store.dismissed);
     this.syncLauncher();
     this.ui.setHeader(this.store.agent, this.store.online);
     this.applyBanner();
-    this.store.setUnread(visitor?.unread || conversation?.visitor_unread || 0);
+    this.store.setUnread(visitor?.unread || (conversation ? unreadOf(conversation) : 0));
     this.syncUnread();
 
     this.started = true;
@@ -883,7 +892,8 @@ export class ChatController {
      */
     if (event.data.updated === true) this.forceFull = true;
 
-    // Mesaj ya da konuşma değişimi: hemen bir tur.
+    // Mesaj ya da konuşma değişimi: hemen bir tur. Haber yeni konuşmadan da gelebilir.
+    this.checkConversations = true;
     this.poller.poke(0);
   }
 
@@ -921,6 +931,18 @@ export class ChatController {
     const c = this.store.conversation;
 
     if (this.store.isOpen && c) {
+      /*
+       * AJAN YENİ KONUŞMA AÇTIYSA PANEL ONA GEÇER (5 Kas 2026).
+       *
+       * Bu dal yalnız mevcut konuşmayı yoklar. Yeni konuşmadaki mesaj bu
+       * yüzden panel açıkken hiç görünmüyordu. Yoklama her 5. turda ya da
+       * soket haberiyle yapılır.
+       */
+      if (this.pollCount % 5 === 0 || this.checkConversations) {
+        this.checkConversations = false;
+        if (await this.adoptUnreadConversation(c)) return true;
+      }
+
       // Açık panel: yeni mesajlar; her 5. turda tam liste (tepki/düzenleme/okundu tazelensin)
       // ya da bir "güncellendi" haberi geldiyse hemen.
       const full = this.pollCount % 5 === 0 || this.forceFull;
@@ -956,7 +978,7 @@ export class ChatController {
      * Açık konuşma yoksa doğru cevap "konuşma yok"tur.
      */
     const open = items.find((x) => x.status === 'open') || null;
-    const unread = items.reduce((sum, x) => sum + (x.visitor_unread || 0), 0);
+    const unread = items.reduce((sum, x) => sum + unreadOf(x), 0);
     const grew = unread > this.store.unread;
 
     if (open && open.id !== this.store.conversation?.id) {
@@ -967,6 +989,8 @@ export class ChatController {
       this.store.setUnread(unread);
 
       if (grew) {
+        this.restoreDismissed();
+
         // Ses ayara bağlı ve tarayıcı çoğu zaman engelliyor; hareket her
         // koşulda görülür. İkisi birbirinin yerine değil, ÜST ÜSTE çalışır:
         // proaktif mesaj müşterinin fark etmediği bir rozet olarak kalırsa
@@ -1003,6 +1027,33 @@ export class ChatController {
       }
     }
     return grew;
+  }
+
+  /** Mevcut konuşma dışında okunmamış açık konuşma varsa panel ona geçer. */
+  private async adoptUnreadConversation(current: Conversation): Promise<boolean> {
+    const r = await this.api.get<unknown>(CONV);
+    if (!r.ok) {
+      this.check(r);
+      return false;
+    }
+    const raw: any = r.data;
+    const items: Conversation[] = Array.isArray(raw) ? raw : raw?.conversations || raw?.data || [];
+    const next = items.find((x) => x.status === 'open' && x.id !== current.id && unreadOf(x) > 0);
+    if (!next) return false;
+
+    this.store.setConversation(next);
+    await this.loadConversation();
+    if (this.settings?.sound) beep();
+
+    return true;
+  }
+
+  /** Yeni mesaj geldi: ziyaretçinin kapattığı balon yeniden görünür. */
+  private restoreDismissed(): void {
+    if (!this.store.dismissed) return;
+
+    this.store.setDismissed(false);
+    this.ui?.setDismissed(false);
   }
 
   private async markRead(): Promise<void> {
