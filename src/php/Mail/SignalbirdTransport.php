@@ -111,8 +111,28 @@ class SignalbirdTransport extends AbstractTransport
             $payload['attachments'] = $attachments;
         }
 
-        foreach ($recipients as $recipient) {
-            $result = $this->client->sendEmail($payload + ['to' => $recipient->getAddress()]);
+        /*
+         * GÖRÜNÜR ALICI LİSTESİ (14 Kas 2026): alıcı başına ayrı istek KALIR
+         * (mesaj kaydı, zarf ve izleme alıcıya bağlıdır), ama iletide birden
+         * çok To/Cc alıcısı varsa her To/Cc isteğine `visible_to` = To+Cc
+         * eklenir; düğüm `To:` başlığını bu listeden yazar ve "tümünü yanıtla"
+         * herkese gider. Bcc listeye ASLA girmez ve Bcc alıcısının isteğine
+         * liste konmaz (kendisi listede olmadığı için API 422 verirdi; Bcc
+         * alıcısı eskisi gibi başlıkta yalnız kendini görür).
+         */
+        $visibleTo = $this->visibleTo($email);
+        $toCcCount = count($email->getTo()) + count($email->getCc());
+
+        foreach ($recipients as $index => $recipient) {
+            $request = $payload + ['to' => $recipient->getAddress()];
+
+            // Sıra To → Cc → Bcc: ilk To+Cc kadar istek görünür alıcılardır.
+            // Hem To'da hem Bcc'de olan adresin Bcc isteği de listesiz gider.
+            if ($visibleTo !== null && $index < $toCcCount) {
+                $request['visible_to'] = $visibleTo;
+            }
+
+            $result = $this->client->sendEmail($request);
 
             if (! ($result['ok'] ?? false)) {
                 throw new TransportException(sprintf(
@@ -147,6 +167,46 @@ class SignalbirdTransport extends AbstractTransport
         }
 
         return (string) $text;
+    }
+
+    /** API'nin görünür alıcı sınırı (signalbird.api MessagingService::VISIBLE_TO_MAX). */
+    private const VISIBLE_TO_MAX = 10;
+
+    /**
+     * To+Cc adresleri (tekrarsız, büyük/küçük harf duyarsız) - yalnız
+     * gönderilebilecekken; yoksa null ve davranış eskisidir:
+     *  - tek görünür alıcı: liste hiçbir şey değiştirmez, alan gönderilmez
+     *  - ticari sınıf: API kampanyada alıcı listesini ifşa etmez (422)
+     *  - 10'dan fazla adres ya da başlığa olduğu gibi yazılamayan adres
+     *    (görünen ad sorun değil - yalnız adres gider; tırnaklı/boşluklu
+     *    yerel kısım sorundur): API reddederdi, posta düşmesin diye liste
+     *    gönderilmez
+     *
+     * @return array<int, string>|null
+     */
+    private function visibleTo(Email $email): ?array
+    {
+        if ($this->class !== 'transactional') {
+            return null;
+        }
+
+        $list = [];
+
+        foreach (array_merge($email->getTo(), $email->getCc()) as $address) {
+            $list[strtolower($address->getAddress())] ??= $address->getAddress();
+        }
+
+        if (count($list) < 2 || count($list) > self::VISIBLE_TO_MAX) {
+            return null;
+        }
+
+        foreach ($list as $address) {
+            if (preg_match('/^[^\s"<>(),;:\\\\\[\]@\x00-\x1F\x7F]+@[^\s"<>(),;:\\\\\[\]@\x00-\x1F\x7F]+$/', $address) !== 1) {
+                return null;
+            }
+        }
+
+        return array_values($list);
     }
 
     private function fromName(Email $email): ?string

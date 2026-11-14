@@ -1,5 +1,29 @@
 # Geliştirme Kaydı - signalbird.sdk
 
+## 2026-11-14 - Görünür alıcı listesi (`visible_to`)
+
+signalbird.api sunucu kesinti eskalasyonu datacenter, destek ve müşteriyi tek
+`To` satırına koyuyor ki "tümünü yanıtla" herkese gitsin. Taşıyıcı alıcı
+başına ayrı istek attığı ve düğüm `To:` başlığına yalnız o alıcıyı yazdığı
+için herkes kendini görüyordu.
+
+- **API:** `POST /v1/email/send` isteğe bağlı `visible_to` (≤10 yalın adres,
+  tekrarsız, `to` listede, yalnız `transactional`) alır; düğüm `To:`'yu bu
+  listeden yazar, zarf yine tek `to`'dur. Ret kodları
+  `VISIBLE_TO_MISSING_RECIPIENT`, `VISIBLE_TO_COMMERCIAL`, `VISIBLE_TO_INVALID`.
+- **PHP taşıyıcı** (`Mail\SignalbirdTransport`): iletide birden çok To/Cc
+  varsa her To/Cc isteğine `visible_to` = To+Cc. Bcc listeye girmez, Bcc
+  isteğine liste konmaz. Tek görünür alıcı / ticari sınıf / 10'dan fazla /
+  başlığa yazılamayan adres → alan gönderilmez (eski davranış, posta düşmez).
+- **TS:** `SendEmailInput.visible_to?: string[]` (tip). PHP/Python/Go/.NET
+  `sendEmail` yükü serbest dizi - kod gerekmedi, parite değişmedi.
+- Bilinen, dokunulmayan: taşıyıcı HTML varken düz metin bölümünü düşürüyor
+  (gövde tek alan); ayrı iş.
+
+Testler: `tests/php/Mail/SignalbirdTransportTest.php` (çok alıcı, tek alıcı,
+Bcc, ticari, >10, tekrar). Yayın: sonraki sürümle (`VERSION` sahibiyle);
+signalbird.api `composer.json` ancak yayından sonra yükseltilir.
+
 ## 2026-11-05 - Widget: ajan mesajı ziyaretçide görünür
 
 Müşteri panelden yazılan mesajı göremiyordu. Üç neden düzeltildi:

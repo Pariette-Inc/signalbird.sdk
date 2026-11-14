@@ -222,7 +222,7 @@ denetler. Alan adları API ile aynıdır (snake_case) - SDK yeniden adlandırmaz
 
 | Alan | Metot | HTTP |
 |---|---|---|
-| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, vars?, sending_domain_id?, sending_address_id?, module_key?, contact_id?, from_name?, reply_to?, attachments?})` - `attachments`: en çok 5 × `{filename, mime?, content_b64}`, toplam çözülmüş 7 MB (`ATTACHMENTS_TOO_LARGE`); `module_key`: gönderici KANALI, From adresini panelde adrese bağlı `email` kanalı seçer (v2.3.0) | `POST /v1/email/send` |
+| e-posta | `sendEmail({to, class, subject?, body?, template?, template_id?, vars?, sending_domain_id?, sending_address_id?, module_key?, contact_id?, from_name?, reply_to?, attachments?, visible_to?})` - `attachments`: en çok 5 × `{filename, mime?, content_b64}`, toplam çözülmüş 7 MB (`ATTACHMENTS_TOO_LARGE`); `visible_to`: iletinin GÖRÜNEN `To:` başlığı (en çok 10 yalın adres, tekrarsız; `to` listede olmalı → yoksa 422 `VISIBLE_TO_MISSING_RECIPIENT`; yalnız `transactional` → ticaride 422 `VISIBLE_TO_COMMERCIAL`; biçim → 422 `VISIBLE_TO_INVALID`/doğrulama hatası). Zarf, mesaj kaydı ve izleme yine tek `to`'dur - liste her alıcının isteğine ayrı ayrı konur (§8.8 Laravel taşıyıcısı); `module_key`: gönderici KANALI, From adresini panelde adrese bağlı `email` kanalı seçer (v2.3.0) | `POST /v1/email/send` |
 | SMS | `sendSms({to, class, body?, template?, template_id?, vars?, brand_id?, contact_id?, sender?})` - `body` (≤1600) ya da şablon zorunlu; `sender` onaylı gönderici adı (≤11); gönderici kanalı (`module_key`) SMS'te yoktur · `previewSms(body)` | `POST /v1/sms/send` · `POST /v1/sms/preview` |
 | push | `sendPush({to, class, subject, body, vars?, contact_id?})` - `to`: token, `contact:<id>`, `external:<id>` | `POST /v1/push/send` |
 | olay | `track({event, contact:{email?|phone?|external_id?}, data?})` - kendi sistemindeki olayı bildirir ve eşleşen otomasyon akışını tetikler; kişi yoksa açılır, `data` şablon değişkeni olur | `POST /v1/events` |
@@ -329,6 +329,14 @@ Taşıyıcının sınırları:
 
 - **Alıcı başına ayrı istek**: Signalbird'de her alıcı ayrı bir kayıttır
   (açılma/tıklama/bounce alıcıya bağlıdır). Toplu olan kampanyadır.
+- **Görünür alıcı listesi** (14 Kas 2026): iletide birden çok To/Cc alıcısı
+  varsa her To/Cc isteğine `visible_to` = To+Cc adresleri (tekrarsız) eklenir;
+  alıcı `To:` başlığında herkesi görür, "tümünü yanıtla" herkese gider. **Bcc
+  listeye asla girmez** ve Bcc alıcısının isteğine liste konmaz. Tek görünür
+  alıcıda, ticari sınıfta, 10'dan fazla adreste ya da başlığa olduğu gibi
+  yazılamayan adreste alan gönderilmez (davranış eskisi gibi). Yalnız PHP
+  taşıyıcısında - diğer dillerde `sendEmail` yükü serbesttir, alanı çağıran
+  kendisi verir; yeni metot yoktur, parite değişmez.
 - **Ek dosya taşınmaz** ve sessizce düşürülmez: `TransportException` fırlatılır.
   Gönderdiğini sandığın fatura hiç gitmesin diye.
 - **Sınıf yapılandırmadan gelir** (`SIGNALBIRD_MAIL_CLASS`, varsayılan
