@@ -248,6 +248,14 @@ interface SendEmailInput {
     /** En fazla 5 ek. */
     attachments?: EmailAttachment[];
     /**
+     * Görünür alıcı listesi: iletinin `To:` başlığı bu adreslerdir, zarf ve
+     * mesaj kaydı yine yalnız `to`'dur ("tümünü yanıtla" herkese gitsin diye;
+     * her alıcı için ayrı istek atılır). En çok 10 yalın adres, tekrarsız;
+     * `to` listede olmalı (`VISIBLE_TO_MISSING_RECIPIENT`), yalnız
+     * `class: 'transactional'` (`VISIBLE_TO_COMMERCIAL`).
+     */
+    visible_to?: string[];
+    /**
      * @deprecated API bu alanı hiç okumaz ve SDK onu GÖNDERMEZ (2.9.0). Şablon
      * için `template` (ad) ya da `template_id` kullanın. Yalnız eski kodun tip
      * denetiminde kırılmaması için tanımlı; başka bir alana eşlenmez.
