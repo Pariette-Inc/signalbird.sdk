@@ -189,6 +189,114 @@ final class SignalbirdTransportTest extends TestCase
         $this->assertArrayNotHasKey('module_key', $client2->calls[0]['body']);
     }
 
+    /** @return FakeMessagingClient n tane 202 yanıtı sıralanmış istemci */
+    private function okClient(int $n): FakeMessagingClient
+    {
+        $client = new FakeMessagingClient();
+
+        for ($i = 1; $i <= $n; $i++) {
+            $client->queueJson(202, ['id' => "msg_{$i}"]);
+        }
+
+        return $client;
+    }
+
+    public function testCokAliciliIletideHerIstegeGorunurListeGider(): void
+    {
+        // 14 Kas 2026: sunucu kesinti eskalasyonu herkesi tek To satırına
+        // koyuyor ki "tümünü yanıtla" herkese gitsin. İstek alıcı başına
+        // kalır; düğüm To başlığını `visible_to`'dan yazar.
+        $client = $this->okClient(3);
+
+        $email = $this->baseEmail()
+            ->to('musteri@example.com', new Address('noc@datacenter.example', 'NOC'))
+            ->cc('destek@example.com');
+
+        $this->send($email, $client);
+
+        $list = ['musteri@example.com', 'noc@datacenter.example', 'destek@example.com'];
+        $this->assertCount(3, $client->calls);
+        foreach ($client->calls as $i => $call) {
+            $this->assertSame($list[$i], $call['body']['to']);
+            $this->assertSame($list, $call['body']['visible_to']);
+        }
+    }
+
+    public function testTekAliciliIletideAlanGonderilmez(): void
+    {
+        $client = $this->okClient(1);
+
+        $this->send($this->baseEmail(), $client);
+
+        $this->assertArrayNotHasKey('visible_to', $client->calls[0]['body']);
+    }
+
+    public function testBccListeyeGirmezVeBccIsteginaListeKonmaz(): void
+    {
+        $client = $this->okClient(3);
+
+        $email = $this->baseEmail()->cc('veli@example.com')->bcc('gizli@example.com');
+
+        $this->send($email, $client);
+
+        $this->assertSame(['ahmet@example.com', 'veli@example.com'], $client->calls[0]['body']['visible_to']);
+        $this->assertSame(['ahmet@example.com', 'veli@example.com'], $client->calls[1]['body']['visible_to']);
+
+        $this->assertSame('gizli@example.com', $client->calls[2]['body']['to']);
+        $this->assertArrayNotHasKey('visible_to', $client->calls[2]['body']);
+        foreach ($client->calls as $call) {
+            $this->assertNotContains('gizli@example.com', $call['body']['visible_to'] ?? []);
+        }
+    }
+
+    public function testTekGorunurAliciVeBccIseAlanGonderilmez(): void
+    {
+        // To tek kişi: liste başlığı değiştirmez, alan hiç gitmez.
+        $client = $this->okClient(2);
+
+        $this->send($this->baseEmail()->bcc('gizli@example.com'), $client);
+
+        $this->assertArrayNotHasKey('visible_to', $client->calls[0]['body']);
+        $this->assertArrayNotHasKey('visible_to', $client->calls[1]['body']);
+    }
+
+    public function testTicariSinifataListeGonderilmez(): void
+    {
+        // API ticari iletide listeyi 422 ile reddeder; taşıyıcı hiç göndermez.
+        $client = $this->okClient(2);
+
+        $this->send($this->baseEmail()->cc('veli@example.com'), $client, 'commercial');
+
+        $this->assertArrayNotHasKey('visible_to', $client->calls[0]['body']);
+        $this->assertArrayNotHasKey('visible_to', $client->calls[1]['body']);
+    }
+
+    public function testOndanFazlaGorunurAlicidaListeGonderilmez(): void
+    {
+        // API en çok 10 kabul eder; posta düşmesin diye eski davranış.
+        $client = $this->okClient(11);
+
+        $email = $this->baseEmail()->to(...array_map(fn ($i) => "kisi{$i}@example.com", range(1, 11)));
+
+        $this->send($email, $client);
+
+        $this->assertCount(11, $client->calls);
+        foreach ($client->calls as $call) {
+            $this->assertArrayNotHasKey('visible_to', $call['body']);
+        }
+    }
+
+    public function testTekrarliAdresListedeBirKezGecer(): void
+    {
+        $client = $this->okClient(3);
+
+        $email = $this->baseEmail()->cc('AHMET@example.com', 'veli@example.com');
+
+        $this->send($email, $client);
+
+        $this->assertSame(['ahmet@example.com', 'veli@example.com'], $client->calls[0]['body']['visible_to']);
+    }
+
     public function testTasiyiciAdiSignalbird(): void
     {
         // `config/mail.php` içindeki `'transport' => 'signalbird'` bu ada bağlıdır.
